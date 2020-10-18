@@ -18,12 +18,15 @@
 
 volatile int STOP=FALSE;
 
+void printString(char * str);
+
+int readString(char * str);
+
 int main(int argc, char** argv)
 {
-    int fd,c, res;
+    int fd, res;
     struct termios oldtio,newtio;
     char buf[255];
-    int i, sum = 0, speed = 0;
     
     if ( (argc < 2) || 
   	     ((strcmp("/dev/ttyS10", argv[1])!=0) && 
@@ -74,17 +77,11 @@ int main(int argc, char** argv)
       exit(-1);
     }
 
-    printf("New termios structure set\n");
-
-    int size = read(STDIN_FILENO, buf, 255);
-    // for (i = 0; i < 255; i++) {
-    //   buf[i] = 'a';
-    // }
-    
-    /*testing*/
-    buf[size] = '\n';
-    
-    res = write(fd,buf,size);   
+    printf("Input String: "); fflush(stdout);
+    int size = readString(buf);
+    buf[size - 1] = '\0';
+    printString(buf);
+    res = write(fd, buf, size);   
     printf("%d bytes written\n", res);
   /* 
     O ciclo FOR e as instru��es seguintes devem ser alterados de modo a respeitar 
@@ -92,17 +89,19 @@ int main(int argc, char** argv)
   */
 
   char receive[255];
-  while (STOP==FALSE) {       /* loop for input */
-      res = read(fd,buf,1);   // returns after 5 chars have been input /
-      buf[res]=0;               // so we can printf... */
-      printf(":%s:%d\n", buf, res);
-      if (buf[0]=='\n') STOP=TRUE;
-      receive[strlen(receive)] = buf[0];
-    }
+  int i = 0;
+  while (1)
+  {
+    read(fd, buf, 1); 
+    i++;
+    receive[strlen(receive)] = buf[0];    
+    if (buf[0] == 0)
+      break;
+  }
+  receive[i - 1] = 0;
+  printf("RECEIVED");
+  printString(receive);
 
-  printf("out\n");
-
-   
     if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
       perror("tcsetattr");
       exit(-1);
@@ -110,4 +109,21 @@ int main(int argc, char** argv)
 
     close(fd);
     return 0;
+}
+
+void printString(char * str) {
+  printf("\nStarting printString...\n\tSize: %ld\n",strlen(str));
+  for (int i = 0; i < strlen(str); i++) {
+    printf("\tstr[%d]: %c\n", i, str[i]);
+  }
+  printf("printString ended\n");
+}
+
+int readString(char * str) {
+  int i = 0;
+  for (;; i++) {
+    read(STDIN_FILENO, str + i, 1);
+    if (str[i] == '\n') break;
+  };
+  return i + 1;
 }
