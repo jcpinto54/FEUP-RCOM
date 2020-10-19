@@ -1,0 +1,2 @@
+1. Para que serve o campo de endereço e o campo de controlo das tramas? E qual a diferença da utilização desses campos nas tramas I e nas S e U?
+ 
