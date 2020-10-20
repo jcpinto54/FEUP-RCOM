@@ -40,8 +40,10 @@ u_int8_t getBit(u_int8_t byte, u_int8_t bit);
 u_int8_t bccCalculator(u_int8_t bytes[], int start, size_t length);
 bool bccVerifier(u_int8_t bytes[], int start, size_t length, u_int8_t parity);
 
+int prepareToReceive(frame_t *frame, size_t size);
 void buildSETFrame(frame_t *frame, bool transmitterToReceiver);
 void buildUAFrame(frame_t * frame, bool transmitterToReceiver);
 void destroyFrame(frame_t *frame);
 
+void printString(char * str);
 
