@@ -14,12 +14,16 @@
 
 applicationLayer app;
 
+void receiveUA();
+void sendSET();
 int writeFrame(frame_t frame);
 int readFrame(frame_t *frame);
 void llopen(int porta, int appStatus);
 
 int main(int argc, char *argv[])
 {
+    printf("111\n");
+
     struct termios oldtio, newtio;
 
     if ((argc < 3)) {
@@ -27,7 +31,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    if ((strcmp("r", argv[1]) != 0) && (strcmp("s", argv[1]) != 0)) {
+    if ((strcmp("-r", argv[1]) != 0) && (strcmp("-s", argv[1]) != 0)) {
         printf("Usage:\t %s -r/-s serialPort\n\t\tex: %s -s /dev/ttyS1\n", argv[0], argv[0]);
         exit(1);
     }
@@ -37,10 +41,11 @@ int main(int argc, char *argv[])
         exit(1);
     }
     
-    if (strcmp("s", argv[1])== 0) app.status = TRANSMITTER;
-    if (strcmp("r", argv[1])== 0) app.status = RECEIVER;
+    if (strcmp("-s", argv[1])== 0) app.status = TRANSMITTER;
+    if (strcmp("-r", argv[1])== 0) app.status = RECEIVER;
     
 
+    printf("111\n");
     app.fd = open(argv[2], O_RDWR | O_NOCTTY);
     if (app.fd < 0) {
         perror(argv[1]);
@@ -51,6 +56,8 @@ int main(int argc, char *argv[])
         perror("tcgetattr");
         exit(-1);
     }
+
+    printf("111\n");
 
     bzero(&newtio, sizeof(newtio));
     newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
@@ -63,7 +70,7 @@ int main(int argc, char *argv[])
     newtio.c_cc[VTIME] = 30; // time to time-out in deciseconds
     newtio.c_cc[VMIN] = 5;  // min number of chars to read
 
-
+    printf("111\n");
     llopen(COM1, app.status);
     
 }
@@ -81,7 +88,9 @@ int readFrame(frame_t *frame) {
     char aux;
     bool inPacket = false;
     while (1) {
-        read(app.fd, &aux, 1);
+        if (read(app.fd, &aux, 1) == 0);
+        printString(&aux);
+        printString(frame->bytes);
         if (aux == FLAG) {
             if (inPacket) {
                 if (frame->size == 4) {
@@ -114,11 +123,14 @@ int readFrame(frame_t *frame) {
 void llopen(int porta, int appStatus) {
     frame_t setFrame;
     frame_t receiverFrame;
+    prepareToReceive(&setFrame, 5); prepareToReceive(&receiverFrame, 5);
     switch(appStatus) {
         case TRANSMITTER:
             buildSETFrame(&setFrame, true);
+            printf("aaa\n");
             writeFrame(setFrame);
             frame_t responseFrame;
+            printf("bbb\n");
             readFrame(&responseFrame);
             if (!bccVerifier(responseFrame.bytes, 1, 2, responseFrame.bytes[2])) {
                 perror("bcc doesn't match in response");
@@ -128,6 +140,7 @@ void llopen(int porta, int appStatus) {
             printf("Done, Transmitter Out!\n");
         break;
         case RECEIVER:
+            printf("aaa\n");
             readFrame(&receiverFrame);
             if (!bccVerifier(receiverFrame.bytes, 1, 2, receiverFrame.bytes[2])) {
                 perror("bcc doesn't match in receiver");
@@ -135,6 +148,7 @@ void llopen(int porta, int appStatus) {
             }
             frame_t uaFrame;
             buildUAFrame(&uaFrame, true);
+            printf("bbb\n");
             writeFrame(uaFrame);
             
             printf("Done, Receiver Out!\n");
@@ -142,6 +156,73 @@ void llopen(int porta, int appStatus) {
     }
 }
 
+
+// void receiveUA()
+// {
+//   unsigned char c;
+//   int state = 0;
+
+//   while(state < 5)
+//   {
+//     read(app.fd, &c, 1);
+//     printf("Char: %c - State: %d\n", c, state);
+//     switch(state)
+//     {
+//       case 0:
+//         if(c == UA[0])
+//           state = 1;
+//         break;
+//       case 1:
+//         if(c == UA[1])
+//           state = 2;
+//         else if(c != UA[0])
+//           state = 0;
+//         break;
+//       case 2:
+//         if(c == UA[2])
+//           state = 3;
+//         else if(c == UA[0])
+//           state = 1;
+//         else
+//           state = 0;
+//         break;
+//       case 3:
+//         if(c == UA[3])
+//           state = 4;
+//         else if(c == UA[0])
+//           state = 1;
+//         else
+//           state = 0;
+//         break;
+//       case 4:
+//         if(c == UA[4])
+//           state = 5;
+//         else if(c == UA[0])
+//           state = 1;
+//         else
+//           state = 0; 
+//         break;
+//     }
+//   }
+// }
+
+// void sendSET()
+// {
+//   if(attempts >= MAX_ATTEMPTS)
+//   {
+//     perror("Too many failed attempts to send. Time out!\n");
+//     exit(-1);
+//   }
+
+//   printf("Attempt %d\n", attempts);
+//   int sentBytes = 0;
+//   while(sentBytes != 5)
+//   {
+//     sentBytes = write(fd, SET, 5);
+//     printf("%d bytes sent\n", sentBytes);
+//   }
+//   attempts++;
+// }
 
 // ---
 
@@ -196,5 +277,16 @@ void destroyFrame(frame_t *frame) {
     free(frame->bytes);
 }
 
+void printString(char * str) {
+  printf("\nStarting printString...\n\tSize: %ld\n",strlen(str));
+  for (int i = 0; i < strlen(str); i++) {
+    printf("\tstr[%d]: %c\n", i, str[i]);
+  }
+  printf("printString ended\n");
+}
 
+int prepareToReceive(frame_t *frame, size_t size) {
+    frame->size = size;
+    return (frame->bytes = malloc(frame->size)) == NULL;
+}
 
