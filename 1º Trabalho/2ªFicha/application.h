@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "2ndAssignment.h"
+
 
 void receiveUA();
 void sendSET();

@@ -1,8 +1,6 @@
 #include "application.h"
 
 
-
-
 int writeFrame(frame_t frame) {
     int sizeWritten;
     if ((sizeWritten = write(app.fd, frame.bytes, frame.size)) < 0) {
