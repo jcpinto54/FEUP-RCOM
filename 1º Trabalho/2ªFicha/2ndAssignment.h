@@ -1,5 +1,9 @@
 #pragma once
 
+#define BAUDRATE B38400
+#define MODEMDEVICE "/dev/ttyS1"
+#define _POSIX_SOURCE 1 /* POSIX compliant source */
+
 #define FLAG 0x7e
 
 #define TRANSMITTER_TO_RECEIVER 0x03
