@@ -1,10 +1,18 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include "application.h"
 
 void llopen(char *port, int appStatus)
 {
     struct termios oldtio, newtio;
 
-    app.fd = open(port, O_RDWR | O_NOCTTY);
+    app.fd = open(port, O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (app.fd < 0) {
         perror(port);
         exit(-1);
@@ -27,42 +35,42 @@ void llopen(char *port, int appStatus)
     newtio.c_cc[VTIME] = 30; // time to time-out in deciseconds
     newtio.c_cc[VMIN] = 5;  // min number of chars to read
 
-    tcsetattr(app.fd, TCSANOW, &newtio);
+    if (tcsetattr(app.fd, TCSANOW, &newtio) == -1) {
+        perror("tcsetattr");
+        exit(-1);
+    }
 
     // ---
 
     switch (appStatus) {
-        case TRANSMITTER:
-            ;
+        case TRANSMITTER:;
+            printf("SET\n");
             frame_t setFrame;
             buildSETFrame(&setFrame, true);
             sendMessage(setFrame);
+            destroyFrame(&setFrame);
 
+            printf("RESPONDING\n");
             frame_t responseFrame;
             prepareToReceive(&responseFrame, 5);
             receiveNotIMessage(&responseFrame);
-            if (!bccVerifier(responseFrame.bytes, 1, 2, responseFrame.bytes[2]))
-            {
-                perror("bcc doesn't match in response");
-                exit(2);
-            }
 
+            destroyFrame(&responseFrame);
             printf("Done, Transmitter Ready\n");
             break;
-        case RECEIVER:
-            ;
+        case RECEIVER:;
+            printf("RECEIVING\n");
             frame_t receiverFrame;
             prepareToReceive(&receiverFrame, 5);
             receiveNotIMessage(&receiverFrame);
-            if (!bccVerifier(receiverFrame.bytes, 1, 2, receiverFrame.bytes[2]))
-            {
-                perror("bcc doesn't match in receiver");
-                exit(2);
-            }
+            destroyFrame(&receiverFrame);
+
+            printf("UA\n");
             frame_t uaFrame;
             buildUAFrame(&uaFrame, true);
             sendMessage(uaFrame);
 
+            destroyFrame(&uaFrame);
             printf("Done, Receiver Ready\n");
             break;
     }
@@ -70,13 +78,11 @@ void llopen(char *port, int appStatus)
 
 void receiveNotIMessage(frame_t *frame)
 {
-    unsigned char c;
+    uint8_t c;
     receive_state_t state = INIT;
 
-    while (1)
-    {
+    do {
         read(app.fd, &c, 1);
-        printf("Char: %c - State: %d\n", c, state);
         switch (state)
         {
         case INIT:
@@ -126,14 +132,19 @@ void receiveNotIMessage(frame_t *frame)
         case COMPLETE:
             break;
         }
-        
-        if (state == COMPLETE) break;
+        sleep(1);
+    } while (state != COMPLETE);
+
+    if (!bccVerifier(frame->bytes, 1, 2, frame->bytes[2])) {
+        perror("bcc doesn't match in receiver");
+        exit(2);
     }
 }
 
 void sendMessage(frame_t frame) {
     int attempts = 0;
     int sentBytes = 0;
+
     while (sentBytes != frame.size) {
         if (attempts >= MAX_ATTEMPTS) {
             perror("Too many failed attempts to send. Time out!\n");
@@ -151,12 +162,12 @@ void sendMessage(frame_t frame) {
 
 // ---
 
-u_int8_t getBit(u_int8_t byte, u_int8_t bit)
+uint8_t getBit(uint8_t byte, uint8_t bit)
 {
     return (byte >> bit) & BIT(0);
 }
 
-u_int8_t bccCalculator(u_int8_t bytes[], int start, size_t length)
+uint8_t bccCalculator(uint8_t bytes[], int start, size_t length)
 {
     int onesCounter = 0;
     for (int i = start; i < start + length; i++)
@@ -169,7 +180,7 @@ u_int8_t bccCalculator(u_int8_t bytes[], int start, size_t length)
     return onesCounter % 2;
 }
 
-bool bccVerifier(u_int8_t bytes[], int start, size_t length, u_int8_t parity)
+bool bccVerifier(uint8_t bytes[], int start, size_t length, uint8_t parity)
 {
     if (bccCalculator(bytes, start, length) == parity)
         return true;
@@ -186,7 +197,7 @@ void buildSETFrame(frame_t *frame, bool transmitterToReceiver)
     else
         frame->bytes[1] = RECEIVER_TO_TRANSMITTER;
     frame->bytes[2] = SET;
-    frame->bytes[3] = 0;
+    frame->bytes[3] = 0;    // BCC
     frame->bytes[4] = FLAG;
 }
 
@@ -200,7 +211,7 @@ void buildUAFrame(frame_t *frame, bool transmitterToReceiver)
     else
         frame->bytes[1] = RECEIVER_TO_TRANSMITTER;
     frame->bytes[2] = SET;
-    frame->bytes[3] = 1;
+    frame->bytes[3] = 1;    // BCC
     frame->bytes[4] = FLAG;
 }
 
