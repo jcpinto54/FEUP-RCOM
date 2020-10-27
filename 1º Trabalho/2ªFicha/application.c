@@ -68,6 +68,48 @@ void llopen(char *port, int appStatus)
     }
 }
 
+int llwrite(int fd, char * buffer, int length)
+{
+    int res;
+    res = write(fd, buffer, length);   
+    printf("%d bytes written\n", res);
+
+    for(int i = 0; i < res; i++)
+    {
+      printf("%d: %c\n", buffer[i], buffer[i]); 
+    }
+
+    char receive[length];
+    strcpy(receive, "");
+
+    char* buf;
+
+    while(STOP == false) {       /* loop for input */
+      res = read(fd,buf,5);      /* returns after 5 chars have been input */
+      buf[res]=0;                /* so we can printf... */
+      printf(":%s:%d\n", buf, res);
+      if (buf[0]=='\n') 
+      {
+        STOP = true;
+        printf("\n");
+      }
+      receive[length] = buf[0];
+    }
+
+    printf("sent: %s", send);
+    printf("received: %s\n", receive);
+
+    if(strcmp(send, receive) != 0)
+    {
+      perror("Message corrupted!\n");
+      return -1;
+    }
+ 
+    printf("Sucess!\n");
+    return length;
+
+}
+
 void receiveNotIMessage(frame_t *frame)
 {
     unsigned char c;
