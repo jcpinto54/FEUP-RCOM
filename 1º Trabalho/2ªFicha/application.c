@@ -110,6 +110,18 @@ int llwrite(int fd, char * buffer, int length)
 
 }
 
+int prepareI(char* data, int size)
+{
+    frame_t info = malloc(sizeof(u_int8_t) * (4 + size + 2));
+
+    info->size = size;
+
+    info->bytes[0] = FLAG; //F
+    info->bytes[1] = TRANSMITTER_TO_RECEIVER; //A
+    info->bytes[2] = 0; //C: ID da trama, suposto mudar depois
+    info->bytes[3] = bccCalculator(info->bytes, 1, 2); //BCC1, calculado com A e C
+}
+
 void receiveNotIMessage(frame_t *frame)
 {
     unsigned char c;
