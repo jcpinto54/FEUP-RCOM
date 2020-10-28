@@ -9,17 +9,19 @@
 #include "application.h"
 #include "macros.h"
 
+extern applicationLayer application;
+
 void llopen(char *port, int appStatus)
 {
     struct termios oldtio, newtio;
 
-    app.fd = open(port, O_RDWR | O_NOCTTY | O_NONBLOCK);
-    if (app.fd < 0) {
+    application.fd = open(port, O_RDWR | O_NOCTTY | O_NONBLOCK);
+    if (application.fd < 0) {
         perror(port);
         exit(-1);
     }
 
-    if (tcgetattr(app.fd, &oldtio) == -1) {
+    if (tcgetattr(application.fd, &oldtio) == -1) {
         perror("tcgetattr");
         exit(-1);
     }
@@ -36,7 +38,7 @@ void llopen(char *port, int appStatus)
     newtio.c_cc[VTIME] = 30; // time to time-out in deciseconds
     newtio.c_cc[VMIN] = 5;  // min number of chars to read
 
-    if (tcsetattr(app.fd, TCSANOW, &newtio) == -1) {
+    if (tcsetattr(application.fd, TCSANOW, &newtio) == -1) {
         perror("tcsetattr");
         exit(-1);
     }
@@ -166,7 +168,7 @@ void receiveNotIMessage(frame_t *frame)
     receive_state_t state = INIT;
 
     do {
-        read(app.fd, &c, 1);
+        read(application.fd, &c, 1);
         printf("Byte read: %x    -    State: %d\n", c, state);
         switch (state)
         {
@@ -232,7 +234,7 @@ void sendMessage(frame_t frame) {
         }
 
         while (sentBytes != frame.size) {
-            sentBytes += write(app.fd, frame.bytes, frame.size);
+            sentBytes += write(application.fd, frame.bytes, frame.size);
             printf("%d bytes sent\n", sentBytes);
         }
         attempts++;

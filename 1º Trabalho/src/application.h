@@ -25,7 +25,6 @@ typedef struct {
 // ---
 
 
-applicationLayer app;
 
 u_int8_t bccCalculator(u_int8_t bytes[], int start, size_t length);
 bool bccVerifier(u_int8_t bytes[], int start, size_t length, u_int8_t parity);
