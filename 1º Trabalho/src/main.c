@@ -10,6 +10,8 @@
 #include "macros.h"
 #include "utils.h"
 
+applicationLayer app;
+
 int main(int argc, char *argv[])
 {
 
@@ -26,7 +28,9 @@ int main(int argc, char *argv[])
     if (app.status == TRANSMITTER) strcpy(port, SERIAL_PORT_1);
     else if (app.status == RECEIVER) strcpy(port, SERIAL_PORT_2);
 
-    llopen(port, app.status);
+    printf("LLOPEN RETURN: %d\n", llopen(port, app.status));
+
+    printf("LLCLOSE RETURN: %d\n", llclose(app.fd));
     
 }
 

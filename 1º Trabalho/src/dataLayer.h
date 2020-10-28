@@ -25,17 +25,20 @@ typedef struct {
 // ---
 
 
-applicationLayer app;
-
 u_int8_t bccCalculator(u_int8_t bytes[], int start, size_t length);
 bool bccVerifier(u_int8_t bytes[], int start, size_t length, u_int8_t parity);
 
-int prepareToReceive(frame_t *frame, size_t size);
+
 int buildSETFrame(frame_t *frame, bool transmitterToReceiver);
+bool isSETFrame(frame_t *frame);
 int buildUAFrame(frame_t * frame, bool transmitterToReceiver);
+bool isUAFrame(frame_t *frame);
 int buildDISCFrame(frame_t * frame, bool transmitterToReceiver);
+bool isDISCFrame(frame_t *frame);
+
+int prepareToReceive(frame_t *frame, size_t size);
 void destroyFrame(frame_t *frame);
-int receiveNotIMessage(frame_t *frame);
+int receiveNotIMessage(frame_t *frame, bool isResponse);
 int sendMessage(frame_t frame);
 
 int llopen(char *port, int appStatus);

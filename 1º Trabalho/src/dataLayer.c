@@ -6,14 +6,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 #include "dataLayer.h"
 #include "macros.h"
 
+extern applicationLayer app;
+
 int llopen(char *port, int appStatus)
 {
+    printf("ENTERED LLOPEN\n");
+    
     struct termios oldtio, newtio;
 
-    app.fd = open(port, O_RDWR | O_NOCTTY | O_NONBLOCK);
+    app.fd = open(port, O_RDWR | O_NOCTTY);
     if (app.fd < 0) {
         perror(port);
         return -1;
@@ -21,7 +26,7 @@ int llopen(char *port, int appStatus)
 
     if (tcgetattr(app.fd, &oldtio) == -1) {
         perror("tcgetattr");
-        return -1;
+        return -2;
     }
 
 
@@ -33,39 +38,45 @@ int llopen(char *port, int appStatus)
     // set input mode (non-canonical, no echo,...)
     newtio.c_lflag = 0;
 
-    newtio.c_cc[VTIME] = 30; // time to time-out in deciseconds
+    newtio.c_cc[VTIME] = 0; // time to time-out in deciseconds
     newtio.c_cc[VMIN] = 0;  // min number of chars to read
 
     if (tcsetattr(app.fd, TCSANOW, &newtio) == -1) {
         perror("tcsetattr");
-        return -1;
+        return -3;
     }
 
-    // ---
+    frame_t setFrame;
+    frame_t responseFrame;
+    frame_t receiverFrame;
+    frame_t uaFrame;
 
     switch (appStatus) {
         case TRANSMITTER:;
-            frame_t setFrame;
-            if (buildSETFrame(&setFrame, true)) return -1;
-            if (sendMessage(setFrame)) return -1;
-            destroyFrame(&setFrame);
+            while (1) {
+                if (buildSETFrame(&setFrame, true)) return -4;
+                if (sendMessage(setFrame)) return -5;
+                destroyFrame(&setFrame);
 
-            frame_t responseFrame;
-            if (prepareToReceive(&responseFrame, 5)) return -1;
-            if (receiveNotIMessage(&responseFrame)) return -1;
-            destroyFrame(&responseFrame);
+                if (prepareToReceive(&responseFrame, 5)) return -6;
+                int responseReceive = receiveNotIMessage(&responseFrame, true); 
+                if (responseReceive == 1 || responseReceive == 2) continue;         // in a timeout, retransmit frame
+                else if (responseReceive > 2) return -7;
+                if (!isUAFrame(&responseFrame)) continue;
+                destroyFrame(&responseFrame);
 
-            printf("Done, Transmitter Ready\n");
+                printf("Done, Transmitter Ready\n");
+                break;
+            }
             break;
         case RECEIVER:;
-            frame_t receiverFrame;
-            if (prepareToReceive(&receiverFrame, 5)) return -1;
-            if (receiveNotIMessage(&receiverFrame)) return -1;
+            if (prepareToReceive(&receiverFrame, 5)) return -6;
+            if (receiveNotIMessage(&receiverFrame, true)) return -7;
+            if (!isSETFrame(&receiverFrame)) return -8;
             destroyFrame(&receiverFrame);
 
-            frame_t uaFrame;
-            if (buildUAFrame(&uaFrame, true)) return -1;
-            if (sendMessage(uaFrame)) return -1;
+            if (buildUAFrame(&uaFrame, true)) return -4;
+            if (sendMessage(uaFrame)) return -5;
             destroyFrame(&uaFrame);
             
             printf("Done, Receiver Ready\n");
@@ -75,74 +86,131 @@ int llopen(char *port, int appStatus)
 }
 
 int llclose(int fd) {
+    printf("ENTERED LLCLOSE\n");
+
+    frame_t discFrame;
+    frame_t receiveFrame;
+    frame_t uaFrame;
+
+    int receiveReturn;
     switch (app.status) {
         case TRANSMITTER:;
+            while (1) { 
+                if (buildDISCFrame(&discFrame, true)) return -1;
+                if (sendMessage(discFrame)) return -2;
+                destroyFrame(&discFrame);
+
+                if (prepareToReceive(&receiveFrame, 5)) return -3;
+                receiveReturn = receiveNotIMessage(&receiveFrame, true);
+                if (receiveReturn == 1 || receiveReturn == 2) continue;        //in a timeout, retransmit frame
+                else if (receiveReturn > 2) return -4;
+                if (!isDISCFrame(&receiveFrame)) continue;
+                destroyFrame(&receiveFrame);
+
+                if (buildUAFrame(&uaFrame, true)) return -1;
+                if (sendMessage(uaFrame)) return -2;
+                destroyFrame(&uaFrame);
+                
+                printf("Done, Transmitter Out\n");
+                break;
+            }
+        break;
+        case RECEIVER:;
+            if (prepareToReceive(&receiveFrame, 5)) return -3;
+            if (receiveNotIMessage(&receiveFrame, true)) return -4;
+            if (!isDISCFrame(&receiveFrame)) return -5;
+            destroyFrame(&receiveFrame);
+
+            if (buildDISCFrame(&discFrame, true)) return -1;
+            if (sendMessage(discFrame)) return -2;
+            destroyFrame(&discFrame);
+
+            if (prepareToReceive(&receiveFrame, 5)) return -3;
+            if (receiveNotIMessage(&receiveFrame, true)) return -4;
+            if (!isUAFrame(&receiveFrame)) return -5;
+            destroyFrame(&receiveFrame);
+
+            printf("Done, Receiver Out\n");
+        break;
     }
+    close(fd);
+    return 1;
 }
 
 // ---
 
-int receiveNotIMessage(frame_t *frame)
+int receiveNotIMessage(frame_t *frame, bool isResponse)
 {
     u_int8_t c;
     receive_state_t state = INIT;
-
+    time_t initTime, curTime;
+    initTime = time(NULL);
     do {
-        if (read(app.fd, &c, 1) == -1) {
-            perror("read timeout");
-            return 1;
+        int bytesRead = read(app.fd, &c, 1);
+        if (bytesRead < 0) {
+            perror("read error");
+            return 3;
         }
-        printf("Byte read: %x    -    State: %d\n", c, state);
-        switch (state)
-        {
-        case INIT:
-            if (c == FLAG) {
-                state = RCV_FLAG;
-                frame->bytes[0] = c;
+        else if (bytesRead == 0 && isResponse) {
+            curTime = time(NULL);
+            time_t seconds = curTime - initTime;
+            if (seconds >= 3.0) {
+                printf("Read Timeout!\n");
+                return 1;
             }
-            break;
-        case RCV_FLAG:
-            if (c == TRANSMITTER_TO_RECEIVER || c == RECEIVER_TO_TRANSMITTER) {
-                state = RCV_A;
-                frame->bytes[1] = c;
-            }
-            else
-                state = INIT;
-            break;
-        case RCV_A:
-            if (c == SET || c == UA || c == DISC || c == RR || c == REJ) {
-                state = RCV_C;
-                frame->bytes[2] = c;
-            }
-            else if (c == FLAG)
-                state = RCV_FLAG;
-            else
-                state = INIT;
-            break;
-        case RCV_C:
-            if (bccVerifier(frame->bytes, 1, 2, c)) {
-                state = RCV_BCC;
-                frame->bytes[3] = c;
-            }
-            else if (c == FLAG)
-                state = RCV_FLAG;
-            else {
-                perror("BCC1 not correct\n");
-                return 2;
-            }
-            break;
-        case RCV_BCC:
-            if (c == FLAG) {
-                state = COMPLETE;
-                frame->bytes[4] = c;
-            }
-            else
-                state = INIT;
-            break;
-        case COMPLETE:
-            break;
         }
-        sleep(1);
+        else if (bytesRead > 0 && isResponse) {
+            initTime = time(NULL);
+        }
+
+        switch (state) {
+            case INIT:
+                if (c == FLAG) {
+                    state = RCV_FLAG;
+                    frame->bytes[0] = c;
+                }
+                break;
+            case RCV_FLAG:
+                if (c == TRANSMITTER_TO_RECEIVER || c == RECEIVER_TO_TRANSMITTER) {
+                    state = RCV_A;
+                    frame->bytes[1] = c;
+                }
+                else
+                    state = INIT;
+                break;
+            case RCV_A:
+                if (c == SET || c == UA || c == DISC || c == RR || c == REJ) {
+                    state = RCV_C;
+                    frame->bytes[2] = c;
+                }
+                else if (c == FLAG)
+                    state = RCV_FLAG;
+                else
+                    state = INIT;
+                break;
+            case RCV_C:
+                if (bccVerifier(frame->bytes, 1, 2, c)) {
+                    state = RCV_BCC;
+                    frame->bytes[3] = c;
+                }
+                else if (c == FLAG)
+                    state = RCV_FLAG;
+                else {
+                    perror("BCC1 not correct\n");
+                    return 2;
+                }
+                break;
+            case RCV_BCC:
+                if (c == FLAG) {
+                    state = COMPLETE;
+                    frame->bytes[4] = c;
+                }
+                else
+                    state = INIT;
+                break;
+            case COMPLETE:
+                break;
+        }
     } while (state != COMPLETE);
     
     return 0;
@@ -202,6 +270,11 @@ int buildSETFrame(frame_t *frame, bool transmitterToReceiver)
     return 0;
 }
 
+bool isSETFrame(frame_t *frame) {
+    if (frame->size != 5) return false;
+    return frame->bytes[2] == SET;
+}
+
 int buildUAFrame(frame_t *frame, bool transmitterToReceiver)
 {
     if ((frame->bytes = malloc(5)) == NULL) return 1;
@@ -216,6 +289,11 @@ int buildUAFrame(frame_t *frame, bool transmitterToReceiver)
     frame->bytes[4] = FLAG;
 
     return 0;
+}
+
+bool isUAFrame(frame_t *frame) {
+    if (frame->size != 5) return false;
+    return frame->bytes[2] == UA;
 }
 
 int buildDISCFrame(frame_t *frame, bool transmitterToReceiver)
@@ -234,6 +312,10 @@ int buildDISCFrame(frame_t *frame, bool transmitterToReceiver)
     return 0;
 }
 
+bool isDISCFrame(frame_t *frame) {
+    if (frame->size != 5) return false;
+    return frame->bytes[2] == DISC;
+}
 
 void destroyFrame(frame_t *frame)
 {
