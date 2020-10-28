@@ -70,56 +70,63 @@ void llopen(char *port, int appStatus)
 
 int llwrite(int fd, char * buffer, int length)
 {
-    int res;
-    res = write(fd, buffer, length);   
-    printf("%d bytes written\n", res);
-
-    for(int i = 0; i < res; i++)
+    frame_t *info = NULL, *responseFrame = NULL;
+    prepareI(buffer, length, info); //Prepara a trama de informação
+    
+    do
     {
-      printf("%d: %c\n", buffer[i], buffer[i]); 
-    }
+        sendMessage(*info);
 
-    char receive[length];
-    strcpy(receive, "");
+        receiveNotIMessage(responseFrame);
+    }while(responseFrame->bytes[2] != RR);
 
-    char* buf;
-
-    while(STOP == false) {       /* loop for input */
-      res = read(fd,buf,5);      /* returns after 5 chars have been input */
-      buf[res]=0;                /* so we can printf... */
-      printf(":%s:%d\n", buf, res);
-      if (buf[0]=='\n') 
-      {
-        STOP = true;
-        printf("\n");
-      }
-      receive[length] = buf[0];
-    }
-
-    printf("sent: %s", send);
-    printf("received: %s\n", receive);
-
-    if(strcmp(send, receive) != 0)
-    {
-      perror("Message corrupted!\n");
-      return -1;
-    }
- 
-    printf("Sucess!\n");
+    destroyFrame(info);
+    destroyFrame(responseFrame);
+    
     return length;
-
 }
 
-int prepareI(char* data, int size)
+void auxStuffing(frame_t * frame, int * stuffingCounter, char byte, int i)
 {
-    frame_t info = malloc(sizeof(u_int8_t) * (4 + size + 2));
 
-    info->size = size;
+    if(byte == FLAG){//do byte stuffing
+        frame->bytes[4 + i + (*stuffingCounter)] = STUFFING_FLAG;
+        frame->bytes[4 + i + (++(*stuffingCounter))] = FLAG;
+    }
+    else if(byte == STUFFING_FLAG){//do byte stuffing
+        frame->bytes[4 + i + (*stuffingCounter)] = STUFFING_FLAG;
+        frame->bytes[4 + i + (++(*stuffingCounter))] = STUFFING_FLAG;
+    }
+    else{
+        frame->bytes[4 + i + (*stuffingCounter)] = byte;
+    }
+}
+
+int prepareI(char* data, int size, frame_t* info) //Testar
+{
+    info->size = sizeof(u_int8_t) * (4 + size + 2);
+    info->bytes = malloc(info->size);
+
 
     info->bytes[0] = FLAG; //F
     info->bytes[1] = TRANSMITTER_TO_RECEIVER; //A
     info->bytes[2] = 0; //C: ID da trama, suposto mudar depois
     info->bytes[3] = bccCalculator(info->bytes, 1, 2); //BCC1, calculado com A e C
+
+    int stuffingCounter = 0;
+    //Talvez colocar o tamanho da mensagem como primeiro byte?
+    info->bytes[4] = data[0];
+
+    for(unsigned int i = 1; i < size; i++) 
+    {
+        auxStuffing(info, &stuffingCounter, data[i], i);
+    }
+
+    int bcc2_byte = 4 + 1 + size + stuffingCounter;
+
+    info->bytes[bcc2_byte] = bccCalculator(info->bytes, 4, size);
+    info->bytes[bcc2_byte + 1] = FLAG;
+    return bcc2_byte + 2;
 }
 
 void receiveNotIMessage(frame_t *frame)
