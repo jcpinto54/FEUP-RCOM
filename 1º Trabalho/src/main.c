@@ -7,6 +7,8 @@
 #include <string.h>
 #include <unistd.h>
 #include "application.h"
+#include "macros.h"
+#include "utils.h"
 
 int main(int argc, char *argv[])
 {

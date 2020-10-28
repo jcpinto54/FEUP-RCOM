@@ -7,6 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "application.h"
+#include "macros.h"
 
 void llopen(char *port, int appStatus)
 {
@@ -76,55 +77,14 @@ void llopen(char *port, int appStatus)
     }
 }
 
-int llwrite(int fd, char * buffer, int length)
-{
-    int res;
-    res = write(fd, buffer, length);   
-    printf("%d bytes written\n", res);
-
-    for(int i = 0; i < res; i++)
-    {
-      printf("%d: %c\n", buffer[i], buffer[i]); 
-    }
-
-    char receive[length];
-    strcpy(receive, "");
-
-    char* buf;
-
-    while(STOP == false) {       /* loop for input */
-      res = read(fd,buf,5);      /* returns after 5 chars have been input */
-      buf[res]=0;                /* so we can printf... */
-      printf(":%s:%d\n", buf, res);
-      if (buf[0]=='\n') 
-      {
-        STOP = true;
-        printf("\n");
-      }
-      receive[length] = buf[0];
-    }
-
-    printf("sent: %s", send);
-    printf("received: %s\n", receive);
-
-    if(strcmp(send, receive) != 0)
-    {
-      perror("Message corrupted!\n");
-      return -1;
-    }
- 
-    printf("Sucess!\n");
-    return length;
-
-}
-
 void receiveNotIMessage(frame_t *frame)
 {
-    uint8_t c;
+    u_int8_t c;
     receive_state_t state = INIT;
 
     do {
         read(app.fd, &c, 1);
+        printf("Byte read: %x    -    State: %d\n", c, state);
         switch (state)
         {
         case INIT:
@@ -152,22 +112,21 @@ void receiveNotIMessage(frame_t *frame)
                 state = INIT;
             break;
         case RCV_C:
-            if (c == bccCalculator(frame->bytes, 1, 2)) {
+            if (bccVerifier(frame->bytes, 1, 2, c)) {
                 state = RCV_BCC;
                 frame->bytes[3] = c;
             }
             else if (c == FLAG)
                 state = RCV_FLAG;
-            else
+            else {
                 state = INIT;
+            }
             break;
         case RCV_BCC:
             if (c == FLAG) {
-                state = RCV_FLAG;
+                state = COMPLETE;
                 frame->bytes[4] = c;
             }
-            else if (c == FLAG)
-                state = COMPLETE;
             else
                 state = INIT;
             break;
@@ -177,10 +136,6 @@ void receiveNotIMessage(frame_t *frame)
         sleep(1);
     } while (state != COMPLETE);
 
-    if (!bccVerifier(frame->bytes, 1, 2, frame->bytes[2])) {
-        perror("bcc doesn't match in receiver");
-        exit(2);
-    }
 }
 
 void sendMessage(frame_t frame) {
@@ -193,7 +148,6 @@ void sendMessage(frame_t frame) {
             exit(-1);
         }
 
-        printf("Write attempt %d\n", attempts);
         while (sentBytes != frame.size) {
             sentBytes += write(app.fd, frame.bytes, frame.size);
             printf("%d bytes sent\n", sentBytes);
@@ -204,12 +158,7 @@ void sendMessage(frame_t frame) {
 
 // ---
 
-uint8_t getBit(uint8_t byte, uint8_t bit)
-{
-    return (byte >> bit) & BIT(0);
-}
-
-uint8_t bccCalculator(uint8_t bytes[], int start, size_t length)
+u_int8_t bccCalculator(u_int8_t bytes[], int start, size_t length)
 {
     int onesCounter = 0;
     for (int i = start; i < start + length; i++)
@@ -222,7 +171,7 @@ uint8_t bccCalculator(uint8_t bytes[], int start, size_t length)
     return onesCounter % 2;
 }
 
-bool bccVerifier(uint8_t bytes[], int start, size_t length, uint8_t parity)
+bool bccVerifier(u_int8_t bytes[], int start, size_t length, u_int8_t parity)
 {
     if (bccCalculator(bytes, start, length) == parity)
         return true;
@@ -252,7 +201,7 @@ void buildUAFrame(frame_t *frame, bool transmitterToReceiver)
         frame->bytes[1] = TRANSMITTER_TO_RECEIVER;
     else
         frame->bytes[1] = RECEIVER_TO_TRANSMITTER;
-    frame->bytes[2] = SET;
+    frame->bytes[2] = UA;
     frame->bytes[3] = 1;    // BCC
     frame->bytes[4] = FLAG;
 }
@@ -260,16 +209,6 @@ void buildUAFrame(frame_t *frame, bool transmitterToReceiver)
 void destroyFrame(frame_t *frame)
 {
     free(frame->bytes);
-}
-
-void printString(char *str)
-{
-    printf("\nStarting printString...\n\tSize: %ld\n", strlen(str));
-    for (int i = 0; i < strlen(str); i++)
-    {
-        printf("\tstr[%d]: %c\n", i, str[i]);
-    }
-    printf("printString ended\n");
 }
 
 int prepareToReceive(frame_t *frame, size_t size)

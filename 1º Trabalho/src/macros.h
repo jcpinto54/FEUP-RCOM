@@ -21,35 +21,5 @@
 
 #define MAX_ATTEMPTS 5
 
-#ifndef BIT
-    #define BIT(x) ((1 << x) -1)
-#endif
-
-typedef unsigned char uint8_t;
-
-typedef enum {
-    false,
-    true
-} bool;
-
-
-typedef struct {
-    int fd; // serial port
-    int status; // TRANSMITTER | RECEIVER
-} applicationLayer;
-
-
-typedef enum {
-    INIT,
-    RCV_FLAG,
-    RCV_A,
-    RCV_C,
-    RCV_BCC,
-    COMPLETE
-} receive_state_t;
-
-typedef struct {
-    uint8_t *bytes;
-    int size;
-} frame_t;
+#define MAX_FRAME_SIZE 255
 
