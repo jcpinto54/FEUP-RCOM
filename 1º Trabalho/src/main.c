@@ -27,6 +27,8 @@ int main(int argc, char *argv[])
     else if (app.status == RECEIVER) strcpy(port, SERIAL_PORT_2);
 
     llopen(port, app.status);
+
+    
     
 }
 
