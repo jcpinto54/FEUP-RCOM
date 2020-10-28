@@ -14,6 +14,10 @@
 #define RR 0x05  // 0b R 0 0 0 0 1 0 1
 #define REJ 0x01 // 0b R 0 0 0 0 0 0 1
 
+#define ESC 0x7d
+#define FLAG_STUFFING 0x5e
+#define ESC_STUFFING 0x5d
+
 #define RECEIVER 0
 #define TRANSMITTER 1
 #define SERIAL_PORT_1 "/dev/ttyS1"

@@ -81,30 +81,51 @@ int llwrite(int fd, char * buffer, int length)
 {
     frame_t *info = NULL, *responseFrame = NULL;
     prepareI(buffer, length, info); //Prepara a trama de informação
+    bool stop = false;
+    int attempts = 0, result = -1;
     
     do
     {
-        sendMessage(*info);
+        if(attempts >= MAX_ATTEMPTS) 
+        {
+            perror("ERROR: Too many attempts\n");
+            stop = true;
+        }
 
+        sendMessage(*info);
         receiveNotIMessage(responseFrame);
-    }while(responseFrame->bytes[2] != RR);
+
+        if(responseFrame->bytes[2] == RR) 
+        {
+            result = info->size;
+            stop = true;
+        }
+        else if(responseFrame->bytes[2] == REJ)
+        {
+            attempts++;
+        }
+        else
+        {
+            perror("ERROR: Unknown response frame");
+        }
+    }while(!stop);
 
     destroyFrame(info);
     destroyFrame(responseFrame);
     
-    return length;
+    return result;
 }
 
 void auxStuffing(frame_t * frame, int * stuffingCounter, char byte, int i)
 {
 
     if(byte == FLAG){//do byte stuffing
-        frame->bytes[4 + i + (*stuffingCounter)] = STUFFING_FLAG;
-        frame->bytes[4 + i + (++(*stuffingCounter))] = FLAG;
+        frame->bytes[4 + i + (*stuffingCounter)] = ESC;
+        frame->bytes[4 + i + (++(*stuffingCounter))] = FLAG_STUFFING;
     }
-    else if(byte == STUFFING_FLAG){//do byte stuffing
-        frame->bytes[4 + i + (*stuffingCounter)] = STUFFING_FLAG;
-        frame->bytes[4 + i + (++(*stuffingCounter))] = STUFFING_FLAG;
+    else if(byte == ESC){//do byte stuffing
+        frame->bytes[4 + i + (*stuffingCounter)] = ESC;
+        frame->bytes[4 + i + (++(*stuffingCounter))] = ESC_STUFFING;
     }
     else{
         frame->bytes[4 + i + (*stuffingCounter)] = byte;
