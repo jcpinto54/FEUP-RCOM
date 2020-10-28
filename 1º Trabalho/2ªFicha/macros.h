@@ -26,6 +26,8 @@
     #define BIT(x) ((1 << x) -1)
 #endif
 
+typedef unsigned char uint8_t;
+
 typedef enum {
     false,
     true
@@ -48,6 +50,7 @@ typedef enum {
 } receive_state_t;
 
 typedef struct {
-    u_int8_t *bytes;
+    uint8_t *bytes;
     int size;
 } frame_t;
+
