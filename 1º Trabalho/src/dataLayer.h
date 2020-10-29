@@ -46,8 +46,13 @@ void buildUAFrame(frame_t * frame, bool transmitterToReceiver);
 bool isUAFrame(frame_t *frame);
 void buildDISCFrame(frame_t * frame, bool transmitterToReceiver);
 bool isDISCFrame(frame_t *frame);
+<<<<<<< HEAD
 void auxStuffing(frame_t * frame, int * stuffingCounter, char *data);
 int prepareI(char* data, int size, frame_t*** infoNew);
+=======
+void auxStuffing(frame_t * frame, int * stuffingCounter, char byte, int i);
+int prepareI(char* data, int size, frame_t* info);
+>>>>>>> a1dffc6a4776a01246c3bd5ca7cca7df9ca1949c
 
 void prepareToReceive(frame_t *frame, size_t size);
 

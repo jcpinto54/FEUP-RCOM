@@ -138,6 +138,10 @@ int llclose(int fd) {
 int llread(int fd, char * buffer){
     frame_t frame;
     //bool response;
+<<<<<<< HEAD
+=======
+    receiveIMessage(&frame);
+>>>>>>> a1dffc6a4776a01246c3bd5ca7cca7df9ca1949c
     int size;
     if ((size = receiveIMessage(&frame)) < 0) {
         perror("Error in receiveIMessage");
@@ -151,6 +155,7 @@ int llread(int fd, char * buffer){
 
 int llwrite(int fd, char * buffer, int length)
 {
+<<<<<<< HEAD
     // frame_t **info = NULL, *responseFrame = NULL;
     // int framesToSend = prepareI(buffer, length, info); //Prepara a trama de informação
     // bool stop = false;
@@ -188,6 +193,101 @@ int llwrite(int fd, char * buffer, int length)
     // return result;
     return 0;
 }
+=======
+    frame_t *info = NULL, *responseFrame = NULL;
+    prepareI(buffer, length, info); //Prepara a trama de informação
+    bool stop = false;
+    int attempts = 0, result = -1;
+    
+    do
+    {
+        if(attempts >= MAX_WRITE_ATTEMPTS) 
+        {
+            perror("ERROR: Too many write attempts\n");
+            stop = true;
+        }
+
+        sendMessage(*info);
+        receiveNotIMessage(responseFrame);
+
+        if(responseFrame->bytes[2] == RR) 
+        {
+            result = info->size;
+            stop = true;
+        }
+        else if(responseFrame->bytes[2] == REJ)
+        {
+            attempts++;
+        }
+        else
+        {
+            perror("ERROR: Unknown response frame");
+        }
+    }while(!stop);
+
+    destroyFrame(info);
+    destroyFrame(responseFrame);
+    
+    return result;
+}
+
+void auxStuffing(frame_t * frame, int * stuffingCounter, char byte, int i)
+{
+
+    if(byte == FLAG){//do byte stuffing
+        frame->bytes[4 + i + (*stuffingCounter)] = ESC;
+        frame->bytes[4 + i + (++(*stuffingCounter))] = FLAG_STUFFING;
+    }
+    else if(byte == ESC){//do byte stuffing
+        frame->bytes[4 + i + (*stuffingCounter)] = ESC;
+        frame->bytes[4 + i + (++(*stuffingCounter))] = ESC_STUFFING;
+    }
+    else{
+        frame->bytes[4 + i + (*stuffingCounter)] = byte;
+    }
+
+}
+
+int prepareI(char* data, int size, frame_t* info) //Testar
+{
+    info->size = sizeof(u_int8_t) * (4 + size + 2);
+    info->bytes = malloc(info->size);
+
+
+    info->bytes[0] = FLAG; //F
+    info->bytes[1] = TRANSMITTER_TO_RECEIVER; //A
+    info->bytes[2] = 0; //C: ID da trama, suposto mudar depois
+    info->bytes[3] = bccCalculator(info->bytes, 1, 2); //BCC1, calculado com A e C
+
+    int stuffingCounter = 0;
+    //Talvez colocar o tamanho da mensagem como primeiro byte?
+    info->bytes[4] = data[0];
+
+    for(unsigned int i = 1; i < size; i++) 
+    {
+        auxStuffing(info, &stuffingCounter, data[i], i);
+    }
+
+    int bcc2_byte = 4 + 1 + size + stuffingCounter;
+
+    info->bytes[bcc2_byte] = bccCalculator(info->bytes, 4, size);
+    info->bytes[bcc2_byte + 1] = FLAG;
+    return bcc2_byte + 2;
+}
+
+
+int receiveIMessage(frame_t *frame){
+    u_int8_t c;
+    receive_state_t state = INIT;
+    int dataCounter = 0;
+    bool destuffing = false;
+    do {
+        int bytesRead = read(app.fd, &c, 1);
+        if (bytesRead < 0) {
+            perror("read error");
+            return 3;
+        }
+>>>>>>> a1dffc6a4776a01246c3bd5ca7cca7df9ca1949c
 
 //---
 

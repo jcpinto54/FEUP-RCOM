@@ -3,7 +3,8 @@
 #define BAUDRATE B38400
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 
-#define FLAG 0x7e           // F
+#define FLAG 0x7E                       // F
+#define STUFFING_FLAG 0xEF
 
 #define TRANSMITTER_TO_RECEIVER 0x03    // A
 #define RECEIVER_TO_TRANSMITTER 0x01
