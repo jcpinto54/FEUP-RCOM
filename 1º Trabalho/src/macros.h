@@ -19,7 +19,7 @@
 #define SERIAL_PORT_1 "/dev/ttyS1"
 #define SERIAL_PORT_2 "/dev/ttyS0"
 
-#define MAX_ATTEMPTS 5
+#define MAX_WRITE_ATTEMPTS 5
 
 #define MAX_FRAME_SIZE 255
-
+#define MAX_FRAME_RETRANSMISSIONS 3
