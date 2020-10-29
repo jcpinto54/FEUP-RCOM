@@ -6,7 +6,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "application.h"
+#include "dataLayer.h"
+#include "macros.h"
+#include "utils.h"
+
+applicationLayer app;
 
 int main(int argc, char *argv[])
 {
@@ -24,7 +28,19 @@ int main(int argc, char *argv[])
     if (app.status == TRANSMITTER) strcpy(port, SERIAL_PORT_1);
     else if (app.status == RECEIVER) strcpy(port, SERIAL_PORT_2);
 
-    llopen(port, app.status);
+    
+    int llopenReturn = llopen(port, app.status);
+    printf("LLOPEN RETURN: %d\n", llopenReturn);
+
+    int clearReturn = clearSerialPort(port);
+    printf("CLEAR RETURN 2 : %d\n", clearReturn);
+
+    if (llopenReturn < 0 || clearReturn) 
+        exit(0);
+
+    
+    int llcloseReturn = llclose(app.fd);
+    printf("LLCLOSE RETURN: %d\n", llcloseReturn);
     
 }
 
