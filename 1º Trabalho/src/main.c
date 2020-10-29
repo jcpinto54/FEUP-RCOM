@@ -28,12 +28,13 @@ int main(int argc, char *argv[])
     if (app.status == TRANSMITTER) strcpy(port, SERIAL_PORT_1);
     else if (app.status == RECEIVER) strcpy(port, SERIAL_PORT_2);
 
-    // llopen and llclose testing   
+    
+    // TEST LLOPEN AND LLCLOSE
     // int llopenReturn = llopen(port, app.status);
     // printf("LLOPEN RETURN: %d\n", llopenReturn);
 
     // int clearReturn = clearSerialPort(port);
-    // printf("CLEAR RETURN : %d\n", clearReturn);
+    // printf("CLEAR RETURN 2 : %d\n", clearReturn);
 
     // if (llopenReturn < 0 || clearReturn) 
     //     exit(0);
@@ -41,29 +42,21 @@ int main(int argc, char *argv[])
     // int llcloseReturn = llclose(app.fd);
     // printf("LLCLOSE RETURN: %d\n", llcloseReturn);
     
-    printf("LLOPEN RETURN: %d\n", llopen(port, app.status));
-    printf("CLEAR RETURN : %d\n", clearSerialPort(port));
+    frame_t **iFrames;
+    char data[10];
+    data[0] = 0x11;
+    data[1] = 0x10;
+    data[2] = 0x10;
+    data[3] = 0x10;
+    data[4] = 0x10;
+    data[5] = 0x10;
+    data[6] = 0x10;
+    data[7] = 0x10;
+    data[8] = 0x10;
+    data[9] = 0x10;
+    int fNeeded = prepareI(data, 10, &iFrames);
+    printf("\n\nFrames Needed: %d\n", fNeeded);
+    for (int j = 0; j < iFrames[0]->size; j++) printf("i: %d   -   iFrames[0]->bytes[i]: %x\n", j, iFrames[0]->bytes[j]);
 
-    frame_t f;
-    u_int8_t iBytes[6];
-    u_int8_t dataBytes[5];
-    dataBytes[0] = 0x01;
-    dataBytes[1] = 0x03;
-    dataBytes[2] = 0x04;
-    dataBytes[3] = 0x01;
-    dataBytes[4] = 0x02;
-    iBytes[0] = FLAG;
-    iBytes[1] = TRANSMITTER_TO_RECEIVER;
-    iBytes[2] = I;
-    iBytes[3] = 0;
-    iBytes[4] = 0;
-    iBytes[5] = FLAG;
-    f.bytes = iBytes;
-    f.dataSize = 5;
-    f.data = dataBytes;
-    f.size = 6;
-    
-
-    printf("LLCLOSE RETURN: %d\n", llclose(app.fd));
 }
 

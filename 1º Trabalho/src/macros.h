@@ -15,12 +15,18 @@
 #define REJ 0x01 // 0b R 0 0 0 0 0 0 1
 #define I 0x00   // 0b 0 S 0 0 0 0 0 0
 
+#define ESC 0x7d
+#define FLAG_STUFFING 0x5e
+#define ESC_STUFFING 0x5d
+
 #define RECEIVER 0
 #define TRANSMITTER 1
 #define SERIAL_PORT_1 "/dev/ttyS1"
 #define SERIAL_PORT_2 "/dev/ttyS0"
 
 #define MAX_WRITE_ATTEMPTS 5
+#define TIMEOUT 3.0
 
-#define MAX_FRAME_SIZE 255
+#define MAX_FRAME_SIZE 256
+#define MAX_FRAME_DATA_LENGTH (MAX_FRAME_SIZE/2 - 6)     // if all bytes are stuffed it takes the MAX_FRAME_SIZE
 #define MAX_FRAME_RETRANSMISSIONS 3
