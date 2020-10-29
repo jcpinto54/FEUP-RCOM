@@ -53,16 +53,21 @@ int llopen(char *port, int appStatus)
 
     switch (appStatus) {
         case TRANSMITTER:;
-            while (1) {
+            for (int i = 0;; i++) {
+                if (i == MAX_FRAME_RETRANSMISSIONS) {
+                    printf("Max Number of retransmissions reached. Exiting program.\n");
+                    exit(1);
+                }
+
                 if (buildSETFrame(&setFrame, true)) return -4;
                 if (sendMessage(setFrame)) return -5;
                 destroyFrame(&setFrame);
 
                 if (prepareToReceive(&responseFrame, 5)) return -6;
                 int responseReceive = receiveNotIMessage(&responseFrame, true); 
-                if (responseReceive == 1 || responseReceive == 2) continue;         // in a timeout, retransmit frame
+                if (responseReceive == 1 || responseReceive == 2) continue;         // in a timeout or wrong bcc, retransmit frame
                 else if (responseReceive > 2) return -7;
-                if (!isUAFrame(&responseFrame)) continue;
+                if (!isUAFrame(&responseFrame)) continue;       // wrong frame received
                 destroyFrame(&responseFrame);
 
                 printf("Done, Transmitter Ready\n");
@@ -95,16 +100,21 @@ int llclose(int fd) {
     int receiveReturn;
     switch (app.status) {
         case TRANSMITTER:;
-            while (1) { 
+            for (int i = 0;; i++) {
+                if (i == MAX_FRAME_RETRANSMISSIONS) {
+                    printf("Max Number of retransmissions reached. Exiting program.\n");
+                    exit(1);
+                }
+
                 if (buildDISCFrame(&discFrame, true)) return -1;
                 if (sendMessage(discFrame)) return -2;
                 destroyFrame(&discFrame);
 
                 if (prepareToReceive(&receiveFrame, 5)) return -3;
                 receiveReturn = receiveNotIMessage(&receiveFrame, true);
-                if (receiveReturn == 1 || receiveReturn == 2) continue;        //in a timeout, retransmit frame
+                if (receiveReturn == 1 || receiveReturn == 2) continue;        //in a timeout or wrong bcc, retransmit frame
                 else if (receiveReturn > 2) return -4;
-                if (!isDISCFrame(&receiveFrame)) continue;
+                if (!isDISCFrame(&receiveFrame)) continue;      // wrong frame received
                 destroyFrame(&receiveFrame);
 
                 if (buildUAFrame(&uaFrame, true)) return -1;
@@ -117,7 +127,7 @@ int llclose(int fd) {
         break;
         case RECEIVER:;
             if (prepareToReceive(&receiveFrame, 5)) return -3;
-            if (receiveNotIMessage(&receiveFrame, true)) return -4;
+            if (receiveNotIMessage(&receiveFrame, true)) return -7;
             if (!isDISCFrame(&receiveFrame)) return -5;
             destroyFrame(&receiveFrame);
 
@@ -133,7 +143,7 @@ int llclose(int fd) {
             printf("Done, Receiver Out\n");
         break;
     }
-    close(fd);
+    if (close(fd) == -1) return -8;
     return 1;
 }
 
@@ -217,18 +227,28 @@ int receiveNotIMessage(frame_t *frame, bool isResponse)
 }
 
 int sendMessage(frame_t frame) {
-    int attempts = 0;
     int sentBytes = 0;
 
-    while (sentBytes != frame.size) {
+    for (int attempts = 0;(sentBytes != frame.size); attempts++) {
         if (attempts >= MAX_WRITE_ATTEMPTS) {
             perror("Too many failed attempts to send. Time out!\n");
             return 1;
         }
         sentBytes += write(app.fd, frame.bytes, frame.size);
         printf("%d bytes sent\n", sentBytes);
-        attempts++;
     }
+    return 0;
+}
+
+int clearSerialPort(char *port) {
+    int auxFd = open(port, O_RDWR | O_NOCTTY | O_NONBLOCK);
+    if (auxFd == -1) {
+        perror("error clearing serialPort");
+        return 1;
+    }
+    char c;
+    while (read(auxFd, &c, 1) != 0) printf("byte cleared: %x\n", c);
+    if (close(auxFd) == -1) return 2;
     return 0;
 }
 
