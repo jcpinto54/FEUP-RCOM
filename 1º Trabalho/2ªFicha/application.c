@@ -110,6 +110,38 @@ int llwrite(int fd, char * buffer, int length)
 
 }
 
+void llread(frame_t * frame){
+
+    unsigned char flag, endereco, controlo, d1, d2, bcc1, bcc2, data;
+    receive_state_t state = INIT;
+
+    while(1){
+        if(read(app.fd, &flag, 1) == 0){ //if the first byte was read.
+            printf("Char: %c - State: %d\n", flag, state);
+        }
+    }
+    //Start reading the rest
+    while(!read(app.fd, &endereco, 1)){}
+        printf("Char: %c - State: %d\n", endereco, state);
+
+    while(!read(app.fd, &controlo, 1)){}
+        printf("Char: %c - State: %d\n", controlo, state);
+
+    while(!read(app.fd, &bcc1, 1)){}
+        printf("Char: %c - State: %d\n", bcc1, state);
+
+    while(!read(app.fd, &d1, 1)){}
+        printf("Char: %c - State: %d\n", d1, state);
+
+    frame->bytes = malloc(sizeof(char)*d1);
+
+    while(read(app.fd, &data, 1)){
+        if(data == )
+    }
+    
+}
+
+
 void receiveNotIMessage(frame_t *frame)
 {
     unsigned char c;
@@ -190,6 +222,8 @@ void sendMessage(frame_t frame) {
         attempts++;
     }
 }
+
+
 
 // ---
 
