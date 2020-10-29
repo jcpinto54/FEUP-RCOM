@@ -8,6 +8,6 @@ typedef enum {
 
 u_int64_t bit(unsigned n);
 
-u_int8_t getBit(int byte, int bit);
+u_int8_t getBit(int byte, int b);
 
 void printString(char *str);

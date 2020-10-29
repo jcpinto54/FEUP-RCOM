@@ -45,7 +45,7 @@ typedef enum {
     RCV_FLAG,
     RCV_A,
     RCV_C,
-    RCV_BCC,
+    RCV_BCC1,
     COMPLETE
 } receive_state_t;
 
