@@ -13,6 +13,7 @@
 #define UA 0x07
 #define RR 0x05  // 0b R 0 0 0 0 1 0 1
 #define REJ 0x01 // 0b R 0 0 0 0 0 0 1
+#define I 0x00   // 0b 0 S 0 0 0 0 0 0
 
 #define RECEIVER 0
 #define TRANSMITTER 1

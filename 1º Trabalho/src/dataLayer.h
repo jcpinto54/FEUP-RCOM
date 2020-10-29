@@ -20,7 +20,7 @@ typedef enum {
 
 typedef struct {
     u_int8_t *bytes, *data;
-    int size;
+    size_t size, dataSize;
 } frame_t;
 
 // ---
@@ -29,7 +29,8 @@ int llopen(char *port, int appStatus);
 int llclose(int fd);
 int llread(int fd, char * buffer);
 
-int receiveNotIMessage(frame_t *frame, bool isResponse);
+int receiveIMessage(frame_t *frame);
+int receiveNotIMessage(frame_t *frame);
 int sendMessage(frame_t frame);
 int clearSerialPort(char *port);
 
