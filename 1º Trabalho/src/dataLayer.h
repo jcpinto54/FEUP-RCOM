@@ -14,12 +14,13 @@ typedef enum {
     RCV_C,
     RCV_BCC1,
     RCV_DATA,
+    RCV_BCC2,
     COMPLETE
 } receive_state_t;
 
 typedef struct {
     u_int8_t *bytes, *data;
-    int size;
+    size_t size, dataSize;
 } frame_t;
 
 // ---
@@ -30,8 +31,8 @@ int llread(int fd, char * buffer);
 int llwrite(int fd, char * buffer, int length);
 
 int receiveIMessage(frame_t *frame);
-int receiveNotIMessage(frame_t *frame, bool isResponse);
-int addReceiveData(frame_t *frame);
+
+int receiveNotIMessage(frame_t *frame);
 int sendMessage(frame_t frame);
 int clearSerialPort(char *port);
 
@@ -48,5 +49,8 @@ void auxStuffing(frame_t * frame, int * stuffingCounter, char byte, int i);
 int prepareI(char* data, int size, frame_t* info);
 
 int prepareToReceive(frame_t *frame, size_t size);
+int prepareToReceiveData(frame_t *frame, size_t size);
+int addReceiveData(frame_t * frame, char data, int local);
+
 void destroyFrame(frame_t *frame);
 
