@@ -14,6 +14,7 @@ typedef enum {
     RCV_C,
     RCV_BCC1,
     RCV_DATA,
+    RCV_BCC2,
     COMPLETE
 } receive_state_t;
 
@@ -43,5 +44,8 @@ int buildDISCFrame(frame_t * frame, bool transmitterToReceiver);
 bool isDISCFrame(frame_t *frame);
 
 int prepareToReceive(frame_t *frame, size_t size);
+int prepareToReceiveData(frame_t *frame, size_t size);
+int addReceiveData(frame_t * frame, char data, int local);
+
 void destroyFrame(frame_t *frame);
 

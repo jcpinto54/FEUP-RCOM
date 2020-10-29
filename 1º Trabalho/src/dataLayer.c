@@ -209,7 +209,7 @@ int receiveIMessage(frame_t *frame){
                 }
                 break;
             case RCV_BCC1:
-                if (c == FLAG) {
+                if (c == 0x77) {
                     state = RCV_DATA;
                     frame->bytes[4] = c;
                 }
@@ -221,11 +221,15 @@ int receiveIMessage(frame_t *frame){
                 if(!dataCounter){
                     prepareToReceiveData(&frame, (size_t) c);
                 }
-                addReceiveData(&frame);
+                addReceiveData(&frame, c, dataCounter);
                 dataCounter++;
-                if(dataCounter == frame->data[0]) state = COMPLETE;
-                
+                if(dataCounter == frame->data[0]) state = RCV_BCC2;
                 break;
+            case RCV_BCC2:
+                if(frame->data[3] == c) state = COMPLETE;
+                perror("BCC1 and BCC2 don't match. Exiting...\n");
+                break;
+
             case COMPLETE:
                 break;
         }
@@ -438,4 +442,6 @@ int prepareToReceiveData(frame_t *frame, size_t size){
     return (frame->data = malloc(size)) == NULL;
 }
 
-int addReceiveData()
+int addReceiveData(frame_t * frame, char data, int local){
+    frame->data[local] = data;
+}
