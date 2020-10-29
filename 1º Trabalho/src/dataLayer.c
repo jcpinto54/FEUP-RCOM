@@ -149,6 +149,91 @@ int llclose(int fd) {
 
 // ---
 
+int llread(int fd, char * buffer){
+    frame_t frame;
+    bool response;
+    receiveIMessage(&frame);
+    checkIMessage(&frame);
+    sendResponse(response);
+
+}
+
+int receiveIMessage(frame_t *frame){
+    u_int8_t c;
+    receive_state_t state = INIT;
+    time_t initTime, curTime;
+    int dataCounter = 0;
+    initTime = time(NULL);
+    do {
+        int bytesRead = read(app.fd, &c, 1);
+        if (bytesRead < 0) {
+            perror("read error");
+            return 3;
+        }
+
+        switch (state) {
+            case INIT:
+                if (c == FLAG) {
+                    state = RCV_FLAG;
+                    frame->bytes[0] = c;
+                }
+                break;
+            case RCV_FLAG:
+                if (c == TRANSMITTER_TO_RECEIVER || c == RECEIVER_TO_TRANSMITTER) {
+                    state = RCV_A;
+                    frame->bytes[1] = c;
+                }
+                else
+                    state = INIT;
+                break;
+            case RCV_A:
+                if (c == SET || c == UA || c == DISC || c == RR || c == REJ) {
+                    state = RCV_C;
+                    frame->bytes[2] = c;
+                }
+                else if (c == FLAG)
+                    state = RCV_FLAG;
+                else
+                    state = INIT;
+                break;
+            case RCV_C:
+                if (bccVerifier(frame->bytes, 1, 2, c)) {
+                    state = RCV_BCC1;
+                    frame->bytes[3] = c;
+                }
+                else if (c == FLAG)
+                    state = RCV_FLAG;
+                else {
+                    perror("BCC1 not correct\n");
+                    return 2;
+                }
+                break;
+            case RCV_BCC1:
+                if (c == FLAG) {
+                    state = RCV_DATA;
+                    frame->bytes[4] = c;
+                }
+                else
+                    state = INIT;
+                break;
+
+            case RCV_DATA:
+                if(!dataCounter){
+                    prepareToReceiveData(&frame, (size_t) c);
+                }
+                addReceiveData(&frame);
+                dataCounter++;
+                if(dataCounter == frame->data[0]) state = COMPLETE;
+                
+                break;
+            case COMPLETE:
+                break;
+        }
+    } while (state != COMPLETE);
+    
+    return 0;
+}
+
 int receiveNotIMessage(frame_t *frame, bool isResponse)
 {
     u_int8_t c;
@@ -200,7 +285,7 @@ int receiveNotIMessage(frame_t *frame, bool isResponse)
                 break;
             case RCV_C:
                 if (bccVerifier(frame->bytes, 1, 2, c)) {
-                    state = RCV_BCC;
+                    state = RCV_BCC1;
                     frame->bytes[3] = c;
                 }
                 else if (c == FLAG)
@@ -210,7 +295,7 @@ int receiveNotIMessage(frame_t *frame, bool isResponse)
                     return 2;
                 }
                 break;
-            case RCV_BCC:
+            case RCV_BCC1:
                 if (c == FLAG) {
                     state = COMPLETE;
                     frame->bytes[4] = c;
@@ -340,6 +425,7 @@ bool isDISCFrame(frame_t *frame) {
 void destroyFrame(frame_t *frame)
 {
     free(frame->bytes);
+    if(frame->data != NULL) free(frame->data);
 }
 
 int prepareToReceive(frame_t *frame, size_t size)
@@ -347,3 +433,9 @@ int prepareToReceive(frame_t *frame, size_t size)
     frame->size = size;
     return (frame->bytes = malloc(frame->size)) == NULL;
 }
+
+int prepareToReceiveData(frame_t *frame, size_t size){
+    return (frame->data = malloc(size)) == NULL;
+}
+
+int addReceiveData()

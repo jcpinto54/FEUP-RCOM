@@ -12,20 +12,21 @@ typedef enum {
     RCV_FLAG,
     RCV_A,
     RCV_C,
-    RCV_BCC,
+    RCV_BCC1,
+    RCV_DATA,
     COMPLETE
 } receive_state_t;
 
 typedef struct {
-    u_int8_t *bytes;
+    u_int8_t *bytes, *data;
     int size;
 } frame_t;
-
 
 // ---
 
 int llopen(char *port, int appStatus);
 int llclose(int fd);
+int llread(int fd, char * buffer);
 
 int receiveNotIMessage(frame_t *frame, bool isResponse);
 int sendMessage(frame_t frame);
