@@ -13,6 +13,9 @@
 #include "utils.h"
 extern applicationLayer application;
 
+int idFrameSent = 0;
+int idFrameRead = 1;
+
 void auxStuffing(frame_t * frame, int * stuffingCounter, char *data)
 {
     for(unsigned int i = 0; i < frame->bytes[4]; i++) {
@@ -69,7 +72,6 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
     *infoNew = info;
     return framesNeeded;
 }
-
 
 int receiveIMessage(frame_t *frame){
     // u_int8_t c;

@@ -17,14 +17,14 @@ int main(int argc, char *argv[])
         exit(1);
     }
     
-    if (strcmp("-s", argv[1])== 0) app.status = TRANSMITTER;
-    else if (strcmp("-r", argv[1])== 0) app.status = RECEIVER;
+    if (strcmp("-s", argv[1])== 0) application.status = TRANSMITTER;
+    else if (strcmp("-r", argv[1])== 0) application.status = RECEIVER;
     
     char port[11];
-    if (app.status == TRANSMITTER) strcpy(port, SERIAL_PORT_1);
-    else if (app.status == RECEIVER) strcpy(port, SERIAL_PORT_2);
+    if (application.status == TRANSMITTER) strcpy(port, SERIAL_PORT_1);
+    else if (application.status == RECEIVER) strcpy(port, SERIAL_PORT_2);
 
-    llopen(port, app.status);
+    llopen(port, application.status);
     
 }
 

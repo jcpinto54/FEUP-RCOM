@@ -11,6 +11,8 @@
 #include "dataLayerPrivate.h"
 extern applicationLayer application;
 
+extern int idFrameRead, idFrameSent;
+
 int llopen(char *port, int appStatus)
 {
     printf("ENTERED LLOPEN\n");
@@ -144,9 +146,9 @@ int llread(int fd, char * buffer){
         perror("Error in receiveIMessage");
         return -1;
     }
-    // checkIMessage(&frame);
     // sendResponse(response);
 
+    idFrameRead = (idFrameRead + 1) % 2;
     return size;
 }
 
@@ -187,5 +189,7 @@ int llwrite(int fd, char * buffer, int length)
     // destroyFrame(responseFrame);
     
     // return result;
+
+    idFrameSent = (idFrameSent + 1) % 2;
     return 0;
 }
