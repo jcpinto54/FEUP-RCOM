@@ -27,6 +27,6 @@
 #define MAX_WRITE_ATTEMPTS 5
 #define TIMEOUT 3.0
 
-#define MAX_FRAME_SIZE 256
-#define MAX_FRAME_DATA_LENGTH (MAX_FRAME_SIZE/2 - 6)     // if all bytes are stuffed it takes the MAX_FRAME_SIZE
+#define MAX_FRAME_SIZE 256               // minimum is 16
+#define MAX_FRAME_DATA_LENGTH (MAX_FRAME_SIZE/2 - 8)     // if all bytes are stuffed it takes the MAX_FRAME_SIZE
 #define MAX_FRAME_RETRANSMISSIONS 3

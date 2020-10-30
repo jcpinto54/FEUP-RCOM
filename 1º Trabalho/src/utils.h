@@ -5,6 +5,7 @@ typedef enum {
     true
 } bool;
 
+int ceiling(float x);
 
 u_int64_t bit(unsigned n);
 

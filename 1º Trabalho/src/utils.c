@@ -3,6 +3,11 @@
 #include <string.h>
 #include "utils.h"
 
+int ceiling(float x) {
+    int y = x;
+    if (y == x) return x;
+    return x + 1;
+}
 
 u_int64_t bit(unsigned n) {
     return 1 << n;
