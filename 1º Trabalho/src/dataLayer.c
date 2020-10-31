@@ -11,7 +11,7 @@
 #include "dataLayerPrivate.h"
 extern applicationLayer application;
 
-extern int idFrameResponse, idFrameSent;
+extern int idFrameSent;
 
 int llopen(char *port, int appStatus)
 {
@@ -63,8 +63,8 @@ int llopen(char *port, int appStatus)
 
                 prepareToReceive(&responseFrame, 5);
                 int responseReceive = receiveNotIMessage(&responseFrame); 
-                if (responseReceive == 1 || responseReceive == 2) continue;         // in a timeout or wrong bcc, retransmit frame
-                else if (responseReceive > 2) return -7;
+                if (responseReceive == -1 || responseReceive == -2) continue;         // in a timeout or wrong bcc, retransmit frame
+                else if (responseReceive < -2) return -7;
                 if (!isUAFrame(&responseFrame)) continue;       // wrong frame received
 
                 break;
@@ -105,8 +105,8 @@ int llclose(int fd) {
 
                 prepareToReceive(&receiveFrame, 5);
                 receiveReturn = receiveNotIMessage(&receiveFrame);
-                if (receiveReturn == 1 || receiveReturn == 2) continue;        //in a timeout or wrong bcc, retransmit frame
-                else if (receiveReturn > 2) return -4;
+                if (receiveReturn == -1 || receiveReturn == -2) continue;        //in a timeout or wrong bcc, retransmit frame
+                else if (receiveReturn < -2) return -4;
                 if (!isDISCFrame(&receiveFrame)) continue;      // wrong frame received
 
                 buildUAFrame(&uaFrame, true);
@@ -136,15 +136,28 @@ int llclose(int fd) {
 
 int llread(int fd, char * buffer){
     frame_t frame;
-    int size;
-    if ((size = receiveIMessage(&frame)) < 0) {
-        perror("Error in receiveIaMessage");
-        return -1;
-    }
-    // sendResponse(response);
+    int receiveIMessageReturn;
+    while (1) {
+        receiveIMessageReturn = receiveIMessage(&frame);
+        if (receiveIMessageReturn == 0 || receiveIMessageReturn == -1) break;
+        else if (receiveIMessageReturn == 1) continue;
+        else {
+            printf("receiveIMessage returned unexpected value\n");
+            return -1;
+        }
+        
+        frame_t response;
+        if (receiveIMessageReturn == 0)
+            prepareResponse(&response, true, ((frame.bytes[2] >> 6) + 1) % 2);
+        else if (receiveIMessageReturn == -1)
+            prepareResponse(&response, false, ((frame.bytes[2] >> 6) + 1) % 2);
 
-    idFrameResponse = (idFrameResponse + 1) % 2;
-    return size;
+        sendNotIFrame(&response);
+    }
+
+    printFrame(&frame);
+    
+    return 0;
 }
 
 int llwrite(int fd, char * buffer, int length)
@@ -153,9 +166,10 @@ int llwrite(int fd, char * buffer, int length)
     int framesToSend = prepareI(buffer, length, &info); //Prepara a trama de informação
     
     for (int i = 0; i < framesToSend; i++) {
+        printFrame(info[i]);
         sendIFrame(info[i]);
     }
-
+    idFrameSent = (idFrameSent + 1) % 2;
     return 0;
 }
 

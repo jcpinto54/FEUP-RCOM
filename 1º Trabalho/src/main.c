@@ -67,11 +67,10 @@ int main(int argc, char *argv[])
     switch (application.status) {
         case TRANSMITTER:;
             llwrite(application.fd, "ola eu sou o joao", 17);
-            printf("\n\nNOT SUPPOSED TO SEE THIS! (for now)\n\n");
+            printf("\n\nNOT SUPPOSED TO SEE THIS! for now)\n\n");
         break;
         case RECEIVER:;
-            frame_t frame;
-            receiveIMessage(&frame);
+            llread(application.fd, NULL);
         break;
     }
 

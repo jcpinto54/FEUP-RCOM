@@ -32,6 +32,7 @@ void buildDISCFrame(frame_t * frame, bool transmitterToReceiver);
 bool isDISCFrame(frame_t *frame);
 void auxStuffing(frame_t * frame, int * stuffingCounter, char *data);
 int prepareI(char* data, int size, frame_t*** infoNew);
+void prepareResponse(frame_t *frame, bool valid, int id);
 
 void prepareToReceive(frame_t *frame, size_t size);
 
