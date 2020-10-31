@@ -8,6 +8,7 @@ typedef enum {
     RCV_C,
     RCV_BCC1,
     RCV_DATA,
+    RCV_LAST_FRAME_FLAG,
     RCV_BCC2,
     COMPLETE
 } receive_state_t;
@@ -17,8 +18,8 @@ typedef enum {
 
 int receiveIMessage(frame_t *frame);
 int receiveNotIMessage(frame_t *frame);
-int sendMessage(frame_t frame);
-int clearSerialPort(char *port);
+int sendIFrame(frame_t *frame);
+int sendNotIFrame(frame_t *frame);
 
 u_int8_t bccCalculator(u_int8_t bytes[], int start, size_t length);
 bool bccVerifier(u_int8_t bytes[], int start, size_t length, u_int8_t parity);

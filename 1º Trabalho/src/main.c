@@ -10,8 +10,8 @@
 #include "macros.h"
 #include "utils.h"
 
-// TEST PREPAREI
-// #include "dataLayerPrivate.h"
+// // TEST PREPAREI
+#include "dataLayerPrivate.h"
 
 
 applicationLayer application;
@@ -28,23 +28,20 @@ int main(int argc, char *argv[])
     if (strcmp("-s", argv[1])== 0) application.status = TRANSMITTER;
     else if (strcmp("-r", argv[1])== 0) application.status = RECEIVER;
     
-    char port[11];
-    if (application.status == TRANSMITTER) strcpy(port, SERIAL_PORT_1);
-    else if (application.status == RECEIVER) strcpy(port, SERIAL_PORT_2);
+    if (application.status == TRANSMITTER) strcpy(application.port, SERIAL_PORT_1);
+    else if (application.status == RECEIVER) strcpy(application.port, SERIAL_PORT_2);
 
     
-    // TEST LLOPEN AND LLCLOSE
+    // // TEST LLOPEN AND LLCLOSE
     // int llopenReturn = llopen(port, application.status);
     // printf("LLOPEN RETURN: %d\n", llopenReturn);
-    // int clearReturn = clearSerialPort(port);
-    // printf("CLEAR RETURN: %d\n", clearReturn);
-    // if (llopenReturn < 0 || clearReturn) 
-    //     exit(0);
+    // if (llopenReturn < 0) 
+    //     exit(1);
     // int llcloseReturn = llclose(application.fd);
     // printf("LLCLOSE RETURN: %d\n", llcloseReturn);
     
 
-    // TEST PREPAREI
+    // // TEST PREPAREI
     // frame_t **iFrames;
     // char data[10];
     // data[0] = 0x11;
@@ -59,5 +56,32 @@ int main(int argc, char *argv[])
     // data[9] = 0x10;
     // int fNeeded = prepareI(data, 10, &iFrames);
     // for (int i = 0; i < fNeeded; i++) printFrame(iFrames[i]);
+
+
+    if (llopen(application.port, application.status) < 0) {
+        perror("error in llopen"); 
+        clearSerialPort(application.port);
+        exit(1);
+    }
+
+    switch (application.status) {
+        case TRANSMITTER:;
+            llwrite(application.fd, "ola eu sou o joao", 17);
+            printf("\n\nNOT SUPPOSED TO SEE THIS! (for now)\n\n");
+        break;
+        case RECEIVER:;
+            frame_t frame;
+            receiveIMessage(&frame);
+        break;
+    }
+
+    if (llclose(application.fd) < 0) {
+        perror("error in llclose"); 
+        clearSerialPort(application.port);
+        exit(1);
+    }
+
+    return 0;
+
 }
 

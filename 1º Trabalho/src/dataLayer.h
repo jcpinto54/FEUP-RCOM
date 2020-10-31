@@ -9,6 +9,7 @@ typedef struct {
 typedef struct {
     int fd; // serial port
     int status; // TRANSMITTER | RECEIVER
+    char port[11];
 } applicationLayer;
 
 
@@ -16,3 +17,5 @@ int llopen(char *port, int appStatus);
 int llclose(int fd);
 int llread(int fd, char * buffer);
 int llwrite(int fd, char * buffer, int length);
+
+int clearSerialPort(char *port);

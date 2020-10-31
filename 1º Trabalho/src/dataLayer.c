@@ -11,12 +11,10 @@
 #include "dataLayerPrivate.h"
 extern applicationLayer application;
 
-extern int idFrameRead, idFrameSent;
+extern int idFrameResponse, idFrameSent;
 
 int llopen(char *port, int appStatus)
 {
-    printf("ENTERED LLOPEN\n");
-    
     struct termios oldtio, newtio;
 
     application.fd = open(port, O_RDWR | O_NOCTTY);
@@ -57,11 +55,11 @@ int llopen(char *port, int appStatus)
             for (int i = 0;; i++) {
                 if (i == MAX_FRAME_RETRANSMISSIONS) {
                     printf("Max Number of retransmissions reached. Exiting program.\n");
-                    exit(1);
+                    return -1;
                 }
 
                 buildSETFrame(&setFrame, true);
-                if (sendMessage(setFrame)) return -5;
+                if (sendNotIFrame(&setFrame)) return -5;
 
                 prepareToReceive(&responseFrame, 5);
                 int responseReceive = receiveNotIMessage(&responseFrame); 
@@ -69,7 +67,6 @@ int llopen(char *port, int appStatus)
                 else if (responseReceive > 2) return -7;
                 if (!isUAFrame(&responseFrame)) continue;       // wrong frame received
 
-                printf("Done, Transmitter Ready\n");
                 break;
             }
             break;
@@ -79,16 +76,16 @@ int llopen(char *port, int appStatus)
             if (!isSETFrame(&receiverFrame)) return -8;
 
             buildUAFrame(&uaFrame, true);
-            if (sendMessage(uaFrame)) return -5;
+            if (sendNotIFrame(&uaFrame)) return -5;
             
-            printf("Done, Receiver Ready\n");
             break;
     }
+
+    printf("LLOPEN DONE\n");
     return application.fd;
 }
 
 int llclose(int fd) {
-    printf("ENTERED LLCLOSE\n");
 
     frame_t discFrame;
     frame_t receiveFrame;
@@ -100,11 +97,11 @@ int llclose(int fd) {
             for (int i = 0;; i++) {
                 if (i == MAX_FRAME_RETRANSMISSIONS) {
                     printf("Max Number of retransmissions reached. Exiting program.\n");
-                    exit(1);
+                    return -1;
                 }
 
                 buildDISCFrame(&discFrame, true);
-                if (sendMessage(discFrame)) return -2;
+                if (sendNotIFrame(&discFrame)) return -2;
 
                 prepareToReceive(&receiveFrame, 5);
                 receiveReturn = receiveNotIMessage(&receiveFrame);
@@ -113,9 +110,8 @@ int llclose(int fd) {
                 if (!isDISCFrame(&receiveFrame)) continue;      // wrong frame received
 
                 buildUAFrame(&uaFrame, true);
-                if (sendMessage(uaFrame)) return -2;
+                if (sendNotIFrame(&uaFrame)) return -2;
                 
-                printf("Done, Transmitter Out\n");
                 break;
             }
         break;
@@ -125,71 +121,53 @@ int llclose(int fd) {
             if (!isDISCFrame(&receiveFrame)) return -5;
 
             buildDISCFrame(&discFrame, true);
-            if (sendMessage(discFrame)) return -2;
+            if (sendNotIFrame(&discFrame)) return -2;
 
             prepareToReceive(&receiveFrame, 5);
             if (receiveNotIMessage(&receiveFrame)) return -4;
             if (!isUAFrame(&receiveFrame)) return -5;
 
-            printf("Done, Receiver Out\n");
         break;
     }
     if (close(fd) == -1) return -8;
+    printf("LLCLOSE DONE\n");
     return 1;
 }
 
 int llread(int fd, char * buffer){
     frame_t frame;
-    //bool response;
     int size;
     if ((size = receiveIMessage(&frame)) < 0) {
-        perror("Error in receiveIMessage");
+        perror("Error in receiveIaMessage");
         return -1;
     }
     // sendResponse(response);
 
-    idFrameRead = (idFrameRead + 1) % 2;
+    idFrameResponse = (idFrameResponse + 1) % 2;
     return size;
 }
 
 int llwrite(int fd, char * buffer, int length)
 {
-    // frame_t **info = NULL, *responseFrame = NULL;
-    // int framesToSend = prepareI(buffer, length, info); //Prepara a trama de informação
-    // bool stop = false;
-    // int attempts = 0, result = -1;
+    frame_t **info = NULL;
+    int framesToSend = prepareI(buffer, length, &info); //Prepara a trama de informação
     
-    // do
-    // {
-    //     if(attempts >= MAX_WRITE_ATTEMPTS) 
-    //     {
-    //         perror("ERROR: Too many write attempts\n");
-    //         stop = true;
-    //     }
+    for (int i = 0; i < framesToSend; i++) {
+        sendIFrame(info[i]);
+    }
 
-    //     // sendMessage(*info);                  
-    //     receiveNotIMessage(responseFrame);
+    return 0;
+}
 
-    //     if(responseFrame->bytes[2] == RR) 
-    //     {
-    //         // result = info->size;
-    //         stop = true;
-    //     }
-    //     else if(responseFrame->bytes[2] == REJ)
-    //     {
-    //         attempts++;
-    //     }
-    //     else
-    //     {
-    //         perror("ERROR: Unknown response frame");
-    //     }
-    // }while(!stop);
 
-    // destroyFrame(info);
-    // destroyFrame(responseFrame);
-    
-    // return result;
-
-    idFrameSent = (idFrameSent + 1) % 2;
+int clearSerialPort(char *port) {
+    int auxFd = open(port, O_RDWR | O_NOCTTY | O_NONBLOCK);
+    if (auxFd == -1) {
+        perror("error clearing serialPort");
+        return 1;
+    }
+    char c;
+    while (read(auxFd, &c, 1) != 0) printf("byte cleared: %x\n", c);
+    if (close(auxFd) == -1) return 2;
     return 0;
 }

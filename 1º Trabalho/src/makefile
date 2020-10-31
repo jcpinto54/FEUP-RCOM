@@ -1,8 +1,8 @@
-CC = cc
+CC = gcc
 CFLAGS = -Wall
 
 
-proj: main.c dataLayer.c dataLayerPrivate.c utils.c
+proj: utils.c dataLayerPrivate.c dataLayer.c  main.c
 	$(CC) $(CFLAGS) $? -o $@
 
 .PHONY: clean

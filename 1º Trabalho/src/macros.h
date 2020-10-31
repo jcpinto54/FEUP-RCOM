@@ -18,6 +18,8 @@
 #define ESC 0x7d
 #define FLAG_STUFFING 0x5e
 #define ESC_STUFFING 0x5d
+#define FLAG_MORE_FRAMES_TO_COME 0xaa
+#define FLAG_LAST_FRAME 0xbb
 
 #define RECEIVER 0
 #define TRANSMITTER 1
@@ -28,5 +30,5 @@
 #define TIMEOUT 3.0
 
 #define MAX_FRAME_SIZE 256                               // minimum is 16
-#define MAX_FRAME_DATA_LENGTH (MAX_FRAME_SIZE - 7)/2     // if all bytes are stuffed it takes the MAX_FRAME_SIZE
+#define MAX_FRAME_DATA_LENGTH (MAX_FRAME_SIZE - 8)/2     // if all bytes are stuffed it takes the MAX_FRAME_SIZE
 #define MAX_FRAME_RETRANSMISSIONS 3
