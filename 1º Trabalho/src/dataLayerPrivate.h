@@ -17,7 +17,7 @@ typedef enum {
 // ---
 
 int receiveIMessage(frame_t *frame);
-int receiveNotIMessage(frame_t *frame);
+int receiveNotIMessage(frame_t *frame, int responseId);
 int sendIFrame(frame_t *frame);
 int sendNotIFrame(frame_t *frame);
 

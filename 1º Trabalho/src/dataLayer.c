@@ -62,7 +62,7 @@ int llopen(char *port, int appStatus)
                 if (sendNotIFrame(&setFrame)) return -5;
 
                 prepareToReceive(&responseFrame, 5);
-                int responseReceive = receiveNotIMessage(&responseFrame); 
+                int responseReceive = receiveNotIMessage(&responseFrame, RESPONSE_WITHOUT_ID); 
                 if (responseReceive == -1 || responseReceive == -2) continue;         // in a timeout or wrong bcc, retransmit frame
                 else if (responseReceive < -2) return -7;
                 if (!isUAFrame(&responseFrame)) continue;       // wrong frame received
@@ -72,7 +72,7 @@ int llopen(char *port, int appStatus)
             break;
         case RECEIVER:;
             prepareToReceive(&receiverFrame, 5);
-            if (receiveNotIMessage(&receiverFrame)) return -7;
+            if (receiveNotIMessage(&receiverFrame, RESPONSE_WITHOUT_ID)) return -7;
             if (!isSETFrame(&receiverFrame)) return -8;
 
             buildUAFrame(&uaFrame, true);
@@ -104,7 +104,7 @@ int llclose(int fd) {
                 if (sendNotIFrame(&discFrame)) return -2;
 
                 prepareToReceive(&receiveFrame, 5);
-                receiveReturn = receiveNotIMessage(&receiveFrame);
+                receiveReturn = receiveNotIMessage(&receiveFrame, RESPONSE_WITHOUT_ID);
                 if (receiveReturn == -1 || receiveReturn == -2) continue;        //in a timeout or wrong bcc, retransmit frame
                 else if (receiveReturn < -2) return -4;
                 if (!isDISCFrame(&receiveFrame)) continue;      // wrong frame received
@@ -118,7 +118,7 @@ int llclose(int fd) {
         case RECEIVER:;
             while (1) {
                 prepareToReceive(&receiveFrame, 5);
-                int receiveReturn = receiveNotIMessage(&receiveFrame);
+                int receiveReturn = receiveNotIMessage(&receiveFrame, RESPONSE_WITHOUT_ID);
                 if (receiveReturn == -1) continue;
                 else if (receiveReturn) return -7;
                 if (!isDISCFrame(&receiveFrame)) return -5;
@@ -128,7 +128,7 @@ int llclose(int fd) {
             if (sendNotIFrame(&discFrame)) return -2;
 
             prepareToReceive(&receiveFrame, 5);
-            int receiveNotIMessageReturn = receiveNotIMessage(&receiveFrame);
+            int receiveNotIMessageReturn = receiveNotIMessage(&receiveFrame, RESPONSE_WITHOUT_ID);
             if (receiveNotIMessageReturn) return -4;
             if (!isUAFrame(&receiveFrame)) return -5;
 
@@ -150,20 +150,21 @@ int llread(int fd, char ** buffer){
             return -1;
         }
         
-        if (receiveIMessageReturn == 0) {
+        if (receiveIMessageReturn == 0 || receiveIMessageReturn == 1) {
             prepareResponse(&response, true, ((frame.bytes[2] >> 6) + 1) % 2);
-            memcpy(*buffer + bufferLength - MAX_FRAME_DATA_LENGTH, frame.bytes + 5, frame.bytes[4]);
         }
         else if (receiveIMessageReturn == -1)
             prepareResponse(&response, false, ((frame.bytes[2] >> 6) + 1) % 2);
 
-        sendNotIFrame(&response);
-        
+        if (sendNotIFrame(&response) == -1) {
+            return -1;
+        }
+        memcpy(*buffer + bufferLength - MAX_FRAME_DATA_LENGTH, frame.bytes + 5, frame.bytes[4]);        
+
         if (receiveIMessageReturn == 1) {
             *buffer = (char *)realloc(*buffer, bufferLength);
             bufferLength += MAX_FRAME_DATA_LENGTH;
         }
-        
     } while (receiveIMessageReturn != 0);
 
     return 0;
@@ -173,11 +174,10 @@ int llwrite(int fd, char * buffer, int length)
 {
     frame_t **info = NULL;
     int framesToSend = prepareI(buffer, length, &info); //Prepara a trama de informação
-    
+    printf("Divided the data in %d frames. Sending all frames...\n", framesToSend);
     for (int i = 0; i < framesToSend; i++) {
-        sendIFrame(info[i]);
+        if (sendIFrame(info[i]) == -1) return -1;
     }
-    idFrameSent = (idFrameSent + 1) % 2;
     return 0;
 }
 

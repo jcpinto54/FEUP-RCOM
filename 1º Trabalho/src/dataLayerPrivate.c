@@ -45,6 +45,7 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
         info[i]->bytes[0] = FLAG; //F
         info[i]->bytes[1] = TRANSMITTER_TO_RECEIVER; //A
         info[i]->bytes[2] = idFrameSent << 6 | I;
+        info[i]->infoId = idFrameSent;
         info[i]->bytes[3] = bccCalculator(info[i]->bytes, 1, 2); //BCC1, calculado com A e C
     
         int stuffingCounter = 0;
@@ -74,6 +75,7 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
         info[i]->bytes[bcc2_byte_ix + 1] = FLAG;
         info[i]->size = 8 + frameDataSize + stuffingCounter;
         data += frameDataSize;
+        idFrameSent = (idFrameSent + 1) % 2;
     }
     *infoNew = info;
     return framesNeeded;
@@ -196,7 +198,7 @@ int receiveIMessage(frame_t *frame){
 // Returns -1 if there was a timeout
 // Returns -3 if there was a read error
 // Returns -2 if bcc is not correct
-int receiveNotIMessage(frame_t *frame)
+int receiveNotIMessage(frame_t *frame, int responseId)
 {
     u_int8_t c;
     receive_state_t state = INIT;
@@ -241,7 +243,7 @@ int receiveNotIMessage(frame_t *frame)
                 }
                 break;
             case RCV_A:
-                if (c == SET || c == UA || c == DISC || c == (RR | (((idFrameSent + 1) % 2) << 7)) || c == (REJ | (((idFrameSent + 1) % 2) << 7))) {
+                if ((c == SET) || (c == UA) || (c == DISC) || (c == (RR | (responseId << 7))) || (c == (REJ | (responseId << 7)))) {
                     state = RCV_C;
                     frame->bytes[2] = c;
                 }
@@ -280,8 +282,8 @@ int receiveNotIMessage(frame_t *frame)
     } while (state != COMPLETE);
     frame->size = 5;
     int returnValue = 0;
-    if (frame->bytes[2] == (RR | (((idFrameSent + 1) % 2) << 7))) returnValue = 1;
-    if (frame->bytes[2] == (REJ | (((idFrameSent + 1) % 2) << 7))) returnValue = 2;
+    if (frame->bytes[2] == (RR | (responseId << 7))) returnValue = 1;
+    if (frame->bytes[2] == (REJ | (responseId << 7))) returnValue = 2;
     return returnValue;
 }
 
@@ -292,6 +294,8 @@ int sendNotIFrame(frame_t *frame) {
     return 0;
 }
 
+// Returns -1 if max write attempts were reached
+// Returns 0 if ok
 int sendIFrame(frame_t *frame) {
     int attempts = 0, sentBytes = 0;
     frame_t responseFrame;
@@ -301,11 +305,11 @@ int sendIFrame(frame_t *frame) {
             printf("Too many write attempts\n");
             return -1;
         }
-    
         if ((sentBytes = write(application.fd, frame->bytes, frame->size)) == -1) return -1;                  
         printf("%d bytes sent\n", sentBytes);
 
-        int receiveReturn = receiveNotIMessage(&responseFrame);
+        int receiveReturn = receiveNotIMessage(&responseFrame, (frame->infoId + 1) % 2);
+
         if (receiveReturn == -1) {
             printf("Timeout reading response, trying again...\n");
         }
@@ -323,7 +327,7 @@ int sendIFrame(frame_t *frame) {
             break;
         }
         else if (receiveReturn == 2) {
-            printf("Received not ok message from the receiver, trying again...\n");
+            printf("Received not OK message from the receiver, trying again...\n");
         }
         else {
             printf("Unexpected response frame, trying again...\n");

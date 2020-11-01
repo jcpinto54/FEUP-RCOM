@@ -4,6 +4,7 @@
 typedef struct {
     u_int8_t bytes[MAX_FRAME_SIZE];
     size_t size;
+    int infoId;
 } frame_t;
 
 typedef struct {
