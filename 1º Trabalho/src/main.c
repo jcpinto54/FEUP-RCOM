@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 
 
     if (llopen(application.port, application.status) < 0) {
-        perror("error in llopen"); 
+        printf("error in llopen\n"); 
         clearSerialPort(application.port);
         exit(1);
     }
@@ -67,15 +67,17 @@ int main(int argc, char *argv[])
     switch (application.status) {
         case TRANSMITTER:;
             llwrite(application.fd, "ola eu sou o joao", 17);
-            printf("\n\nNOT SUPPOSED TO SEE THIS! for now)\n\n");
         break;
         case RECEIVER:;
-            llread(application.fd, NULL);
+            char *received;
+            llread(application.fd, &received);
+            printf("RESULT: %s\n", received);
         break;
     }
 
-    if (llclose(application.fd) < 0) {
-        perror("error in llclose"); 
+    int llcloseReturn = llclose(application.fd);
+    if (llcloseReturn < 0) {
+        printf("error in llclose\n"); 
         clearSerialPort(application.port);
         exit(1);
     }

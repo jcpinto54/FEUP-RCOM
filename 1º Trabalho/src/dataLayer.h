@@ -15,7 +15,7 @@ typedef struct {
 
 int llopen(char *port, int appStatus);
 int llclose(int fd);
-int llread(int fd, char * buffer);
+int llread(int fd, char ** buffer);
 int llwrite(int fd, char * buffer, int length);
 
 int clearSerialPort(char *port);

@@ -116,15 +116,20 @@ int llclose(int fd) {
             }
         break;
         case RECEIVER:;
-            prepareToReceive(&receiveFrame, 5);
-            if (receiveNotIMessage(&receiveFrame)) return -7;
-            if (!isDISCFrame(&receiveFrame)) return -5;
-
+            while (1) {
+                prepareToReceive(&receiveFrame, 5);
+                int receiveReturn = receiveNotIMessage(&receiveFrame);
+                if (receiveReturn == -1) continue;
+                else if (receiveReturn) return -7;
+                if (!isDISCFrame(&receiveFrame)) return -5;
+                break;
+            }
             buildDISCFrame(&discFrame, true);
             if (sendNotIFrame(&discFrame)) return -2;
 
             prepareToReceive(&receiveFrame, 5);
-            if (receiveNotIMessage(&receiveFrame)) return -4;
+            int receiveNotIMessageReturn = receiveNotIMessage(&receiveFrame);
+            if (receiveNotIMessageReturn) return -4;
             if (!isUAFrame(&receiveFrame)) return -5;
 
         break;
@@ -134,29 +139,33 @@ int llclose(int fd) {
     return 1;
 }
 
-int llread(int fd, char * buffer){
-    frame_t frame;
-    int receiveIMessageReturn;
-    while (1) {
+int llread(int fd, char ** buffer){
+    frame_t frame, response;
+    int receiveIMessageReturn, bufferLength = MAX_FRAME_DATA_LENGTH;
+    *buffer = (char *)malloc(MAX_FRAME_DATA_LENGTH);
+    do {
         receiveIMessageReturn = receiveIMessage(&frame);
-        if (receiveIMessageReturn == 0 || receiveIMessageReturn == -1) break;
-        else if (receiveIMessageReturn == 1) continue;
-        else {
+        if (receiveIMessageReturn < -1 || receiveIMessageReturn > 1) {
             printf("receiveIMessage returned unexpected value\n");
             return -1;
         }
         
-        frame_t response;
-        if (receiveIMessageReturn == 0)
+        if (receiveIMessageReturn == 0) {
             prepareResponse(&response, true, ((frame.bytes[2] >> 6) + 1) % 2);
+            memcpy(*buffer + bufferLength - MAX_FRAME_DATA_LENGTH, frame.bytes + 5, frame.bytes[4]);
+        }
         else if (receiveIMessageReturn == -1)
             prepareResponse(&response, false, ((frame.bytes[2] >> 6) + 1) % 2);
 
         sendNotIFrame(&response);
-    }
+        
+        if (receiveIMessageReturn == 1) {
+            *buffer = (char *)realloc(*buffer, bufferLength);
+            bufferLength += MAX_FRAME_DATA_LENGTH;
+        }
+        
+    } while (receiveIMessageReturn != 0);
 
-    printFrame(&frame);
-    
     return 0;
 }
 
@@ -166,7 +175,6 @@ int llwrite(int fd, char * buffer, int length)
     int framesToSend = prepareI(buffer, length, &info); //Prepara a trama de informação
     
     for (int i = 0; i < framesToSend; i++) {
-        printFrame(info[i]);
         sendIFrame(info[i]);
     }
     idFrameSent = (idFrameSent + 1) % 2;

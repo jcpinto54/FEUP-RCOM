@@ -70,7 +70,7 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
             info[i]->bytes[bcc2_byte_ix - 1] = FLAG_MORE_FRAMES_TO_COME;
         }
         
-        info[i]->bytes[bcc2_byte_ix] = bccCalculator(info[i]->bytes, 4, frameDataSize + 1);   // +1 because of the byte to know wether this is the last frame
+        info[i]->bytes[bcc2_byte_ix] = bccCalculator(info[i]->bytes, 4, frameDataSize + 2);   // +1 because of the byte to know wether this is the last frame
         info[i]->bytes[bcc2_byte_ix + 1] = FLAG;
         info[i]->size = 8 + frameDataSize + stuffingCounter;
         data += frameDataSize;
@@ -84,12 +84,12 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
 int receiveIMessage(frame_t *frame){
     u_int8_t c;
     receive_state_t state = INIT;
-    int dataCounter = 0, returnValue = 0;
+    int dataCounter = -1, returnValue = 0;
     do {
         int bytesRead = read(application.fd, &c, 1);
         if (bytesRead < 0) {
-            perror("read error");
-            return -1;
+            printf("read error");
+            returnValue = -1;
         }
 
         switch (state) {
@@ -131,15 +131,21 @@ int receiveIMessage(frame_t *frame){
                 }
                 break;
             case RCV_BCC1:      // needs destuffing
-                if (dataCounter == 0 && c > 0 && c <= MAX_FRAME_DATA_LENGTH) {
+                if (dataCounter == -1 && c > 0 && c <= MAX_FRAME_DATA_LENGTH) {
                     frame->bytes[4] = c;
+                    dataCounter++;
+                    continue;
                 }
-                else if (dataCounter == 0 && (c < 0 || c > MAX_FRAME_DATA_LENGTH)) return -1;
+                else if (dataCounter == -1 && (c < 0 || c > MAX_FRAME_DATA_LENGTH)) {
+                    printf("First item is not a valid size value\n");
+                    returnValue = -1;
+                    break;
+                }
                 if (c == FLAG) {     
                     state = RCV_FLAG;
                     continue;
                 }
-                frame->bytes[4 + dataCounter] = c;
+                frame->bytes[5 + dataCounter] = c;
                 dataCounter++;
                 if (dataCounter == frame->bytes[4]) state = RCV_DATA;
                 break;
@@ -152,7 +158,7 @@ int receiveIMessage(frame_t *frame){
                     state = RCV_FLAG;
                 break;            
             case RCV_LAST_FRAME_FLAG:
-                if (bccVerifier(frame->bytes, 4, frame->bytes[4] + 1, c)) {
+                if (bccVerifier(frame->bytes, 4, dataCounter + 2, c)) {
                     state = RCV_BCC2;
                     frame->bytes[4 + dataCounter + 2] = c;
                 }
@@ -173,12 +179,14 @@ int receiveIMessage(frame_t *frame){
                 break;
             case COMPLETE: break;
         }
-    } while (state != COMPLETE);
+    } while (state != COMPLETE && returnValue != -1);
 
-    frame->size = 5 + dataCounter + 3;
-    if (frame->bytes[4 + dataCounter + 1] == FLAG_MORE_FRAMES_TO_COME) returnValue = 1;
-    else if (frame->bytes[4 + dataCounter + 1] == FLAG_LAST_FRAME) returnValue = 0;
-    
+    if (returnValue != -1) {
+        frame->size = 5 + dataCounter + 3;
+        if (frame->bytes[4 + dataCounter + 1] == FLAG_MORE_FRAMES_TO_COME) returnValue = 1;
+        else if (frame->bytes[4 + dataCounter + 1] == FLAG_LAST_FRAME) returnValue = 0;
+    }
+
     return returnValue;
 }
 
@@ -224,16 +232,22 @@ int receiveNotIMessage(frame_t *frame)
                     state = RCV_A;
                     frame->bytes[1] = c;
                 }
-                else
+                else if (c == FLAG) {
+                    state = RCV_FLAG;
+                }
+                else {
                     state = INIT;
+                    return -1;
+                }
                 break;
             case RCV_A:
                 if (c == SET || c == UA || c == DISC || c == (RR | (((idFrameSent + 1) % 2) << 7)) || c == (REJ | (((idFrameSent + 1) % 2) << 7))) {
                     state = RCV_C;
                     frame->bytes[2] = c;
                 }
-                else if (c == FLAG)
+                else if (c == FLAG) {
                     state = RCV_FLAG;
+                }
                 else
                     state = INIT;
                 break;
@@ -271,17 +285,10 @@ int receiveNotIMessage(frame_t *frame)
     return returnValue;
 }
 
+// Returns -1 if timeout, 0 if ok 
 int sendNotIFrame(frame_t *frame) {
-    int sentBytes = 0;
-
-    for (int attempts = 0;(sentBytes != frame->size); attempts++) {
-        if (attempts >= MAX_WRITE_ATTEMPTS) {
-            perror("Too many failed attempts to send. Time out!\n");
-            return -1;
-        }
-        if ((sentBytes = write(application.fd, frame->bytes, frame->size)) == -1) return -1; 
-        printf("%d bytes sent\n", sentBytes);
-    }
+    int writeReturn = write(application.fd, frame->bytes, frame->size);
+    if (writeReturn == -1) return -1; 
     return 0;
 }
 
@@ -349,12 +356,15 @@ u_int8_t bccCalculator(u_int8_t bytes[], int start, size_t length)
         {
             onesCounter += getBit(bytes[i], j);
         }
+        // printf("bccCalculator i: %d, ones: %d, byte: %x\n", i, onesCounter, bytes[i]);
     }
     return onesCounter % 2;
 }
 
+// Return true if bcc verifies else otherwise 
 bool bccVerifier(u_int8_t bytes[], int start, size_t length, u_int8_t parity)
 {
+    // printf("BCC: %d\n", bccCalculator(bytes, start, length));
     if (bccCalculator(bytes, start, length) == parity)
         return true;
     return false;
