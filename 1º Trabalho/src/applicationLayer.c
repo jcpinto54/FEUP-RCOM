@@ -103,14 +103,20 @@ packet_t * createControlPacket(u_int8_t type, int size, char * filename){
     return packet;
 }
 
-int parseControlPacket(char* controlPacket, char* filename){
-    int size = controlPacket[4];
+int parseControlPacket(char* controlPacket, int* fileSize, char* filename){
+    int controlStatus = controlPacket[0];
+    if(controlStatus != START && controlStatus != END){
+        perror("Unknown control packet status: not START nor END!");
+        return -1;
+    }
+
+    fileSize* = controlPacket[4];
     u_int8_t stringSize = controlPacket[5];
     for(int i = 0; i < stringSize; i++){
         filename[i] = controlPacket[5 + 1 + i];
     }
 
-    return size;
+    return controlStatus;
 }
 
 packet_t * createDataPacket(char * string, int number, size_t size){
@@ -139,7 +145,7 @@ int receiveFile(){
         return -1;
     }
 
-    fileSize = parseControlPacket(receive);
+    fileSize = parseControlPacket(receive, filename);
 
     fd = fopen(filename, "w");
 
