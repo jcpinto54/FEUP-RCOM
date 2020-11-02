@@ -58,6 +58,7 @@ int main(int argc, char *argv[])
     // for (int i = 0; i < fNeeded; i++) printFrame(iFrames[i]);
 
 
+    // TEST DATA LAYER
     if (llopen(application.port, application.status) < 0) {
         printf("error in llopen\n"); 
         clearSerialPort(application.port);
@@ -66,7 +67,7 @@ int main(int argc, char *argv[])
 
     switch (application.status) {
         case TRANSMITTER:;
-            llwrite(application.fd, "ola eu sou o joao", 17);
+            llwrite(application.fd, "ola}o", 5);
         break;
         case RECEIVER:;
             char *received;
@@ -81,6 +82,31 @@ int main(int argc, char *argv[])
         clearSerialPort(application.port);
         exit(1);
     }
+
+
+    // // TEST BYTE STUFFING
+    // frame_t frame;
+    // frame.bytes[0] = FLAG;
+    // frame.bytes[1] = TRANSMITTER_TO_RECEIVER;
+    // frame.bytes[2] = I;
+    // frame.bytes[3] = bccCalculator(frame.bytes, 1, 2);
+    // frame.bytes[4] = 5;
+    // frame.bytes[5] = 'o';
+    // frame.bytes[6] = 'l';
+    // frame.bytes[7] = 'a';
+    // frame.bytes[8] = '}';
+    // frame.bytes[9] = 'o';
+    // frame.bytes[10] = FLAG_LAST_FRAME;
+    // frame.bytes[11] = bccCalculator(frame.bytes, 4, frame.bytes[4] + 2);
+    // frame.bytes[12] = FLAG;
+    // frame.size = 13;
+    // printFrame(&frame);
+    // stuffFrame(&frame);
+    // printFrame(&frame);
+    // destuffFrame(&frame);
+    // printFrame(&frame);
+
+
 
     return 0;
 

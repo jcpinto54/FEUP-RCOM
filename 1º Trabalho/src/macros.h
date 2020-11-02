@@ -18,6 +18,9 @@
 #define DATA 1
 #define START 2
 #define END 3
+#define RR_MASK 0x7f
+#define REJ_MASK 0x7f
+#define I_MASK 0xbf
 
 #define ESC 0x7d
 #define FLAG_STUFFING 0x5e
@@ -31,6 +34,7 @@
 #define SERIAL_PORT_2 "/dev/ttyS0"
 
 #define MAX_WRITE_ATTEMPTS 5
+#define MAX_READ_ATTEMPTS 5
 #define TIMEOUT 3.0
 
 #define MAX_FRAME_SIZE 256                               // minimum is 16
