@@ -39,6 +39,28 @@ int parseFileData(char * filename){
     //criar um packet para cada fragmento de dados chamando createDataPacket
 }
 packet_t * createControlPacket(u_int8_t type, int size, char * filename){
+    packet_t * packet;
+    packet->bytes[0] = type;
+    int i = 0;
+    packet->bytes[1] = FILENAME;
+    packet->bytes[2] = strlen(filename)+1;
+    for(; i < packet->bytes[2] ; i++){
+        packet->bytes[3 + i] = filename[i];
+    }
+
+    int numOfDigits = log10(size) + 1; 
+    char* arr = calloc(numOfDigits, sizeof(char));
+    for(int x = 0 ; x< numOfDigits; x++, size/=10) 
+    { 
+	    arr[x] = size % 10; 
+    }
+
+    packet->bytes[++i] = FILESIZE;
+    packet->bytes[++i] = strlen(arr) + 1;
+    int bytelocation = i;
+    for(; i < packet->bytes[bytelocation] ; i++){
+        packet->bytes[bytelocation + i] = arr[i];
+    }
 
 }
 
