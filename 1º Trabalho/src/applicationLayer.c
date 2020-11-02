@@ -11,7 +11,7 @@
 #include "applicationLayer.h"
 #include "dataLayer.h"
 
-extern application app;
+application app;
 
 int parseFileData(char * filename){
   
@@ -27,14 +27,14 @@ int parseFileData(char * filename){
 
     packet = createControlPacket(START, fileSize, filename);
 
-    if(llwrite(application.fd, packet->bytes, packet->size) == -1){
+    if(llwrite(app.fd, packet->bytes, packet->size) == -1){
         perror("Error transmitting start control packet in applicationLayer.c ...");
         return -1;
     }
 
     while((size = read(fd,buffer,MAX_DATA_PACKET_DATA_LENGTH))!=EOF){
         packet = createDataPacket(buffer,size);
-        if(llwrite(application.fd, packet->bytes, packet->size) == -1){
+        if(llwrite(app.fd, packet->bytes, packet->size) == -1){
             perror("Error transmitting data packet in applicationLayer.c ...");
             return -1;
         }
@@ -42,7 +42,7 @@ int parseFileData(char * filename){
 
     packet = createControlPacket(END, fileSize, filename);
 
-    if(llwrite(application.fd, packet->bytes, packet->size) == -1){
+    if(llwrite(app.fd, packet->bytes, packet->size) == -1){
         perror("Error transmitting end control packet in applicationLayer.c ...");
         return -1;
     }

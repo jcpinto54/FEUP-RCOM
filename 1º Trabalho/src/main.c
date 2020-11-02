@@ -14,7 +14,7 @@
 // // TEST PREPAREI
 // #include "dataLayerPrivate.h"
 
-application app;
+extern application app;
 
 int main(int argc, char *argv[])
 {
