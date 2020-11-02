@@ -131,10 +131,8 @@ packet_t * createDataPacket(char * string, int number, size_t size){
     }
 }
 
-char* parseDataPacket(char * dataArray){
-    char * bytes;
-    memcpy( bytes, &dataArray[3], (dataArray[3]*256 + dataArray[2]) * sizeof(*dataArray));
-    return bytes;
+void * parseDataPacket(char * dataArray, char * bytes){
+    return memcpy( bytes, &dataArray[3], (dataArray[3]*256 + dataArray[2]) * sizeof(*dataArray));
 }
 
 int receiveFile(){
@@ -151,6 +149,11 @@ int receiveFile(){
 
     controlStatus = parseControlPacket(receive, &fileSize, filename);
 
+    if(controlStatus != START){
+        perror("Error receiving start control packet in applicationLayer.c ...");
+        return -1;
+    }
+
     fd = fopen(filename, "w");
 
     for(int i = 0 ; i < fileSize ; i++){
@@ -158,9 +161,10 @@ int receiveFile(){
             perror("Error receiving data packet in applicationLayer.c ...");
             return -1;
         }
-        bytes = parseDataPacket(receive);
-        if(write(fd, bytes, strlen(bytes))!= strlen(bytes)){
+        parseDataPacket(receive, bytes);
+        if(write(fd, bytes, strlen(bytes)) != strlen(bytes)){
             perror("Error writing to file ...");
+            return -1;
         }
     }
 
@@ -168,5 +172,16 @@ int receiveFile(){
         perror("Error receiving end control packet in applicationLayer.c ...");
         return -1;
     }
+
+    controlStatus = parseControlPacket(receive, &fileSize, filename);
+
+    if(controlStatus != END){
+        perror("Error receiving end control packet in applicationLayer.c ...");
+        return -1;
+    }
+
+    fclose(fd);
+
+    return 0;
 
 }
