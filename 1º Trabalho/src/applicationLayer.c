@@ -32,13 +32,8 @@ int sendFile(char * filename){
     }
 
     while((size = read(fd,buffer,MAX_DATA_PACKET_DATA_LENGTH))!=EOF){
-<<<<<<< HEAD
-        packet = createDataPacket(buffer,size);
-        if(llwrite(app.fd, packet->bytes, packet->size) < 0){
-=======
         packet = createDataPacket(buffer, (number % 256), size);
         if(llwrite(app.fd, packet->bytes, packet->size) < 0){
->>>>>>> 6a90299b34b52d90c6fa9896a8fac44565e21f13
             perror("Error transmitting data packet in applicationLayer.c ...");
             return -1;
         }
