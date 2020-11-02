@@ -134,7 +134,6 @@ void * parseDataPacket(char * dataArray, char * bytes){
 
 int receiveFile(){
     FILE *fd;
-    int error = 0;
 
     char* receive, filename, bytes;
     int fileSize, controlStatus;
