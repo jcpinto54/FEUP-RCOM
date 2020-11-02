@@ -13,6 +13,32 @@
 
 application app;
 
+void appRun() {
+    if ((app.fd = llopen(app.port, app.status)) < 0) {
+        printf("error in llopen\n"); 
+        clearSerialPort(app.port);
+        exit(1);
+    }
+
+    switch (app.status) {
+        case TRANSMITTER:;
+            llwrite(app.fd, "ola eu sou o joao", 17);
+        break;
+        case RECEIVER:;
+            char *received;
+            llread(app.fd, &received);
+            printf("Data Received: %s\n", received);
+        break;
+    }
+
+    int llcloseReturn = llclose(app.fd);
+    if (llcloseReturn < 0) {
+        printf("error in llclose\n"); 
+        clearSerialPort(app.port);
+        exit(1);
+    }
+}
+
 int sendFile(char * filename){
     packet_t *packet;
     FILE *fd;
