@@ -55,22 +55,22 @@ int sendFile(char * filename){
 packet_t * createControlPacket(u_int8_t type, int size, char * filename){
     packet_t * packet;
     packet->bytes[0] = type;
-    int i = 0;
+    
 
     packet->bytes[1] = FILESIZE;
-    u_int8_t byte = (size & BYTE_MASK); //LSB
-    packet->bytes[2] = byte;
-    byte = (size & (BYTE_MASK << 8)) >> 8;
+    packet->bytes[2] = 4;
+    u_int8_t byte = (size & BYTE_MASK << 24); //LSB
     packet->bytes[3] = byte;
-    byte = (size & (BYTE_MASK << 16)) >> 16;
+    byte = size & (BYTE_MASK << 16);
     packet->bytes[4] = byte;
-    byte = (size & (BYTE_MASK << 24)) >> 24; //MSB
+    byte = size & (BYTE_MASK << 8);
     packet->bytes[5] = byte;
-    packet->bytes[6] = size;
+    byte = size & (BYTE_MASK); //MSB
+    packet->bytes[6] = byte;
 
-    packet->bytes[7] = FILENAME;
-    packet->bytes[8] = strlen(filename)+1;
-    for(; i < packet->bytes[8] ; i++){
+    packet->bytes[6] = FILENAME;
+    packet->bytes[7] = strlen(filename)+1;          // Qual a razao de ter +1 ???? (PERGUNTA DO JOAO PINTO)
+    for(int i = 0; i < packet->bytes[7] ; i++){
         packet->bytes[8 + i] = filename[i];
     }
     
@@ -93,7 +93,7 @@ packet_t * createDataPacket(char * string, int number, size_t size){
     }
 }
 
-char* parseDataPacket(char* dataPacket){
+char* parseDataPacket(packet_t* dataPacket){
 
 }
 
