@@ -68,10 +68,10 @@ packet_t * createControlPacket(u_int8_t type, int size, char * filename){
     byte = size & (BYTE_MASK); //MSB
     packet->bytes[6] = byte;
 
-    packet->bytes[6] = FILENAME;
-    packet->bytes[7] = strlen(filename)+1;          // Qual a razao de ter +1 ???? (PERGUNTA DO JOAO PINTO)
-    for(int i = 0; i < packet->bytes[7] ; i++){
-        packet->bytes[8 + i] = filename[i];
+    packet->bytes[7] = FILENAME;
+    packet->bytes[8] = strlen(filename);          // Qual a razao de ter +1 ???? (PERGUNTA DO JOAO PINTO)
+    for(int i = 0; i < packet->bytes[8] ; i++){
+        packet->bytes[9 + i] = filename[i];
     }
     
     return packet;
