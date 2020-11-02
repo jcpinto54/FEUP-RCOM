@@ -28,14 +28,14 @@ int sendFile(char * filename){
 
     packet = createControlPacket(START, fileSize, filename);
 
-    if(llwrite(application.fd, packet->bytes, packet->size) == -1){
+    if(llwrite(application.fd, packet->bytes, packet->size) < 0){
         perror("Error transmitting start control packet in applicationLayer.c ...");
         return -1;
     }
 
     while((size = read(fd,buffer,MAX_DATA_PACKET_DATA_LENGTH))!=EOF){
         packet = createDataPacket(buffer,size);
-        if(llwrite(application.fd, packet->bytes, packet->size) == -1){
+        if(llwrite(application.fd, packet->bytes, packet->size) < 0){
             perror("Error transmitting data packet in applicationLayer.c ...");
             return -1;
         }
@@ -43,7 +43,7 @@ int sendFile(char * filename){
 
     packet = createControlPacket(END, fileSize, filename);
 
-    if(llwrite(application.fd, packet->bytes, packet->size) == -1){
+    if(llwrite(application.fd, packet->bytes, packet->size) < 0){
         perror("Error transmitting end control packet in applicationLayer.c ...");
         return -1;
     }
@@ -99,6 +99,10 @@ packet_t * createControlPacket(u_int8_t type, int size, char * filename){
 
 }
 
+int parseControlPacket(packet_t* controlPacket){
+    
+}
+
 packet_t * createDataPacket(char * string, size_t size){
     packet_t *packet;
     packet->size = size + 4;
@@ -115,6 +119,14 @@ int parseDataPacket(packet_t * dataPacket){
 
 }
 
-int receiveFile(){
+int receiveFile(char* filename){
+    FILE *fd;
+
+    fd = fopen(filename, "w");
+
+    char* receive;
+
+    llread(&receive);
+
 
 }
