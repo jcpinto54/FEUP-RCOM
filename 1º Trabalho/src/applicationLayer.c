@@ -131,16 +131,20 @@ packet_t * createDataPacket(char * string, int number, size_t size){
     }
 }
 
-char* parseDataPacket(packet_t* dataPacket){
-
+char* parseDataPacket(char * dataArray){
+    char * bytes;
+    memcpy( bytes, &dataArray[3], (dataArray[3]*256 + dataArray[2]) * sizeof(*dataArray));
+    return bytes;
 }
 
 int receiveFile(){
     FILE *fd;
-    char* receive, filename;
+    int error = 0;
+
+    char* receive, filename, bytes;
     int fileSize;
 
-    if(llread(&receive) < 0){
+    if(llread(app.fd, &receive) < 0){
         perror("Error receiving start control packet in applicationLayer.c ...");
         return -1;
     }
@@ -149,7 +153,18 @@ int receiveFile(){
 
     fd = fopen(filename, "w");
 
-    while()
+    for(int i = 0 ; i < fileSize ; i++){
+        if(llread(app.fd, &receive) < 0){
+            perror("Error receiving data packet in applicationLayer.c ...");
+            return -1;
+        }
+        bytes = parseDataPacket(receive);
+        write(fd, bytes, strlen(bytes));
+    }
 
+    if(llread(app.fd, &receive) < 0){
+        perror("Error receiving end control packet in applicationLayer.c ...");
+        return -1;
+    }
 
 }
