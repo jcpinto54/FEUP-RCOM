@@ -14,7 +14,7 @@
 extern applicationLayer application;
 
 
-int parseFileData(char * filename){
+int sendFile(char * filename){
   
     packet_t *packet;
     FILE *fd;
@@ -112,5 +112,9 @@ packet_t * createDataPacket(char * string, size_t size){
 }
 
 int parseDataPacket(packet_t * dataPacket){
+
+}
+
+int receiveFile(){
 
 }

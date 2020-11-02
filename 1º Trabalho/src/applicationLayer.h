@@ -7,6 +7,7 @@ typedef struct {
 } packet_t;
 
 
-int parseFileData(char * filename);
+int sendFile(char * filename);
 packet_t * createDataPacket(char * string, size_t size);
 int parseDataPacket(packet_t * dataPacket);
+int receiveFile();
