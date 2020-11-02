@@ -42,10 +42,11 @@ int main(int argc, char *argv[])
 
     strcpy(app.filename, argv[2]);
 
-    packet_t * startPacket = createControlPacket(START, 5, "cristiano ronaldo");
-    packet_t * endPacket = createControlPacket(END, 8, "jair bolsonaro");
+    //packet_t * startPacket = createControlPacket(START, 5, "cristiano ronaldo");
+    //packet_t * endPacket = createControlPacket(END, 8, "jair bolsonaro");
 
-
+    //printf("Start packet:\n");
+    //printf("Control: ")
 
     //appRun();
 

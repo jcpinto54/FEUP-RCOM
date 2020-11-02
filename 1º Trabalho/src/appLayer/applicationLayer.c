@@ -107,7 +107,7 @@ int parseControlPacket(char* controlPacket, int* fileSize, char* filename){
         return -1;
     }
 
-    fileSize = controlPacket[4];
+    *fileSize = controlPacket[4];
     u_int8_t stringSize = controlPacket[5];
     for(int i = 0; i < stringSize; i++){
         filename[i] = controlPacket[5 + 1 + i];
@@ -126,6 +126,8 @@ packet_t * createDataPacket(char * string, int number, size_t size){
     for(int i = 0; i < size ; i++){
         packet->bytes[4 + i] = string[i];
     }
+
+    return packet;
 }
 
 void * parseDataPacket(char * dataArray, char * bytes){
@@ -134,9 +136,8 @@ void * parseDataPacket(char * dataArray, char * bytes){
 
 int receiveFile(){
     FILE *fd;
-    int error = 0;
 
-    char* receive, filename, bytes;
+    char* receive, *filename, *bytes;
     int fileSize, controlStatus;
 
     if(llread(app.fd, &receive) < 0){

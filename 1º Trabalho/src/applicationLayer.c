@@ -11,7 +11,7 @@
 #include "applicationLayer.h"
 #include "dataLayer.h"
 
-application app;
+extern application app;
 
 void appRun() {
     if ((app.fd = llopen(app.port, app.status)) < 0) {
@@ -127,6 +127,8 @@ packet_t * createDataPacket(char * string, int number, size_t size){
     for(int i = 0; i < size ; i++){
         packet->bytes[4 + i] = string[i];
     }
+
+    return packet;
 }
 
 void * parseDataPacket(char * dataArray, char * bytes){
@@ -135,9 +137,8 @@ void * parseDataPacket(char * dataArray, char * bytes){
 
 int receiveFile(){
     FILE *fd;
-    int error = 0;
 
-    char* receive, filename, bytes;
+    char* receive, *filename, *bytes;
     int fileSize, controlStatus;
 
     if(llread(app.fd, &receive) < 0){
