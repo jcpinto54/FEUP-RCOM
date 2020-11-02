@@ -6,10 +6,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "applicationLayer.h"
-#include "dataLayer.h"
+#include "appLayer/applicationLayer.h"
+#include "dataLayer/dataLayer.h"
 #include "macros.h"
-#include "utils.h"
+#include "utils/utils.h"
 
 extern application app;
 

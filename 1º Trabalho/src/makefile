@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -Wall
 
 
-proj: utils.c dataLayerPrivate.c dataLayer.c  main.c
+proj: utils/utils.c dataLayer/dataLayerPrivate.c dataLayer/dataLayer.c  appLayer/applicationLayer.c main.c
 	$(CC) $(CFLAGS) $? -o $@
 
 .PHONY: clean
