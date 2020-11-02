@@ -32,6 +32,8 @@ int main(int argc, char *argv[])
     else if (app.status == RECEIVER) strcpy(app.port, SERIAL_PORT_2);
 
 
+
+
     if ((app.fd = llopen(app.port, app.status)) < 0) {
         printf("error in llopen\n"); 
         clearSerialPort(app.port);
