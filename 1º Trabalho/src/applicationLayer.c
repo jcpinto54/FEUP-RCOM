@@ -60,11 +60,11 @@ packet_t * createControlPacket(u_int8_t type, int size, char * filename){
     packet->bytes[1] = FILESIZE;
     u_int8_t byte = (size & BYTE_MASK); //LSB
     packet->bytes[2] = byte;
-    byte = size & (BYTE_MASK << 8);
+    byte = (size & (BYTE_MASK << 8)) >> 8;
     packet->bytes[3] = byte;
-    byte = size & (BYTE_MASK << 8);
+    byte = (size & (BYTE_MASK << 16)) >> 16;
     packet->bytes[4] = byte;
-    byte = size & (BYTE_MASK << 8); //MSB
+    byte = (size & (BYTE_MASK << 24)) >> 24; //MSB
     packet->bytes[5] = byte;
     packet->bytes[6] = size;
 
