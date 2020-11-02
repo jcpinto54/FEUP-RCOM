@@ -77,8 +77,14 @@ packet_t * createControlPacket(u_int8_t type, int size, char * filename){
     return packet;
 }
 
-int parseControlPacket(packet_t* controlPacket){
+int parseControlPacket(char* controlPacket, char* filename){
+    int size = controlPacket[4];
+    u_int8_t stringSize = controlPacket[5];
+    for(int i = 0; i < stringSize; i++){
+        filename[i] = controlPacket[5 + 1 + i];
+    }
 
+    return size;
 }
 
 packet_t * createDataPacket(char * string, int number, size_t size){
@@ -97,19 +103,19 @@ char* parseDataPacket(packet_t* dataPacket){
 
 }
 
-int receiveFile(char* filename){
+int receiveFile(){
     FILE *fd;
-
-    fd = fopen(filename, "w");
-
-    char* receive;
+    char* receive, filename;
+    int fileSize;
 
     if(llread(&receive) < 0){
         perror("Error receiving start control packet in applicationLayer.c ...");
         return -1;
     }
 
-    parseControlPacket(receive);
+    fileSize = parseControlPacket(receive);
+
+    fd = fopen(filename, "w");
 
     while()
 
