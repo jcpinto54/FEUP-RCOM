@@ -14,11 +14,10 @@
 application app;
 
 int sendFile(char * filename){
-  
     packet_t *packet;
     FILE *fd;
     char buffer[MAX_DATA_PACKET_DATA_LENGTH];
-    int size = 0;
+    int size = 0, number = 0;
     fd = fopen(filename, "r");
 
     fseek(fd, 0L, SEEK_END);
@@ -33,11 +32,17 @@ int sendFile(char * filename){
     }
 
     while((size = read(fd,buffer,MAX_DATA_PACKET_DATA_LENGTH))!=EOF){
+<<<<<<< HEAD
         packet = createDataPacket(buffer,size);
         if(llwrite(app.fd, packet->bytes, packet->size) < 0){
+=======
+        packet = createDataPacket(buffer, (number % 256), size);
+        if(llwrite(app.fd, packet->bytes, packet->size) < 0){
+>>>>>>> 6a90299b34b52d90c6fa9896a8fac44565e21f13
             perror("Error transmitting data packet in applicationLayer.c ...");
             return -1;
         }
+        number++;
     }
 
     packet = createControlPacket(END, fileSize, filename);
@@ -48,11 +53,7 @@ int sendFile(char * filename){
     }
 
     fclose(fd);
-
     return 0;
-
-    //TODO dividir a file data em pacotes de tamanho igual ao MAX_DATA_PACKET_LENGTH
-    //criar um packet para cada fragmento de dados chamando createDataPacket
 }
 
 
@@ -60,53 +61,36 @@ packet_t * createControlPacket(u_int8_t type, int size, char * filename){
     packet_t * packet;
     packet->bytes[0] = type;
     int i = 0;
-    packet->bytes[1] = FILENAME;
-    packet->bytes[2] = strlen(filename)+1;
-    for(; i < packet->bytes[2] ; i++){
-        packet->bytes[3 + i] = filename[i];
-    }
-    i = 3 + i;
 
-
+    packet->bytes[1] = FILESIZE;
     u_int8_t byte = (size & BYTE_MASK); //LSB
-    packet->bytes[i++] = byte;
-
+    packet->bytes[2] = byte;
     byte = size & (BYTE_MASK << 8);
-    packet->bytes[i++] = byte;
-
+    packet->bytes[3] = byte;
     byte = size & (BYTE_MASK << 8);
-    packet->bytes[i++] = byte;
-
+    packet->bytes[4] = byte;
     byte = size & (BYTE_MASK << 8); //MSB
-    packet->bytes[i] = byte;
+    packet->bytes[5] = byte;
+    packet->bytes[6] = size;
 
-
-    return packet;
-    /*int numOfDigits = log10(size) + 1; 
-    char* arr = calloc(numOfDigits, sizeof(char));
-    for(int x = 0 ; x< numOfDigits; x++, size/=10) 
-    { 
-	    arr[x] = size % 10; 
+    packet->bytes[7] = FILENAME;
+    packet->bytes[8] = strlen(filename)+1;
+    for(; i < packet->bytes[8] ; i++){
+        packet->bytes[8 + i] = filename[i];
     }
-
-    packet->bytes[++i] = FILESIZE;
-    packet->bytes[++i] = strlen(arr) + 1;
-    int bytelocation = i;
-    for(; i < packet->bytes[bytelocation] ; i++){
-        packet->bytes[bytelocation + i] = arr[i];
-    }*/
-
+    
+    return packet;
 }
 
 int parseControlPacket(packet_t* controlPacket){
-    
+
 }
 
-packet_t * createDataPacket(char * string, size_t size){
+packet_t * createDataPacket(char * string, int number, size_t size){
     packet_t *packet;
     packet->size = size + 4;
     packet->bytes[0] = DATA;
-    packet->bytes[1] = 1;
+    packet->bytes[1] = number;
     packet->bytes[2] = (int) (size / 256);
     packet->bytes[3] = size % 256;
     for(int i = 0; i < size ; i++){
@@ -114,7 +98,7 @@ packet_t * createDataPacket(char * string, size_t size){
     }
 }
 
-int parseDataPacket(packet_t * dataPacket){
+char* parseDataPacket(char* dataPacket){
 
 }
 
@@ -125,7 +109,14 @@ int receiveFile(char* filename){
 
     char* receive;
 
-    llread(&receive);
+    if(llread(&receive) < 0){
+        perror("Error receiving start control packet in applicationLayer.c ...");
+        return -1;
+    }
+
+    parseControlPacket(receive);
+
+    while()
 
 
 }
