@@ -11,8 +11,7 @@
 #include "applicationLayer.h"
 #include "dataLayer.h"
 
-extern application application;
-
+extern application app;
 
 int parseFileData(char * filename){
   
