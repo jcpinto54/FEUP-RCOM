@@ -34,15 +34,20 @@ int main(int argc, char *argv[])
     }
 
     
-    if (strcmp("-s", argv[1])== 0) app.status = TRANSMITTER;
+    if(strcmp("-s", argv[1])== 0) app.status = TRANSMITTER;
     else if (strcmp("-r", argv[1])== 0) app.status = RECEIVER;
     
-    if (app.status == TRANSMITTER) strcpy(app.port, SERIAL_PORT_1);
+    if(app.status == TRANSMITTER) strcpy(app.port, SERIAL_PORT_1);
     else if (app.status == RECEIVER) strcpy(app.port, SERIAL_PORT_2);
 
     strcpy(app.filename, argv[2]);
 
-    appRun();
+    packet_t * startPacket = createControlPacket(START, 5, "cristiano ronaldo");
+    packet_t * endPacket = createControlPacket(END, 8, "jair bolsonaro");
+
+
+
+    //appRun();
 
     return 0;
 }
