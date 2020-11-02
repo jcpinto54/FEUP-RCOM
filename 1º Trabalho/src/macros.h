@@ -18,8 +18,8 @@
 #define DATA 1
 #define START 2
 #define END 3
-#define FILENAME 0
-#define FILESIZE 1
+#define FILESIZE 0
+#define FILENAME 1
 #define RR_MASK 0x7f
 #define REJ_MASK 0x7f
 #define I_MASK 0xbf

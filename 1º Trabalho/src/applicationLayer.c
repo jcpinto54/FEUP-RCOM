@@ -56,29 +56,24 @@ packet_t * createControlPacket(u_int8_t type, int size, char * filename){
     packet_t * packet;
     packet->bytes[0] = type;
     int i = 0;
-    packet->bytes[1] = FILENAME;
-    packet->bytes[2] = strlen(filename)+1;
-    for(; i < packet->bytes[2] ; i++){
-        packet->bytes[3 + i] = filename[i];
-    }
-    i = 3 + i;
 
-    packet->bytes[i++] = FILESIZE;
-
+    packet->bytes[1] = FILESIZE;
     u_int8_t byte = (size & BYTE_MASK); //LSB
-    packet->bytes[i++] = byte;
-
+    packet->bytes[2] = byte;
     byte = size & (BYTE_MASK << 8);
-    packet->bytes[i++] = byte;
-
+    packet->bytes[3] = byte;
     byte = size & (BYTE_MASK << 8);
-    packet->bytes[i++] = byte;
-
+    packet->bytes[4] = byte;
     byte = size & (BYTE_MASK << 8); //MSB
-    packet->bytes[i++] = byte;
+    packet->bytes[5] = byte;
+    packet->bytes[6] = size;
 
-    packet->bytes[i] = size;
-
+    packet->bytes[7] = FILENAME;
+    packet->bytes[8] = strlen(filename)+1;
+    for(; i < packet->bytes[8] ; i++){
+        packet->bytes[8 + i] = filename[i];
+    }
+    
     return packet;
 }
 
