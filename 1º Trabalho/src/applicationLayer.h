@@ -19,7 +19,7 @@ void appRun();
 int sendFile(char * filename);
 packet_t * createDataPacket(char * string, int number, size_t size);
 packet_t * createControlPacket(u_int8_t type, int size, char * filename);
-char * parseDataPacket(packet_t * dataPacket);
-int parseControlPacket(packet_t* controlPacket);
+void * parseDataPacket(char * dataPacket, char * bytes);
+int parseControlPacket(char* controlPacket, int* fileSize, char* filename);
 int receiveFile();
 

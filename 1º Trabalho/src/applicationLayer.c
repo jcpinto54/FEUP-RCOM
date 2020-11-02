@@ -101,8 +101,20 @@ packet_t * createControlPacket(u_int8_t type, int size, char * filename){
     return packet;
 }
 
-int parseControlPacket(packet_t* controlPacket){
+int parseControlPacket(char* controlPacket, int* fileSize, char* filename){
+    int controlStatus = controlPacket[0];
+    if(controlStatus != START && controlStatus != END){
+        perror("Unknown control packet status: not START nor END!");
+        return -1;
+    }
 
+    fileSize = controlPacket[4];
+    u_int8_t stringSize = controlPacket[5];
+    for(int i = 0; i < stringSize; i++){
+        filename[i] = controlPacket[5 + 1 + i];
+    }
+
+    return controlStatus;
 }
 
 packet_t * createDataPacket(char * string, int number, size_t size){
@@ -117,22 +129,60 @@ packet_t * createDataPacket(char * string, int number, size_t size){
     }
 }
 
-char* parseDataPacket(packet_t* dataPacket){
-
+void * parseDataPacket(char * dataArray, char * bytes){
+    return memcpy( bytes, &dataArray[3], (dataArray[3]*256 + dataArray[2]) * sizeof(*dataArray));
 }
 
 int receiveFile(){
+<<<<<<< HEAD
+=======
+    FILE *fd;
+    int error = 0;
 
-    char* receive;
+    char* receive, filename, bytes;
+    int fileSize, controlStatus;
+>>>>>>> 7c4105c50956179a6e9fe8bfa0251032e42787ea
 
-    if(llread(&receive) < 0){
+    if(llread(app.fd, &receive) < 0){
         perror("Error receiving start control packet in applicationLayer.c ...");
         return -1;
     }
 
-    parseControlPacket(receive);
+    controlStatus = parseControlPacket(receive, &fileSize, filename);
 
-    while()
+    if(controlStatus != START){
+        perror("Error receiving start control packet in applicationLayer.c ...");
+        return -1;
+    }
 
+    fd = fopen(filename, "w");
+
+    for(int i = 0 ; i < fileSize ; i++){
+        if(llread(app.fd, &receive) < 0){
+            perror("Error receiving data packet in applicationLayer.c ...");
+            return -1;
+        }
+        parseDataPacket(receive, bytes);
+        if(write(fd, bytes, strlen(bytes)) != strlen(bytes)){
+            perror("Error writing to file ...");
+            return -1;
+        }
+    }
+
+    if(llread(app.fd, &receive) < 0){
+        perror("Error receiving end control packet in applicationLayer.c ...");
+        return -1;
+    }
+
+    controlStatus = parseControlPacket(receive, &fileSize, filename);
+
+    if(controlStatus != END){
+        perror("Error receiving end control packet in applicationLayer.c ...");
+        return -1;
+    }
+
+    fclose(fd);
+
+    return 0;
 
 }
