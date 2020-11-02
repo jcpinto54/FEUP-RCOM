@@ -22,12 +22,10 @@ void appRun() {
 
     switch (app.status) {
         case TRANSMITTER:;
-            llwrite(app.fd, "ola eu sou o joao", 17);
+            sendFile(app.filename);
         break;
         case RECEIVER:;
-            char *received;
-            llread(app.fd, &received);
-            printf("Data Received: %s\n", received);
+            receiveFile();
         break;
     }
 
@@ -123,10 +121,7 @@ char* parseDataPacket(packet_t* dataPacket){
 
 }
 
-int receiveFile(char* filename){
-    FILE *fd;
-
-    fd = fopen(filename, "w");
+int receiveFile(){
 
     char* receive;
 

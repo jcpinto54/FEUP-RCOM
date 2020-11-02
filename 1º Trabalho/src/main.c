@@ -11,25 +11,36 @@
 #include "macros.h"
 #include "utils.h"
 
-// // TEST PREPAREI
-// #include "dataLayerPrivate.h"
-
 extern application app;
 
 int main(int argc, char *argv[])
 {
 
-    if ((argc != 2) ||
-        ((strcmp("-r", argv[1]) != 0) && (strcmp("-s", argv[1]) != 0))) {
-        printf("Usage:\t %s -r/-s\n\t\tex: %s -s\n", argv[0], argv[0]);
+    if (argc == 2) {
+        if ((strcmp("-r", argv[1]) != 0)) {
+            printf("Receiver usage: %s -r\nTransmitter usage: %s -s <filename>\n", argv[0], argv[0]);
+            exit(1);
+        }
+    }
+    else if (argc == 3) {
+        if ((strcmp("-s", argv[1]) != 0)) {
+            printf("Receiver usage: %s -r\nTransmitter usage: %s -s <filename>\n", argv[0], argv[0]);
+            exit(1);
+        }
+    }
+    else {
+        printf("Receiver usage: %s -r\nTransmitter usage: %s -s <filename>\n", argv[0], argv[0]);
         exit(1);
     }
+
     
     if (strcmp("-s", argv[1])== 0) app.status = TRANSMITTER;
     else if (strcmp("-r", argv[1])== 0) app.status = RECEIVER;
     
     if (app.status == TRANSMITTER) strcpy(app.port, SERIAL_PORT_1);
     else if (app.status == RECEIVER) strcpy(app.port, SERIAL_PORT_2);
+
+    strcpy(app.filename, argv[2]);
 
     appRun();
 

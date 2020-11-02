@@ -83,8 +83,7 @@ int llopen(char *port, int appStatus)
             
             break;
     }
-
-    printf("LLOPEN DONE\n");
+    printf("Opened serial port connection\n");
     return fd;
 }
 
@@ -138,7 +137,7 @@ int llclose(int fd) {
         break;
     }
     if (close(fd) == -1) return -8;
-    printf("LLCLOSE DONE\n");
+    printf("Closed serial port connection\n");
     return 1;
 }
 
