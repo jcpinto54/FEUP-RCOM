@@ -30,6 +30,8 @@
 #define FLAG_MORE_FRAMES_TO_COME 0xaa
 #define FLAG_LAST_FRAME 0xbb
 
+#define BYTE_MASK 11111111
+
 #define RECEIVER 0
 #define TRANSMITTER 1
 #define SERIAL_PORT_1 "/dev/ttyS1"

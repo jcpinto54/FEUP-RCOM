@@ -26,18 +26,37 @@ int parseFileData(char * filename){
     int fileSize = ftell(fd);
     fseek(fd, 0L, SEEK_SET);
 
-    createControlPacket(START, fileSize, filename);
+    packet = createControlPacket(START, fileSize, filename);
+
+    if(llwrite(application.fd, packet->bytes, packet->size) == -1){
+        perror("Error transmitting start control packet in applicationLayer.c ...");
+        return -1;
+    }
 
     while((size = read(fd,buffer,MAX_DATA_PACKET_DATA_LENGTH))!=EOF){
         packet = createDataPacket(buffer,size);
         if(llwrite(application.fd, packet->bytes, packet->size) == -1){
             perror("Error transmitting data packet in applicationLayer.c ...");
+            return -1;
         }
     }
+
+    packet = createControlPacket(END, fileSize, filename);
+
+    if(llwrite(application.fd, packet->bytes, packet->size) == -1){
+        perror("Error transmitting end control packet in applicationLayer.c ...");
+        return -1;
+    }
+
     fclose(fd);
+
+    return 0;
+
     //TODO dividir a file data em pacotes de tamanho igual ao MAX_DATA_PACKET_LENGTH
     //criar um packet para cada fragmento de dados chamando createDataPacket
 }
+
+
 packet_t * createControlPacket(u_int8_t type, int size, char * filename){
     packet_t * packet;
     packet->bytes[0] = type;
@@ -47,8 +66,24 @@ packet_t * createControlPacket(u_int8_t type, int size, char * filename){
     for(; i < packet->bytes[2] ; i++){
         packet->bytes[3 + i] = filename[i];
     }
+    i = 3 + i;
 
-    int numOfDigits = log10(size) + 1; 
+
+    u_int8_t byte = (size & BYTE_MASK); //LSB
+    packet->bytes[i++] = byte;
+
+    byte = size & (BYTE_MASK << 8);
+    packet->bytes[i++] = byte;
+
+    byte = size & (BYTE_MASK << 8);
+    packet->bytes[i++] = byte;
+
+    byte = size & (BYTE_MASK << 8); //MSB
+    packet->bytes[i] = byte;
+
+
+    return packet;
+    /*int numOfDigits = log10(size) + 1; 
     char* arr = calloc(numOfDigits, sizeof(char));
     for(int x = 0 ; x< numOfDigits; x++, size/=10) 
     { 
@@ -60,7 +95,7 @@ packet_t * createControlPacket(u_int8_t type, int size, char * filename){
     int bytelocation = i;
     for(; i < packet->bytes[bytelocation] ; i++){
         packet->bytes[bytelocation + i] = arr[i];
-    }
+    }*/
 
 }
 
