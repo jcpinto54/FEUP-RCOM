@@ -11,7 +11,7 @@
 #include "macros.h"
 #include "utils/utils.h"
 
-extern application app;
+application app;
 
 int main(int argc, char *argv[])
 {

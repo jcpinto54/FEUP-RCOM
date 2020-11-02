@@ -10,7 +10,7 @@
 #include "applicationLayer.h"
 #include "../dataLayer/dataLayer.h"
 
-application app;
+extern application app;
 
 void appRun() {
     if ((app.fd = llopen(app.port, app.status)) < 0) {
@@ -49,14 +49,14 @@ int sendFile(char * filename){
 
     packet = createControlPacket(START, fileSize, filename);
 
-    if(llwrite(app.fd, packet->bytes, packet->size) < 0){
+    if(llwrite(app.fd, (char *)packet->bytes, packet->size) < 0){
         perror("Error transmitting start control packet in applicationLayer.c ...");
         return -1;
     }
 
-    while((size = read(fd,buffer,MAX_DATA_PACKET_DATA_LENGTH))!=EOF){
+    while((size = fread(buffer, sizeof(u_int8_t), MAX_DATA_PACKET_DATA_LENGTH, fd))!=EOF){
         packet = createDataPacket(buffer, (number % 256), size);
-        if(llwrite(app.fd, packet->bytes, packet->size) < 0){
+        if(llwrite(app.fd, (char *)packet->bytes, packet->size) < 0){
             perror("Error transmitting data packet in applicationLayer.c ...");
             return -1;
         }
@@ -65,7 +65,7 @@ int sendFile(char * filename){
 
     packet = createControlPacket(END, fileSize, filename);
 
-    if(llwrite(app.fd, packet->bytes, packet->size) < 0){
+    if(llwrite(app.fd, (char *)packet->bytes, packet->size) < 0){
         perror("Error transmitting end control packet in applicationLayer.c ...");
         return -1;
     }
@@ -82,17 +82,17 @@ packet_t * createControlPacket(u_int8_t type, int size, char * filename){
 
     packet->bytes[1] = FILESIZE;
     packet->bytes[2] = 4;
-    u_int8_t byte = (size & BYTE_MASK << 24); //LSB
+    u_int8_t byte = (size & ((u_int8_t)BYTE_MASK << 24)) >> 24; //MSB
     packet->bytes[3] = byte;
-    byte = size & (BYTE_MASK << 16);
+    byte = (size & ((u_int8_t)BYTE_MASK << 16)) >> 16;
     packet->bytes[4] = byte;
-    byte = size & (BYTE_MASK << 8);
+    byte = (size & ((u_int8_t)BYTE_MASK << 8)) >> 8;
     packet->bytes[5] = byte;
-    byte = size & (BYTE_MASK); //MSB
+    byte = size & ((u_int8_t)BYTE_MASK); //LSB
     packet->bytes[6] = byte;
 
     packet->bytes[7] = FILENAME;
-    packet->bytes[8] = strlen(filename);          // Qual a razao de ter +1 ???? (PERGUNTA DO JOAO PINTO)
+    packet->bytes[8] = strlen(filename);         
     for(int i = 0; i < packet->bytes[8] ; i++){
         packet->bytes[9 + i] = filename[i];
     }
@@ -107,10 +107,11 @@ int parseControlPacket(char* controlPacket, int* fileSize, char* filename){
         return -1;
     }
 
-    *fileSize = controlPacket[4];
-    u_int8_t stringSize = controlPacket[5];
+
+    *fileSize = controlPacket[3] << 24 | controlPacket[4] << 16 | controlPacket[5] << 8 | controlPacket[6];
+    u_int8_t stringSize = controlPacket[8];
     for(int i = 0; i < stringSize; i++){
-        filename[i] = controlPacket[5 + 1 + i];
+        filename[i] = controlPacket[8 + 1 + i];
     }
 
     return controlStatus;
