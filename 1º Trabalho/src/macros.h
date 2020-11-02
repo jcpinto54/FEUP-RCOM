@@ -40,8 +40,9 @@
 
 #define MAX_FRAME_SIZE 256                               // minimum is 16
 #define MAX_FRAME_DATA_LENGTH (MAX_FRAME_SIZE - 8)/2     // if all bytes are stuffed it takes the MAX_FRAME_SIZE
+#define MAX_FRAME_RETRANSMISSIONS 3
+
 #define MAX_DATA_PACKET_LENGTH MAX_FRAME_DATA_LENGTH     // the max size of a data packet is the same as the max size of data
 #define MAX_DATA_PACKET_DATA_LENGTH (MAX_DATA_PACKET_LENGTH - 4)
-#define MAX_FRAME_RETRANSMISSIONS 3
 
 #define RESPONSE_WITHOUT_ID -1
