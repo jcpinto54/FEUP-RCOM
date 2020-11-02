@@ -13,6 +13,32 @@
 
 application app;
 
+void appRun() {
+    if ((app.fd = llopen(app.port, app.status)) < 0) {
+        printf("error in llopen\n"); 
+        clearSerialPort(app.port);
+        exit(1);
+    }
+
+    switch (app.status) {
+        case TRANSMITTER:;
+            llwrite(app.fd, "ola eu sou o joao", 17);
+        break;
+        case RECEIVER:;
+            char *received;
+            llread(app.fd, &received);
+            printf("Data Received: %s\n", received);
+        break;
+    }
+
+    int llcloseReturn = llclose(app.fd);
+    if (llcloseReturn < 0) {
+        printf("error in llclose\n"); 
+        clearSerialPort(app.port);
+        exit(1);
+    }
+}
+
 int sendFile(char * filename){
     packet_t *packet;
     FILE *fd;
@@ -77,8 +103,14 @@ packet_t * createControlPacket(u_int8_t type, int size, char * filename){
     return packet;
 }
 
-int parseControlPacket(packet_t* controlPacket){
-    return controlPacket->bytes;
+int parseControlPacket(char* controlPacket, char* filename){
+    int size = controlPacket[4];
+    u_int8_t stringSize = controlPacket[5];
+    for(int i = 0; i < stringSize; i++){
+        filename[i] = controlPacket[5 + 1 + i];
+    }
+
+    return size;
 }
 
 packet_t * createDataPacket(char * string, int number, size_t size){
@@ -99,28 +131,34 @@ char* parseDataPacket(char * dataArray){
     return bytes;
 }
 
-int receiveFile(char* filename){
+int receiveFile(){
     FILE *fd;
-
     int error = 0;
 
-    char* receive;
+    char* receive, filename, bytes;
+    int fileSize;
 
     if(llread(app.fd, &receive) < 0){
         perror("Error receiving start control packet in applicationLayer.c ...");
         return -1;
     }
 
-    parseControlPacket(receive);
+    fileSize = parseControlPacket(receive, filename);
 
     fd = fopen(filename, "w");
 
-    while((error = llread(app.fd, &receive)) != EOF){
-        if(error < 0){
+    for(int i = 0 ; i < fileSize ; i++){
+        if(llread(app.fd, &receive) < 0){
             perror("Error receiving data packet in applicationLayer.c ...");
             return -1;
         }
-        parseDataPacket(receive);
+        bytes = parseDataPacket(receive);
+        write(fd, bytes, strlen(bytes));
+    }
+
+    if(llread(app.fd, &receive) < 0){
+        perror("Error receiving end control packet in applicationLayer.c ...");
+        return -1;
     }
 
 }
