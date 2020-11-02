@@ -110,7 +110,7 @@ int parseControlPacket(char* controlPacket, int* fileSize, char* filename){
         return -1;
     }
 
-    fileSize* = controlPacket[4];
+    fileSize = controlPacket[4];
     u_int8_t stringSize = controlPacket[5];
     for(int i = 0; i < stringSize; i++){
         filename[i] = controlPacket[5 + 1 + i];
@@ -159,7 +159,9 @@ int receiveFile(){
             return -1;
         }
         bytes = parseDataPacket(receive);
-        write(fd, bytes, strlen(bytes));
+        if(write(fd, bytes, strlen(bytes))!= strlen(bytes)){
+            perror("Error writing to file ...");
+        }
     }
 
     if(llread(app.fd, &receive) < 0){
