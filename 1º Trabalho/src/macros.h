@@ -31,9 +31,8 @@
 #define SERIAL_PORT_1 "/dev/ttyS1"
 #define SERIAL_PORT_2 "/dev/ttyS0"
 
-#define MAX_WRITE_ATTEMPTS 5
-#define MAX_READ_ATTEMPTS 5
-#define TIMEOUT 3.0
+#define MAX_WRITE_ATTEMPTS 3
+#define MAX_READ_ATTEMPTS 3
 
 #define MAX_FRAME_SIZE 256                               // minimum is 16
 #define MAX_FRAME_DATA_LENGTH (MAX_FRAME_SIZE - 8)/2     // if all bytes are stuffed it takes the MAX_FRAME_SIZE

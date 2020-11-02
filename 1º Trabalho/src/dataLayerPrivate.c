@@ -14,7 +14,7 @@
 extern applicationLayer application;
 
 int idFrameSent = 0;
-frame_t *lastFrameReceived = NULL;
+int lastFrameReceivedId = -1;
 
 void stuffFrame(frame_t * frame)
 {
@@ -129,9 +129,11 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
     }
     *infoNew = info;
     return framesNeeded;
+    
 }
 
 
+// Returns -5 if there was a timeout
 // Returns -4 if there is an error with reading from the serial port
 // Returns -3 if there is an error with bcc2 
 // Returns -2 if there is an error with data size value
@@ -140,17 +142,27 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
 // Returns 1 if there are more frames to be read 
 // Returns 2 if received a repeated frame and there are no more frames to be read
 // Returns 3 if received a repeated frame and there are more frames to be read
-int receiveIMessage(frame_t *frame){
+int receiveIMessage(frame_t *frame, int timeout){
     u_int8_t c;
     receive_state_t state = INIT;
     int dataCounter = -1, returnValue = 0;
+    time_t initTime, curTime;
+    initTime = time(NULL);
     do {
         int bytesRead = read(application.fd, &c, 1);
         if (bytesRead < 0) {
             perror("read error");
             return -4;
         }
-
+        else if (bytesRead > 0) {
+            initTime = time(NULL);
+        }
+        curTime = time(NULL);
+        time_t seconds = curTime - initTime;
+        if (seconds >= timeout) {
+            return -5;
+        }
+        
         switch (state) {
             case INIT:
                 if (c == FLAG) {
@@ -162,6 +174,9 @@ int receiveIMessage(frame_t *frame){
                 if (c == TRANSMITTER_TO_RECEIVER || c == RECEIVER_TO_TRANSMITTER) {
                     state = RCV_A;
                     frame->bytes[1] = c;
+                }
+                else if (c == FLAG) {
+                    state = RCV_FLAG;
                 }
                 else
                     state = INIT;
@@ -185,11 +200,10 @@ int receiveIMessage(frame_t *frame){
                 else if (c == FLAG)
                     state = RCV_FLAG;
                 else {
-                    printf("BCC1 not correct\n");
-                    returnValue = -1;
+                    state = INIT;
                 }
                 break;
-            case RCV_BCC1:      // needs destuffing
+            case RCV_BCC1:     
                 if (dataCounter == -1 && c > 0 && c <= MAX_FRAME_DATA_LENGTH) {
                     frame->bytes[4] = c;
                     dataCounter++;
@@ -234,9 +248,8 @@ int receiveIMessage(frame_t *frame){
                 break;
             case COMPLETE: break;
         }
-    } while (state != COMPLETE && returnValue != -1);
-
-    if (lastFrameReceived != NULL && lastFrameReceived->infoId == frame->infoId && returnValue == 0) {
+    } while (state != COMPLETE && returnValue == 0);
+    if (lastFrameReceivedId != -1 && lastFrameReceivedId == frame->infoId && returnValue == 0) {
         printf("Read a duplicate frame\n");
         if (frame->bytes[4 + dataCounter + 1] == FLAG_LAST_FRAME) returnValue = 2;
         else if (frame->bytes[4 + dataCounter + 1] == FLAG_MORE_FRAMES_TO_COME) returnValue = 3;
@@ -244,8 +257,6 @@ int receiveIMessage(frame_t *frame){
     else if (returnValue == 0) {
         frame->size = 5 + dataCounter + 3;
         destuffFrame(frame);
-        lastFrameReceived = (frame_t *)malloc(sizeof(frame_t));
-        memcpy(lastFrameReceived, frame, sizeof(frame_t));
         if (frame->bytes[4 + dataCounter + 1] == FLAG_LAST_FRAME) returnValue = 0;
         else if (frame->bytes[4 + dataCounter + 1] == FLAG_MORE_FRAMES_TO_COME) returnValue = 1;
     }
@@ -257,9 +268,8 @@ int receiveIMessage(frame_t *frame){
 // Returns 1 if received RR ok
 // Returns 2 if received REJ ok
 // Returns -1 if there was a timeout
-// Returns -3 if there was a read error
-// Returns -2 if bcc is not correct
-int receiveNotIMessage(frame_t *frame, int responseId)
+// Returns -2 if there was a read error
+int receiveNotIMessage(frame_t *frame, int responseId, int timeout)
 {
     u_int8_t c;
     receive_state_t state = INIT;
@@ -269,18 +279,15 @@ int receiveNotIMessage(frame_t *frame, int responseId)
         int bytesRead = read(application.fd, &c, 1);
         if (bytesRead < 0) {
             perror("read error");
-            return -3;
-        }
-        else if (bytesRead == 0) {
-            curTime = time(NULL);
-            time_t seconds = curTime - initTime;
-            if (seconds >= TIMEOUT) {
-                printf("Read Timeout!\n");
-                return -1;
-            }
+            return -2;
         }
         else if (bytesRead > 0) {
             initTime = time(NULL);
+        }
+        curTime = time(NULL);
+        time_t seconds = curTime - initTime;
+        if (seconds >= timeout) {
+            return -1;
         }
 
         switch (state) {
@@ -322,8 +329,7 @@ int receiveNotIMessage(frame_t *frame, int responseId)
                 else if (c == FLAG)
                     state = RCV_FLAG;
                 else {
-                    printf("BCC1 not correct\n");
-                    return -2;
+                    state = INIT;
                 }
                 break;
             case RCV_BCC1:
@@ -369,15 +375,12 @@ int sendIFrame(frame_t *frame) {
         if ((sentBytes = write(application.fd, frame->bytes, frame->size)) == -1) return -1;                  
         printf("%d bytes sent\n", sentBytes);
 
-        int receiveReturn = receiveNotIMessage(&responseFrame, (frame->infoId + 1) % 2);
+        int receiveReturn = receiveNotIMessage(&responseFrame, (frame->infoId + 1) % 2, 2);
 
         if (receiveReturn == -1) {
             printf("Timeout reading response, trying again...\n");
         }
         else if (receiveReturn == -2) {
-            printf("Received a response with wrong bcc, trying again...\n");
-        }
-        else if (receiveReturn == -3) {
             printf("There was a reading error while reading response, trying again...\n");
         }
         else if (receiveReturn == 0) {

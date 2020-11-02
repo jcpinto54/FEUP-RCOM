@@ -67,12 +67,12 @@ int main(int argc, char *argv[])
 
     switch (application.status) {
         case TRANSMITTER:;
-            llwrite(application.fd, "ola}o", 5);
+            llwrite(application.fd, "ola eu sou o joao", 17);
         break;
         case RECEIVER:;
             char *received;
             llread(application.fd, &received);
-            printf("RESULT: %s\n", received);
+            printf("Data Received: %s\n", received);
         break;
     }
 
