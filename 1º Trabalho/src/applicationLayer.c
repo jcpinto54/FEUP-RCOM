@@ -134,14 +134,11 @@ void * parseDataPacket(char * dataArray, char * bytes){
 }
 
 int receiveFile(){
-<<<<<<< HEAD
-=======
     FILE *fd;
     int error = 0;
 
     char* receive, filename, bytes;
     int fileSize, controlStatus;
->>>>>>> 7c4105c50956179a6e9fe8bfa0251032e42787ea
 
     if(llread(app.fd, &receive) < 0){
         perror("Error receiving start control packet in applicationLayer.c ...");
