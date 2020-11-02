@@ -142,14 +142,14 @@ int receiveFile(){
     int error = 0;
 
     char* receive, filename, bytes;
-    int fileSize;
+    int fileSize, controlStatus;
 
     if(llread(app.fd, &receive) < 0){
         perror("Error receiving start control packet in applicationLayer.c ...");
         return -1;
     }
 
-    fileSize = parseControlPacket(receive, filename);
+    controlStatus = parseControlPacket(receive, &fileSize, filename);
 
     fd = fopen(filename, "w");
 
