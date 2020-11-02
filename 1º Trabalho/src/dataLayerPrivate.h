@@ -30,11 +30,12 @@ void buildUAFrame(frame_t * frame, bool transmitterToReceiver);
 bool isUAFrame(frame_t *frame);
 void buildDISCFrame(frame_t * frame, bool transmitterToReceiver);
 bool isDISCFrame(frame_t *frame);
-void auxStuffing(frame_t * frame, int * stuffingCounter, char *data);
+void stuffFrame(frame_t * frame);
+void destuffFrame(frame_t *frame);
+
 int prepareI(char* data, int size, frame_t*** infoNew);
 void prepareResponse(frame_t *frame, bool valid, int id);
 
 void prepareToReceive(frame_t *frame, size_t size);
-
 void printFrame(frame_t *frame);
 

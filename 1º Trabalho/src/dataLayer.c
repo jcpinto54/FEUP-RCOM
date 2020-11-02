@@ -12,6 +12,8 @@
 extern applicationLayer application;
 
 extern int idFrameSent;
+extern frame_t *lastFrameReceived;
+
 
 int llopen(char *port, int appStatus)
 {
@@ -116,7 +118,7 @@ int llclose(int fd) {
             }
         break;
         case RECEIVER:;
-            while (1) {
+            for (int i = 0; i < MAX_READ_ATTEMPTS; i++) {
                 prepareToReceive(&receiveFrame, 5);
                 int receiveReturn = receiveNotIMessage(&receiveFrame, RESPONSE_WITHOUT_ID);
                 if (receiveReturn == -1) continue;
@@ -139,33 +141,55 @@ int llclose(int fd) {
     return 1;
 }
 
+
 int llread(int fd, char ** buffer){
     frame_t frame, response;
     int receiveIMessageReturn, bufferLength = MAX_FRAME_DATA_LENGTH;
     *buffer = (char *)malloc(MAX_FRAME_DATA_LENGTH);
     do {
         receiveIMessageReturn = receiveIMessage(&frame);
-        if (receiveIMessageReturn < -1 || receiveIMessageReturn > 1) {
+        if (receiveIMessageReturn < -4 || receiveIMessageReturn > 3) {
             printf("receiveIMessage returned unexpected value\n");
             return -1;
         }
         
-        if (receiveIMessageReturn == 0 || receiveIMessageReturn == 1) {
-            prepareResponse(&response, true, ((frame.bytes[2] >> 6) + 1) % 2);
+        if (receiveIMessageReturn >= 0 && receiveIMessageReturn <= 3) {
+            prepareResponse(&response, true, (frame.infoId + 1) % 2);
+            printf("Sent RR frame to the transmitter\n");
         }
-        else if (receiveIMessageReturn == -1)
-            prepareResponse(&response, false, ((frame.bytes[2] >> 6) + 1) % 2);
-
-        if (sendNotIFrame(&response) == -1) {
-            return -1;
+        else if (receiveIMessageReturn == -2 && receiveIMessageReturn == -3) {
+            if (frame.infoId == lastFrameReceived->infoId) {
+                prepareResponse(&response, true, (frame.infoId + 1) % 2);
+                printf("Read a duplicate frame\nSent RR frame to the transmitter\n");
+            }
+            else { 
+                prepareResponse(&response, false, (frame.infoId + 1) % 2);
+                printf("Sent REJ frame to the transmitter\n");
+            }
         }
-        memcpy(*buffer + bufferLength - MAX_FRAME_DATA_LENGTH, frame.bytes + 5, frame.bytes[4]);        
+        if (receiveIMessageReturn != -1 || receiveIMessageReturn != -4) {
+            if (sendNotIFrame(&response) == -1) return -1;
+        }
+        
+        if (receiveIMessageReturn == 0 || receiveIMessageReturn == 1)
+            memcpy(*buffer + bufferLength - MAX_FRAME_DATA_LENGTH, frame.bytes + 5, frame.bytes[4]);        
 
         if (receiveIMessageReturn == 1) {
             *buffer = (char *)realloc(*buffer, bufferLength);
             bufferLength += MAX_FRAME_DATA_LENGTH;
         }
-    } while (receiveIMessageReturn != 0);
+
+
+        if (receiveIMessageReturn == -4) {
+            printf("Serial Port couldn't be read. Exiting llread...\n");
+            return -1;
+        }
+        else if (receiveIMessageReturn == -1)
+            printf("No action was done\n");
+
+
+
+    } while (receiveIMessageReturn != 0 && receiveIMessageReturn != 2);
 
     return 0;
 }
