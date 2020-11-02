@@ -38,6 +38,7 @@ int sendFile(char * filename){
             perror("Error transmitting data packet in applicationLayer.c ...");
             return -1;
         }
+        number++;
     }
 
     packet = createControlPacket(END, fileSize, filename);
@@ -93,7 +94,7 @@ packet_t * createDataPacket(char * string, int number, size_t size){
     }
 }
 
-int parseDataPacket(packet_t * dataPacket){
+char* parseDataPacket(char* dataPacket){
 
 }
 
@@ -104,7 +105,14 @@ int receiveFile(char* filename){
 
     char* receive;
 
-    llread(&receive);
+    if(llread(&receive) < 0){
+        perror("Error receiving start control packet in applicationLayer.c ...");
+        return -1;
+    }
+
+    parseControlPacket(receive);
+
+    while()
 
 
 }
