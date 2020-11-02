@@ -11,7 +11,7 @@
 #include "applicationLayer.h"
 #include "dataLayer.h"
 
-extern applicationLayer application;
+extern application application;
 
 
 int sendFile(char * filename){

@@ -7,11 +7,6 @@ typedef struct {
     int infoId;
 } frame_t;
 
-typedef struct {
-    int fd; // serial port
-    int status; // TRANSMITTER | RECEIVER
-    char port[11];
-} applicationLayer;
 
 
 int llopen(char *port, int appStatus);

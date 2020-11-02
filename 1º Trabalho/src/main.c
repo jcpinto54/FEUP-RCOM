@@ -6,15 +6,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "applicationLayer.h"
 #include "dataLayer.h"
 #include "macros.h"
 #include "utils.h"
 
 // // TEST PREPAREI
-#include "dataLayerPrivate.h"
+// #include "dataLayerPrivate.h"
 
-
-applicationLayer application;
+application app;
 
 int main(int argc, char *argv[])
 {
@@ -25,36 +25,34 @@ int main(int argc, char *argv[])
         exit(1);
     }
     
-    if (strcmp("-s", argv[1])== 0) application.status = TRANSMITTER;
-    else if (strcmp("-r", argv[1])== 0) application.status = RECEIVER;
+    if (strcmp("-s", argv[1])== 0) app.status = TRANSMITTER;
+    else if (strcmp("-r", argv[1])== 0) app.status = RECEIVER;
     
-    if (application.status == TRANSMITTER) strcpy(application.port, SERIAL_PORT_1);
-    else if (application.status == RECEIVER) strcpy(application.port, SERIAL_PORT_2);
+    if (app.status == TRANSMITTER) strcpy(app.port, SERIAL_PORT_1);
+    else if (app.status == RECEIVER) strcpy(app.port, SERIAL_PORT_2);
 
 
-
-    // TEST DATA LAYER
-    if (llopen(application.port, application.status) < 0) {
+    if ((app.fd = llopen(app.port, app.status)) < 0) {
         printf("error in llopen\n"); 
-        clearSerialPort(application.port);
+        clearSerialPort(app.port);
         exit(1);
     }
 
-    switch (application.status) {
+    switch (app.status) {
         case TRANSMITTER:;
-            llwrite(application.fd, "ola eu sou o joao", 17);
+            llwrite(app.fd, "ola eu sou o joao", 17);
         break;
         case RECEIVER:;
             char *received;
-            llread(application.fd, &received);
+            llread(app.fd, &received);
             printf("Data Received: %s\n", received);
         break;
     }
 
-    int llcloseReturn = llclose(application.fd);
+    int llcloseReturn = llclose(app.fd);
     if (llcloseReturn < 0) {
         printf("error in llclose\n"); 
-        clearSerialPort(application.port);
+        clearSerialPort(app.port);
         exit(1);
     }
 

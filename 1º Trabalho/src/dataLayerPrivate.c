@@ -11,7 +11,6 @@
 #include "dataLayerPrivate.h"
 #include "macros.h"
 #include "utils.h"
-extern applicationLayer application;
 
 int idFrameSent = 0;
 int lastFrameReceivedId = -1;
@@ -142,14 +141,14 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
 // Returns 1 if there are more frames to be read 
 // Returns 2 if received a repeated frame and there are no more frames to be read
 // Returns 3 if received a repeated frame and there are more frames to be read
-int receiveIMessage(frame_t *frame, int timeout){
+int receiveIMessage(frame_t *frame, int fd, int timeout){
     u_int8_t c;
     receive_state_t state = INIT;
     int dataCounter = -1, returnValue = 0;
     time_t initTime, curTime;
     initTime = time(NULL);
     do {
-        int bytesRead = read(application.fd, &c, 1);
+        int bytesRead = read(fd, &c, 1);
         if (bytesRead < 0) {
             perror("read error");
             return -4;
@@ -269,14 +268,14 @@ int receiveIMessage(frame_t *frame, int timeout){
 // Returns 2 if received REJ ok
 // Returns -1 if there was a timeout
 // Returns -2 if there was a read error
-int receiveNotIMessage(frame_t *frame, int responseId, int timeout)
+int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
 {
     u_int8_t c;
     receive_state_t state = INIT;
     time_t initTime, curTime;
     initTime = time(NULL);
     do {
-        int bytesRead = read(application.fd, &c, 1);
+        int bytesRead = read(fd, &c, 1);
         if (bytesRead < 0) {
             perror("read error");
             return -2;
@@ -355,15 +354,15 @@ int receiveNotIMessage(frame_t *frame, int responseId, int timeout)
 }
 
 // Returns -1 if timeout, 0 if ok 
-int sendNotIFrame(frame_t *frame) {
-    int writeReturn = write(application.fd, frame->bytes, frame->size);
+int sendNotIFrame(frame_t *frame, int fd) {
+    int writeReturn = write(fd, frame->bytes, frame->size);
     if (writeReturn == -1) return -1; 
     return 0;
 }
 
 // Returns -1 if max write attempts were reached
 // Returns 0 if ok
-int sendIFrame(frame_t *frame) {
+int sendIFrame(frame_t *frame, int fd) {
     int attempts = 0, sentBytes = 0;
     frame_t responseFrame;
     while (1) {
@@ -372,10 +371,10 @@ int sendIFrame(frame_t *frame) {
             printf("Too many write attempts\n");
             return -1;
         }
-        if ((sentBytes = write(application.fd, frame->bytes, frame->size)) == -1) return -1;                  
+        if ((sentBytes = write(fd, frame->bytes, frame->size)) == -1) return -1;                  
         printf("%d bytes sent\n", sentBytes);
 
-        int receiveReturn = receiveNotIMessage(&responseFrame, (frame->infoId + 1) % 2, 2);
+        int receiveReturn = receiveNotIMessage(&responseFrame, fd, (frame->infoId + 1) % 2, 2);
 
         if (receiveReturn == -1) {
             printf("Timeout reading response, trying again...\n");

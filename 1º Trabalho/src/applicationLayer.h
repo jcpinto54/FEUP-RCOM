@@ -2,6 +2,13 @@
 #include "macros.h"
 
 typedef struct {
+    int fd; // serial port
+    int status;
+    char port[11];
+} application;
+
+
+typedef struct {
     u_int8_t bytes[MAX_FRAME_SIZE];
     size_t size;
 } packet_t;
