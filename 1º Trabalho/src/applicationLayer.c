@@ -15,7 +15,6 @@ extern application application;
 
 
 int sendFile(char * filename){
-  
     packet_t *packet;
     FILE *fd;
     char buffer[MAX_DATA_PACKET_DATA_LENGTH];
@@ -49,11 +48,7 @@ int sendFile(char * filename){
     }
 
     fclose(fd);
-
     return 0;
-
-    //TODO dividir a file data em pacotes de tamanho igual ao MAX_DATA_PACKET_LENGTH
-    //criar um packet para cada fragmento de dados chamando createDataPacket
 }
 
 
@@ -68,6 +63,7 @@ packet_t * createControlPacket(u_int8_t type, int size, char * filename){
     }
     i = 3 + i;
 
+    packet->bytes[i++] = FILESIZE;
 
     u_int8_t byte = (size & BYTE_MASK); //LSB
     packet->bytes[i++] = byte;
@@ -79,24 +75,11 @@ packet_t * createControlPacket(u_int8_t type, int size, char * filename){
     packet->bytes[i++] = byte;
 
     byte = size & (BYTE_MASK << 8); //MSB
-    packet->bytes[i] = byte;
+    packet->bytes[i++] = byte;
 
+    packet->bytes[i] = size;
 
     return packet;
-    /*int numOfDigits = log10(size) + 1; 
-    char* arr = calloc(numOfDigits, sizeof(char));
-    for(int x = 0 ; x< numOfDigits; x++, size/=10) 
-    { 
-	    arr[x] = size % 10; 
-    }
-
-    packet->bytes[++i] = FILESIZE;
-    packet->bytes[++i] = strlen(arr) + 1;
-    int bytelocation = i;
-    for(; i < packet->bytes[bytelocation] ; i++){
-        packet->bytes[bytelocation + i] = arr[i];
-    }*/
-
 }
 
 int parseControlPacket(packet_t* controlPacket){
