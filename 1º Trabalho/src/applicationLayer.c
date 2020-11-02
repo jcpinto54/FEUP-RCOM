@@ -78,7 +78,7 @@ packet_t * createControlPacket(u_int8_t type, int size, char * filename){
 }
 
 int parseControlPacket(packet_t* controlPacket){
-
+    return controlPacket->bytes;
 }
 
 packet_t * createDataPacket(char * string, int number, size_t size){
@@ -93,25 +93,34 @@ packet_t * createDataPacket(char * string, int number, size_t size){
     }
 }
 
-char* parseDataPacket(packet_t* dataPacket){
-
+char* parseDataPacket(char * dataArray){
+    char * bytes;
+    memcpy( bytes, &dataArray[3], (dataArray[3]*256 + dataArray[2]) * sizeof(*dataArray));
+    return bytes;
 }
 
 int receiveFile(char* filename){
     FILE *fd;
 
-    fd = fopen(filename, "w");
+    int error = 0;
 
     char* receive;
 
-    if(llread(&receive) < 0){
+    if(llread(app.fd, &receive) < 0){
         perror("Error receiving start control packet in applicationLayer.c ...");
         return -1;
     }
 
     parseControlPacket(receive);
 
-    while()
+    fd = fopen(filename, "w");
 
+    while((error = llread(app.fd, &receive)) != EOF){
+        if(error < 0){
+            perror("Error receiving data packet in applicationLayer.c ...");
+            return -1;
+        }
+        parseDataPacket(receive);
+    }
 
 }
