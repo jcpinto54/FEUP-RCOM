@@ -19,7 +19,7 @@ int sendFile(char * filename){
     packet_t *packet;
     FILE *fd;
     char buffer[MAX_DATA_PACKET_DATA_LENGTH];
-    int size = 0;
+    int size = 0, number = 0;
     fd = fopen(filename, "r");
 
     fseek(fd, 0L, SEEK_END);
@@ -34,7 +34,7 @@ int sendFile(char * filename){
     }
 
     while((size = read(fd,buffer,MAX_DATA_PACKET_DATA_LENGTH))!=EOF){
-        packet = createDataPacket(buffer,size);
+        packet = createDataPacket(buffer, (number % 256), size);
         if(llwrite(application.fd, packet->bytes, packet->size) < 0){
             perror("Error transmitting data packet in applicationLayer.c ...");
             return -1;
@@ -100,14 +100,14 @@ packet_t * createControlPacket(u_int8_t type, int size, char * filename){
 }
 
 int parseControlPacket(packet_t* controlPacket){
-    
+
 }
 
-packet_t * createDataPacket(char * string, size_t size){
+packet_t * createDataPacket(char * string, int number, size_t size){
     packet_t *packet;
     packet->size = size + 4;
     packet->bytes[0] = DATA;
-    packet->bytes[1] = 1;
+    packet->bytes[1] = number;
     packet->bytes[2] = (int) (size / 256);
     packet->bytes[3] = size % 256;
     for(int i = 0; i < size ; i++){
