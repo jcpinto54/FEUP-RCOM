@@ -5,7 +5,7 @@ typedef struct {
     int fd; // serial port
     int status;
     char port[20];
-    char filename[512];
+    char filename[MAX_FILENAME_LENGTH];
 } application;
 
 
@@ -22,4 +22,5 @@ packet_t * createControlPacket(u_int8_t type, int size, char * filename);
 void * parseDataPacket(char * dataPacket, char * bytes);
 int parseControlPacket(char* controlPacket, int* fileSize, char* filename);
 int receiveFile();
+void printPacket(packet_t *packet);
 

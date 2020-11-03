@@ -40,7 +40,7 @@ void appRun() {
 int sendFile(char * filename){
     packet_t *packet;
     FILE *fd;
-    char buffer[MAX_DATA_PACKET_DATA_LENGTH];
+    char buffer[MAX_PACKET_DATA_LENGTH];
     int size = 0, number = 0;
     fd = fopen(filename, "r");
 
@@ -55,7 +55,7 @@ int sendFile(char * filename){
         return -1;
     }
 
-    while((size = read(fd,buffer,MAX_DATA_PACKET_DATA_LENGTH))!=EOF){
+    while((size = read(fd,buffer,MAX_PACKET_DATA_LENGTH))!=EOF){
         packet = createDataPacket(buffer, (number % 256), size);
         if(llwrite(app.fd, packet->bytes, packet->size) < 0){
             perror("Error transmitting data packet in applicationLayer.c ...");
