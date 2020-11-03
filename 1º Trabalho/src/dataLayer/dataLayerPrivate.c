@@ -177,7 +177,6 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 }
                 break;
             case RCV_FLAG:
-                printf("byte: %x   -   state: %d\n", c, state);
                 if (c == TRANSMITTER_TO_RECEIVER || c == RECEIVER_TO_TRANSMITTER) {
                     state = RCV_A;
                     frame->bytes[1] = c;
