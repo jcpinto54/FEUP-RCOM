@@ -239,7 +239,7 @@ int llwrite(int fd, char * buffer, int length)
 
     printf("DATA - Divided the data in %d frames. Sending all frames...\n", framesToSend);
     for (int i = 0; i < framesToSend; i++) {
-        printFrame(info[i])
+        printFrame(info[i]);
         if (sendIFrame(info[i], fd) == -1) return -1;
     }
     return 0;
