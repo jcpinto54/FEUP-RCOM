@@ -155,18 +155,19 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
     initTime = time(NULL);
     do {
         int bytesRead = read(fd, &c, 1);
+        printf("vyte: %x   -   state: %d\n");
         if (bytesRead < 0) {
             perror("read error");
             return -4;
         }
-        else if (bytesRead > 0) {
-            initTime = time(NULL);
-        }
-        curTime = time(NULL);
-        time_t seconds = curTime - initTime;
-        if (seconds >= timeout) {
-            return -5;
-        }
+        // else if (bytesRead > 0) {
+        //     initTime = time(NULL);
+        // }
+        // curTime = time(NULL);
+        // time_t seconds = curTime - initTime;
+        // if (seconds >= timeout) {
+        //     return -5;
+        // }
         
         switch (state) {
             case INIT:
@@ -260,6 +261,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 break;
             case COMPLETE: break;
         }
+        sleep(1);
     } while (state != COMPLETE && returnValue == 0);
     if (lastFrameReceivedId != -1 && lastFrameReceivedId == frame->infoId && returnValue == 0) {
         printf("DATA - Read a duplicate frame\n");
@@ -289,18 +291,19 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
     initTime = time(NULL);
     do {
         int bytesRead = read(fd, &c, 1);
+        printf("vyte: %x   -   state: %d\n");
         if (bytesRead < 0) {
             perror("read error");
             return -2;
         }
-        else if (bytesRead > 0) {
-            initTime = time(NULL);
-        }
-        curTime = time(NULL);
-        time_t seconds = curTime - initTime;
-        if (seconds >= timeout) {
-            return -1;
-        }
+        // else if (bytesRead > 0) {
+        //     initTime = time(NULL);
+        // }
+        // curTime = time(NULL);
+        // time_t seconds = curTime - initTime;
+        // if (seconds >= timeout) {
+        //     return -1;
+        // }
 
         switch (state) {
             case INIT:
@@ -360,6 +363,7 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
                 state = INIT;
                 break;
         }
+        sleep(1);
     } while (state != COMPLETE);
     frame->size = 5;
     int returnValue = 0;
