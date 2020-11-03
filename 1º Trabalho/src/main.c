@@ -15,7 +15,7 @@ application app;
 
 int main(int argc, char *argv[])
 {
-
+    system("umask 0077");
     if (argc == 2) {
         if ((strcmp("-r", argv[1]) != 0)) {
             printf("Receiver usage: %s -r\nTransmitter usage: %s -s <filename>\n", argv[0], argv[0]);

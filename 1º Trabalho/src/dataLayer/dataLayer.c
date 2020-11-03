@@ -57,7 +57,7 @@ int llopen(char *port, int appStatus)
         case TRANSMITTER:;
             for (int i = 0;; i++) {
                 if (i == MAX_FRAME_RETRANSMISSIONS) {
-                    printf("Max Number of retransmissions reached. Exiting program.\n");
+                    printf("DATA - Max Number of retransmissions reached. Exiting program.\n");
                     return -1;
                 }
 
@@ -83,7 +83,7 @@ int llopen(char *port, int appStatus)
             
             break;
     }
-    printf("Opened serial port connection\n");
+    printf("DATA - Opened serial port connection\n");
     return fd;
 }
 
@@ -98,7 +98,7 @@ int llclose(int fd) {
         case TRANSMITTER:;
             for (int i = 0;; i++) {
                 if (i == MAX_FRAME_RETRANSMISSIONS) {
-                    printf("Max Number of retransmissions reached. Exiting program.\n");
+                    printf("DATA - Max Number of retransmissions reached. Exiting program.\n");
                     return -1;
                 }
 
@@ -137,7 +137,7 @@ int llclose(int fd) {
         break;
     }
     if (close(fd) == -1) return -8;
-    printf("Closed serial port connection\n");
+    printf("DATA - Closed serial port connection\n");
     return 1;
 }
 
@@ -150,29 +150,29 @@ int llread(int fd, char ** buffer){
         receiveIMessageReturn = receiveIMessage(&frame, fd, 3);
         
         if (receiveIMessageReturn == -5) {
-            printf("Read timeout. Exiting llread...\n");
+            printf("DATA - Read timeout. Exiting llread...\n");
             return -1;
         }
         
         if (receiveIMessageReturn < -5 || receiveIMessageReturn > 3) {
-            printf("receiveIMessage returned unexpected value\n");
+            printf("DATA - receiveIMessage returned unexpected value\n");
             return -1;
         }
         
         if (receiveIMessageReturn >= 0 && receiveIMessageReturn <= 3) {
             prepareResponse(&response, true, (frame.infoId + 1) % 2);
-            printf("Sent RR frame to the transmitter\n");
+            printf("DATA - Sent RR frame to the transmitter\n");
             sameReadAttempts = 0;
         }
         else if (receiveIMessageReturn == -2 || receiveIMessageReturn == -3) {
             if (lastFrameReceivedId != -1 && frame.infoId == lastFrameReceivedId) {
                 prepareResponse(&response, true, (frame.infoId + 1) % 2);
-                printf("Read a duplicate frame\nSent RR frame to the transmitter\n");
+                printf("DATA - Read a duplicate frame\nSent RR frame to the transmitter\n");
                 sameReadAttempts = 0;
             }
             else { 
                 prepareResponse(&response, false, (frame.infoId + 1) % 2);
-                printf("Sent REJ frame to the transmitter\n");
+                printf("DATA - Sent REJ frame to the transmitter\n");
                 sameReadAttempts++;
             }
         }
@@ -191,16 +191,16 @@ int llread(int fd, char ** buffer){
 
 
         if (receiveIMessageReturn == -4) {
-            printf("Serial Port couldn't be read. Exiting llread...\n");
+            printf("DATA - Serial Port couldn't be read. Exiting llread...\n");
             return -1;
         }
         else if (receiveIMessageReturn == -1)
-            printf("No action was done\n");
+            printf("DATA - No action was done\n");
 
     } while (receiveIMessageReturn != 0 && receiveIMessageReturn != 2 && sameReadAttempts < MAX_READ_ATTEMPTS);
 
     if (sameReadAttempts == MAX_READ_ATTEMPTS) {
-        printf("Max read attempts of the same frame reached.\n");
+        printf("DATA - Max read attempts of the same frame reached.\n");
         return -1;
     }
 
@@ -211,7 +211,7 @@ int llwrite(int fd, char * buffer, int length)
 {
     frame_t **info = NULL;
     int framesToSend = prepareI(buffer, length, &info); //Prepara a trama de informação
-    printf("Divided the data in %d frames. Sending all frames...\n", framesToSend);
+    printf("DATA - Divided the data in %d frames. Sending all frames...\n", framesToSend);
     for (int i = 0; i < framesToSend; i++) {
         if (sendIFrame(info[i], fd) == -1) return -1;
     }
@@ -226,7 +226,7 @@ int clearSerialPort(char *port) {
         return 1;
     }
     char c;
-    while (read(auxFd, &c, 1) != 0) printf("byte cleared: %x\n", c);
+    while (read(auxFd, &c, 1) != 0) printf("DATA - byte cleared: %x\n", c);
     if (close(auxFd) == -1) return 2;
     return 0;
 }

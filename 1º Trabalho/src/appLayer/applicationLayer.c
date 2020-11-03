@@ -39,26 +39,31 @@ void appRun() {
 
 int sendFile(char * filename){
     packet_t *packet;
-    FILE *fd;
-    char buffer[MAX_PACKET_DATA_LENGTH];
-    int size = 0, number = 0;
-    fd = fopen(filename, "r");
+    int fileFd;
 
-    fseek(fd, 0L, SEEK_END);
-    int fileSize = ftell(fd);
-    fseek(fd, 0L, SEEK_SET);
+    fileFd = open(filename, O_RDONLY | O_NONBLOCK);
+    if (fileFd == -1) {
+        perror("file not opened correctly");
+        return -1;
+    }
+
+    struct stat st;
+    stat(filename, &st);
+    unsigned fileSize = st.st_size;
 
     packet = createControlPacket(START, fileSize, filename);
 
     if(llwrite(app.fd, (char *)packet->bytes, packet->size) < 0){
-        printf("Error transmitting start control packet in applicationLayer.c ...\n");
+        printf("APP - Error transmitting start control packet in applicationLayer.c ...\n");
         return -1;
     }
 
-    while((size = fread(buffer, sizeof(u_int8_t), MAX_PACKET_DATA_LENGTH, fd))!=EOF){
+    int size = 0, number = 0;
+    u_int8_t buffer[MAX_PACKET_DATA_LENGTH];
+    while((size = read(fileFd, (char *)buffer, MAX_PACKET_DATA_LENGTH)) > 0){
         packet = createDataPacket(buffer, (number % 256), size);
         if(llwrite(app.fd, (char *)packet->bytes, packet->size) < 0){
-            printf("Error transmitting data packet in applicationLayer.c ...\n");
+            printf("APP - Error transmitting data packet in applicationLayer.c ...\n");
             return -1;
         }
         number++;
@@ -67,47 +72,42 @@ int sendFile(char * filename){
     packet = createControlPacket(END, fileSize, filename);
 
     if(llwrite(app.fd, (char *)packet->bytes, packet->size) < 0){
-        printf("Error transmitting end control packet in applicationLayer.c ...\n");
+        printf("APP - Error transmitting end control packet in applicationLayer.c ...\n");
         return -1;
     }
 
-    fclose(fd);
+    close(fileFd);
     return 0;
 }
 
 
-packet_t * createControlPacket(u_int8_t type, int size, char * filename){
+packet_t * createControlPacket(u_int8_t type, unsigned size, char * filename){
     packet_t * packet = (packet_t *)malloc(sizeof(packet_t));
     packet->bytes[0] = type;
     
     packet->bytes[1] = FILESIZE;
     packet->bytes[2] = 4;
-    u_int8_t byte = (size & ((u_int8_t)BYTE_MASK << 24)) >> 24; //MSB
-    packet->bytes[3] = byte;
-    byte = (size & ((u_int8_t)BYTE_MASK << 16)) >> 16;
-    packet->bytes[4] = byte;
-    byte = (size & ((u_int8_t)BYTE_MASK << 8)) >> 8;
-    packet->bytes[5] = byte;
-    byte = size & ((u_int8_t)BYTE_MASK); //LSB
-    packet->bytes[6] = byte;
+    packet->bytes[3] = (u_int8_t)(size >> 24);
+    packet->bytes[4] = (u_int8_t)(size >> 16);
+    packet->bytes[5] = (u_int8_t)(size >> 8);
+    packet->bytes[6] = (u_int8_t)size; //LSB
 
     packet->bytes[7] = FILENAME;
-    packet->bytes[8] = strlen(filename);         
+    packet->bytes[8] = strlen(filename) + 1;         // got to have +1
     for(int i = 0; i < packet->bytes[8] ; i++){
         packet->bytes[9 + i] = filename[i];
     }
     packet->size = 8 + packet->bytes[8];
+
     return packet;
 }
 
-int parseControlPacket(char* controlPacket, int* fileSize, char* filename){
+int parseControlPacket(u_int8_t* controlPacket, unsigned* fileSize, char* filename){
     int controlStatus = controlPacket[0];
-    printf("controlStatus: %x\n", controlStatus);
     if(controlStatus != START && controlStatus != END){
-        printf("Unknown control packet status: not START nor END!\n");
+        printf("APP - Unknown control packet status: %d - not START nor END!\n" , controlStatus);
         return -1;
     }
-
 
     *fileSize = controlPacket[3] << 24 | controlPacket[4] << 16 | controlPacket[5] << 8 | controlPacket[6];
     u_int8_t stringSize = controlPacket[8];
@@ -118,7 +118,7 @@ int parseControlPacket(char* controlPacket, int* fileSize, char* filename){
     return controlStatus;
 }
 
-packet_t * createDataPacket(char * string, int number, size_t size){
+packet_t * createDataPacket(u_int8_t * string, int number, size_t size){
     packet_t *packet = (packet_t *)malloc(sizeof(packet_t));
     packet->size = size + 4;
     packet->bytes[0] = DATA;
@@ -132,65 +132,68 @@ packet_t * createDataPacket(char * string, int number, size_t size){
     return packet;
 }
 
-void * parseDataPacket(char * dataArray, char * bytes){
-    return memcpy( bytes, &dataArray[3], (dataArray[3]*256 + dataArray[2]) * sizeof(*dataArray));
+int parseDataPacket(u_int8_t * packetArray, u_int8_t ** bytes) {
+    int packetDataSize = packetArray[2]*256 + packetArray[3];
+    *bytes = (u_int8_t *)malloc(packetDataSize);
+    memcpy(*bytes, packetArray + 4, packetDataSize);
+    return packetDataSize;
 }
 
 int receiveFile(){
-    FILE *fd;
 
-    char* receive, *filename, *bytes;
-    int fileSize, controlStatus;
-
+    char* receive;
     if(llread(app.fd, &receive) < 0){
-        printf("Error receiving start control packet in applicationLayer.c ...\n");
+        printf("APP - Error receiving start control packet in applicationLayer.c ...\n");
         return -1;
     }
 
-    filename = (char *)malloc(MAX_FILENAME_LENGTH);
-    controlStatus = parseControlPacket(receive, &fileSize, filename);  // fileSize is returning negative numbers
-
-    printf("fileSize: %d   -  conta de merda: %d  -  fileName: %s\n", fileSize, ceiling(1.0/(MAX_PACKET_DATA_LENGTH/(float)fileSize)), filename);
-    // for (int i = 0; )
+    unsigned fileSize;
+    int controlStatus;
+    char filename[MAX_FILENAME_LENGTH];
+    controlStatus = parseControlPacket((u_int8_t *)receive, &fileSize, filename);  // fileSize is returning negative numbers
 
     if(controlStatus != START){
-        printf("Error receiving start control packet in applicationLayer.c ...\n");
+        printf("APP - Error receiving start control packet in applicationLayer.c ...\n");
         return -1;
     }
 
-    strcpy(filename, "output");
-    fd = fopen(filename, "w");
+    // strcpy(filename, "output.gif");    // comment to test in the same pc 
+    
+    int fileFd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXG | S_IRWXU | S_IRWXO);
+    if (fileFd == -1) {
+        perror("file not opened correctly");
+        return -1;
+    }
 
+    u_int8_t *bytes;
     for(int i = 0 ; i < (fileSize / MAX_PACKET_DATA_LENGTH) + 1 ; i++){
         if(llread(app.fd, &receive) < 0){
-            printf("Error receiving data packet in applicationLayer.c ...\n");
+            printf("APP - Error receiving data packet in applicationLayer.c ...\n");
             return -1;
         }
-        bytes = (char *)malloc((receive[3]*256 + receive[2]));
-        parseDataPacket(receive, bytes);
+        int packetDataSize = parseDataPacket((u_int8_t *)receive, &bytes);
         
-        if(fwrite(bytes, sizeof(u_int8_t), strlen(bytes), fd) != strlen(bytes)){
-            perror("Error writing to file ...");
+        if(write(fileFd, bytes, packetDataSize) < 0){
+            perror("APP - Error writing to file ...\n");
             return -1;
         }
+        free(bytes);
+        free(receive);
     }
 
     if(llread(app.fd, &receive) < 0){
-        printf("Error receiving end control packet in applicationLayer.c ...\n");
+        printf("APP - Error receiving end control packet in applicationLayer.c ...\n");
         return -1;
     }
 
-    controlStatus = parseControlPacket(receive, &fileSize, filename);
+    controlStatus = parseControlPacket((u_int8_t *)receive, &fileSize, filename);
 
     if(controlStatus != END){
-        printf("Error receiving end control packet in applicationLayer.c ...\n");
+        printf("APP - Error receiving end control packet in applicationLayer.c ...\n");
         return -1;
     }
 
-    fclose(fd);
-    free(receive);
-    free(filename);
-    free(bytes);
+    close(fileFd);
     return 0;
 
 }

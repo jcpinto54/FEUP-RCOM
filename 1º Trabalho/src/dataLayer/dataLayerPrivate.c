@@ -203,13 +203,13 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 }
                 break;
             case RCV_BCC1:     
-                if (dataCounter == -1 && c > 0 && c <= MAX_FRAME_DATA_LENGTH) {
+                if (dataCounter == -1 && c > 0 && c <= MAX_FRAME_DATA_LENGTH * 2) {    // *2 because of possibility of byte stuffing in every byte
                     frame->bytes[4] = c;
                     dataCounter++;
                     continue;
                 }
-                else if (dataCounter == -1 && (c < 0 || c > MAX_FRAME_DATA_LENGTH)) {
-                    printf("First item is not a valid size value\n");
+                else if (dataCounter == -1 && (c < 0 || c > MAX_FRAME_DATA_LENGTH * 2)) {
+                    printf("DATA - First item is not a valid size value    -   frameDataSize: %d\n", c);
                     returnValue = -2;
                     break;
                 }
@@ -233,7 +233,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 else if (c == FLAG)
                     state = RCV_FLAG;
                 else {
-                    printf("BCC2 not correct\n");
+                    printf("DATA - BCC2 not correct\n");
                     returnValue = -3;
                 }
                 break;
@@ -249,7 +249,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
         }
     } while (state != COMPLETE && returnValue == 0);
     if (lastFrameReceivedId != -1 && lastFrameReceivedId == frame->infoId && returnValue == 0) {
-        printf("Read a duplicate frame\n");
+        printf("DATA - Read a duplicate frame\n");
         if (frame->bytes[4 + dataCounter + 1] == FLAG_LAST_FRAME) returnValue = 2;
         else if (frame->bytes[4 + dataCounter + 1] == FLAG_MORE_FRAMES_TO_COME) returnValue = 3;
     }
@@ -342,7 +342,7 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
             case COMPLETE:
                 break;
             default:
-                printf("Unknown state");
+                printf("DATA - Unknown state");
                 break;
         }
     } while (state != COMPLETE);
@@ -368,32 +368,32 @@ int sendIFrame(frame_t *frame, int fd) {
     while (1) {
         if(attempts >= MAX_WRITE_ATTEMPTS) 
         {
-            printf("Too many write attempts\n");
+            printf("DATA - Too many write attempts\n");
             return -1;
         }
         if ((sentBytes = write(fd, frame->bytes, frame->size)) == -1) return -1;                  
-        printf("%d bytes sent\n", sentBytes);
+        printf("DATA - %d bytes sent\n", sentBytes);
 
         int receiveReturn = receiveNotIMessage(&responseFrame, fd, (frame->infoId + 1) % 2, 2);
 
         if (receiveReturn == -1) {
-            printf("Timeout reading response, trying again...\n");
+            printf("DATA - Timeout reading response, trying again...\n");
         }
         else if (receiveReturn == -2) {
-            printf("There was a reading error while reading response, trying again...\n");
+            printf("DATA - There was a reading error while reading response, trying again...\n");
         }
         else if (receiveReturn == 0) {
-            printf("Received wrong response, trying again...\n");
+            printf("DATA - Received wrong response, trying again...\n");
         }
         else if (receiveReturn == 1) {
-            printf("Received an OK message from the receiver.\n");
+            printf("DATA - Received an OK message from the receiver.\n");
             break;
         }
         else if (receiveReturn == 2) {
-            printf("Received not OK message from the receiver, trying again...\n");
+            printf("DATA - Received not OK message from the receiver, trying again...\n");
         }
         else {
-            printf("Unexpected response frame, trying again...\n");
+            printf("DATA - Unexpected response frame, trying again...\n");
         }
         attempts++;
     }
@@ -423,7 +423,6 @@ u_int8_t bccCalculator(u_int8_t bytes[], int start, size_t length)
         {
             onesCounter += getBit(bytes[i], j);
         }
-        // printf("bccCalculator i: %d, ones: %d, byte: %x\n", i, onesCounter, bytes[i]);
     }
     return onesCounter % 2;
 }
@@ -431,7 +430,6 @@ u_int8_t bccCalculator(u_int8_t bytes[], int start, size_t length)
 // Return true if bcc verifies else otherwise 
 bool bccVerifier(u_int8_t bytes[], int start, size_t length, u_int8_t parity)
 {
-    // printf("BCC: %d\n", bccCalculator(bytes, start, length));
     if (bccCalculator(bytes, start, length) == parity)
         return true;
     return false;
