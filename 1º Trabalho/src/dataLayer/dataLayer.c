@@ -62,12 +62,14 @@ int llopen(char *port, int appStatus)
                 }
 
                 buildSETFrame(&setFrame, true);
-                if (sendNotIFrame(&setFrame, fd)) return -5;
-
+                if (sendNotIFrame(&setFrame, fd)) {
+                    perror("sendNotIFrame\n");
+                    return -5;
+                }
                 prepareToReceive(&responseFrame, 5);
                 int responseReceive = receiveNotIMessage(&responseFrame, fd, RESPONSE_WITHOUT_ID, 3); 
                 if (responseReceive == -1) continue;         // in a timeout, retransmit frame
-                else if (responseReceive < -2) return -7;
+                else if (responseReceive < -2) {perror("responseReceive\n");  return -7;}
                 if (!isUAFrame(&responseFrame)) continue;       // wrong frame received
 
                 break;
@@ -75,11 +77,12 @@ int llopen(char *port, int appStatus)
             break;
         case RECEIVER:;
             prepareToReceive(&receiverFrame, 5);
-            if (receiveNotIMessage(&receiverFrame, fd, RESPONSE_WITHOUT_ID, 3)) return -7;
-            if (!isSETFrame(&receiverFrame)) return -8;
+            int error = receiveNotIMessage(&receiverFrame, fd, RESPONSE_WITHOUT_ID, 3);
+            if (error) {printf("receiveNotIMessage returned %d\n", error); return -7;}
+            if (!isSETFrame(&receiverFrame)) {perror("isSETFrame\n"); return -8;}
 
             buildUAFrame(&uaFrame, true);
-            if (sendNotIFrame(&uaFrame, fd)) return -5;
+            if (sendNotIFrame(&uaFrame, fd)) {perror("sendNotIFrame\n"); return -5;}
             
             break;
     }
