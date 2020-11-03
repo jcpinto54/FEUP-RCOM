@@ -1,6 +1,6 @@
 #pragma once
 
-#define BAUDRATE B22200
+#define BAUDRATE 10
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 
 #define FLAG 0x7e           // F
