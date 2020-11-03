@@ -167,7 +167,7 @@ int llread(int fd, char ** buffer){
         else if (receiveIMessageReturn == -2 || receiveIMessageReturn == -3) {
             if (lastFrameReceivedId != -1 && frame.infoId == lastFrameReceivedId) {
                 prepareResponse(&response, true, (frame.infoId + 1) % 2);
-                printf("DATA - Read a duplicate frame\nSent RR frame to the transmitter\n");
+                printf("DATA - Read a duplicate frame\nDATA - Sent RR frame to the transmitter\n");
                 sameReadAttempts = 0;
             }
             else { 
@@ -176,8 +176,10 @@ int llread(int fd, char ** buffer){
                 sameReadAttempts++;
             }
         }
-        if (receiveIMessageReturn != -1 || receiveIMessageReturn != -4) {
+        if (receiveIMessageReturn >= 0) {
             lastFrameReceivedId = frame.infoId;
+        }
+        if (receiveIMessageReturn != -1 || receiveIMessageReturn != -4) {
             if (sendNotIFrame(&response, fd) == -1) return -1;
         }
         
