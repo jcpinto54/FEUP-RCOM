@@ -157,7 +157,7 @@ int receiveFile(){
         return -1;
     }
 
-    // strcpy(filename, "output.gif");    // comment to test in the same pc 
+    strcpy(filename, "output.gif");    // comment to test in the same pc 
     
     int fileFd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXG | S_IRWXU | S_IRWXO);
     if (fileFd == -1) {

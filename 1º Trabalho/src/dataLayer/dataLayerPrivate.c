@@ -117,7 +117,7 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
             info[i]->bytes[bcc2_byte_ix - 1] = FLAG_MORE_FRAMES_TO_COME;
         }
         
-        info[i]->bytes[bcc2_byte_ix] = 0;  
+        info[i]->bytes[bcc2_byte_ix] = bccCalculator(info[i]->bytes, 4, info[i]->bytes[4] + 2);  
         info[i]->bytes[bcc2_byte_ix + 1] = FLAG;
         info[i]->size = 8 + frameDataSize;
 
