@@ -416,12 +416,15 @@ void prepareResponse(frame_t *frame, bool valid, int id) {
 
 u_int8_t bccCalculator(u_int8_t bytes[], int start, size_t length)
 {
-    int bcc = bytes[start - 1];
+    int onesCounter = 0;
     for (int i = start; i < start + length; i++)
     {
-        bcc ^= bytes[i];
+        for (int j = 0; j < 8; j++)
+        {
+            onesCounter += getBit(bytes[i], j);
+        }
     }
-    return bcc;
+    return onesCounter % 2;
 }
 
 // Return true if bcc verifies else otherwise 
