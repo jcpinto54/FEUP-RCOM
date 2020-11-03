@@ -291,7 +291,7 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
     initTime = time(NULL);
     do {
         int bytesRead = read(fd, &c, 1);
-        printf("vyte: %x   -   state: %d\n");
+        printf("vyte: %x   -   state: %d\n", c, state);
         if (bytesRead < 0) {
             perror("read error");
             return -2;
