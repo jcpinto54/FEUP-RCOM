@@ -88,10 +88,15 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
         info[i] = malloc(sizeof(frame_t));
 
         info[i]->bytes[0] = FLAG; //F
+        printf("Flag: %c\n", info[i]->bytes[0]);
         info[i]->bytes[1] = TRANSMITTER_TO_RECEIVER; //A
+        printf("A: %c\n", info[i]->bytes[1]);
         info[i]->bytes[2] = idFrameSent << 6 | I;
+        printf("C: %c\n", info[i]->bytes[2]);
         info[i]->infoId = idFrameSent;
         info[i]->bytes[3] = bccCalculator(info[i]->bytes, 1, 2); //BCC1, calculado com A e C
+        printf("BCC1: %c\n", info[i]->bytes[3]);
+
     
         unsigned lengthInOtherFrames = 0;
         if (i < framesNeeded - 1 && framesNeeded != 1) frameDataSize = MAX_FRAME_DATA_LENGTH;
@@ -343,6 +348,7 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
                 break;
             default:
                 printf("DATA - Unknown state");
+                state = INIT;
                 break;
         }
     } while (state != COMPLETE);
@@ -419,7 +425,7 @@ u_int8_t bccCalculator(u_int8_t bytes[], int start, size_t length)
     int bcc = 0x00;
     for (int i = start; i < start + length; i++)
     {
-        bcc = bcc ^ bytes[i];
+        bcc ^= bytes[i];
     }
     return bcc;
 }
@@ -427,9 +433,7 @@ u_int8_t bccCalculator(u_int8_t bytes[], int start, size_t length)
 // Return true if bcc verifies else otherwise 
 bool bccVerifier(u_int8_t bytes[], int start, size_t length, u_int8_t parity)
 {
-    if (bccCalculator(bytes, start, length) == parity)
-        return true;
-    return false;
+    return (bccCalculator(bytes, start, length) == parity);
 }
 
 void buildSETFrame(frame_t *frame, bool transmitterToReceiver)
@@ -441,7 +445,7 @@ void buildSETFrame(frame_t *frame, bool transmitterToReceiver)
     else
         frame->bytes[1] = RECEIVER_TO_TRANSMITTER;
     frame->bytes[2] = SET;
-    frame->bytes[3] = 0;    // BCC
+    frame->bytes[3] = bccCalculator(frame->bytes, 1, 2);    // BCC
     frame->bytes[4] = FLAG;
 }
 
