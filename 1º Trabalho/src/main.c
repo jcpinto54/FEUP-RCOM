@@ -33,7 +33,6 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    
     if (strcmp("-s", argv[1])== 0) app.status = TRANSMITTER;
     else if (strcmp("-r", argv[1])== 0) app.status = RECEIVER;
     

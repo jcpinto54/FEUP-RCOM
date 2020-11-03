@@ -16,10 +16,10 @@ extern application app;
 void appRun() {
     if ((app.fd = llopen(app.port, app.status)) < 0) {
         printf("error in llopen: %d\n", app.fd); 
-        clearSerialPort(app.port);
+//        clearSerialPort(app.port);
         exit(1);
     }
-
+    printf("done llopen\n");
     switch (app.status) {
         case TRANSMITTER:;
             sendFile(app.filename);
@@ -32,7 +32,7 @@ void appRun() {
     int llcloseReturn = llclose(app.fd);
     if (llcloseReturn < 0) {
         printf("error in llclose: %d\n", llcloseReturn); 
-        clearSerialPort(app.port);
+//        clearSerialPort(app.port);
         exit(1);
     }
 }
@@ -157,7 +157,7 @@ int receiveFile(){
         return -1;
     }
 
-    strcpy(filename, "output.gif");    // comment to test in the same pc 
+//    strcpy(filename, "output.gif");    // comment to test in the same pc 
     
     int fileFd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXG | S_IRWXU | S_IRWXO);
     if (fileFd == -1) {

@@ -173,9 +173,11 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 if (c == FLAG) {
                     state = RCV_FLAG;
                     frame->bytes[0] = c;
+                    printf("byte: %x   -   state: %d\n", c, state);
                 }
                 break;
             case RCV_FLAG:
+                printf("byte: %x   -   state: %d\n", c, state);
                 if (c == TRANSMITTER_TO_RECEIVER || c == RECEIVER_TO_TRANSMITTER) {
                     state = RCV_A;
                     frame->bytes[1] = c;
@@ -187,6 +189,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                     state = INIT;
                 break;
             case RCV_A:
+                printf("byte: %x   -   state: %d\n", c, state);
                 if ((c & I_MASK) == I) {
                     state = RCV_C;
                     frame->bytes[2] = c;
@@ -198,6 +201,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                     state = INIT;
                 break;
             case RCV_C:
+                printf("byte: %x   -   state: %d\n", c, state);
                 if (bccVerifier(frame->bytes, 1, 2, c)) {
                     state = RCV_BCC1;
                     frame->bytes[3] = c;
@@ -209,6 +213,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 }
                 break;
             case RCV_BCC1:     
+                printf("byte: %x   -   state: %d\n", c, state);
                 if (dataCounter == -1 && c > 0 && c <= MAX_FRAME_DATA_LENGTH * 2) {    // *2 because of possibility of byte stuffing in every byte
                     frame->bytes[4] = c;
                     dataCounter++;
@@ -224,6 +229,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 if (dataCounter == frame->bytes[4]) state = RCV_DATA;
                 break;
             case RCV_DATA:
+                printf("byte: %x   -   state: %d\n", c, state);
                 if (c == FLAG_MORE_FRAMES_TO_COME || c == FLAG_LAST_FRAME) {
                     state = RCV_LAST_FRAME_FLAG;
                     frame->bytes[4 + dataCounter + 1] = c;
@@ -232,6 +238,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                     state = RCV_FLAG;
                 break;            
             case RCV_LAST_FRAME_FLAG:
+                printf("byte: %x   -   state: %d   -   bcc: %x\n", c, state, bccCalculator(frame->bytes, 4, dataCounter + 2));
                 if (bccVerifier(frame->bytes, 4, dataCounter + 2, c)) {
                     state = RCV_BCC2;
                     frame->bytes[4 + dataCounter + 2] = c;
@@ -244,6 +251,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 }
                 break;
             case RCV_BCC2:
+                printf("byte: %x   -   state: %d\n", c, state);
                 if (c == FLAG) {
                     state = COMPLETE;
                     frame->bytes[4 + dataCounter + 3] = c;
@@ -334,6 +342,7 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
                 else if (c == FLAG)
                     state = RCV_FLAG;
                 else {
+                    printf("BCC1 not correct\n");
                     state = INIT;
                 }
                 break;

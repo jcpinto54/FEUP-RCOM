@@ -62,29 +62,31 @@ int llopen(char *port, int appStatus)
                 }
 
                 buildSETFrame(&setFrame, true);
-                /*
+                
                 printf("setframe size: %lu\n", setFrame.size);
                 printf("setframe flag: %x\n", setFrame.bytes[0] & 0xff);
                 printf("setframe a: %x\n", setFrame.bytes[1]& 0xff);
                 printf("setframe c: %x\n", setFrame.bytes[2]& 0xff);
                 printf("setframe bcc: %x\n", setFrame.bytes[3]& 0xff);
                 printf("setframe flag: %x\n\n\n", setFrame.bytes[4]& 0xff);
-                */
+                
                 
                 if (sendNotIFrame(&setFrame, fd)) {
                     perror("sendNotIFrame\n");
                     return -5;
                 }
                 prepareToReceive(&responseFrame, 5);
+                printf("in receive");
                 int responseReceive = receiveNotIMessage(&responseFrame, fd, RESPONSE_WITHOUT_ID, 3); 
-                /*
+                printf("out receive");
+                
                 printf("response size: %lu\n", responseFrame.size);
                 printf("response flag: %x\n", responseFrame.bytes[0] & 0xff);
                 printf("response a: %x\n", responseFrame.bytes[1]& 0xff);
                 printf("response c: %x\n", responseFrame.bytes[2]& 0xff);
                 printf("response bcc: %x\n", responseFrame.bytes[3]& 0xff);
                 printf("response flag: %x\n\n\n", responseFrame.bytes[4]& 0xff);
-                */
+                
 
                 if (responseReceive == -1) continue;         // in a timeout, retransmit frame
                 else if (responseReceive < -2) {perror("responseReceive\n");  return -7;}
@@ -237,6 +239,7 @@ int llwrite(int fd, char * buffer, int length)
 
     printf("DATA - Divided the data in %d frames. Sending all frames...\n", framesToSend);
     for (int i = 0; i < framesToSend; i++) {
+        printFrame(info[i])
         if (sendIFrame(info[i], fd) == -1) return -1;
     }
     return 0;
