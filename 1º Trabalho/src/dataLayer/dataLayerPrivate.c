@@ -87,16 +87,17 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
     for (int i = 0; i < framesNeeded; i++) {
         info[i] = malloc(sizeof(frame_t));
 
+        //debug
         info[i]->bytes[0] = FLAG; //F
-        printf("Flag: %c\n", info[i]->bytes[0]);
+        printf("Flag: %x\n", info[i]->bytes[0]& 0xff);
         info[i]->bytes[1] = TRANSMITTER_TO_RECEIVER; //A
-        printf("A: %c\n", info[i]->bytes[1]);
+        printf("A: %x\n", info[i]->bytes[1]& 0xff);
         info[i]->bytes[2] = idFrameSent << 6 | I;
-        printf("C: %c\n", info[i]->bytes[2]);
+        printf("C: %x\n", info[i]->bytes[2]& 0xff);
         info[i]->infoId = idFrameSent;
         info[i]->bytes[3] = bccCalculator(info[i]->bytes, 1, 2); //BCC1, calculado com A e C
-        printf("BCC1: %c\n", info[i]->bytes[3]);
-
+        printf("BCC1: %x\n", info[i]->bytes[3]& 0xff);
+        
     
         unsigned lengthInOtherFrames = 0;
         if (i < framesNeeded - 1 && framesNeeded != 1) frameDataSize = MAX_FRAME_DATA_LENGTH;
@@ -380,8 +381,25 @@ int sendIFrame(frame_t *frame, int fd) {
         if ((sentBytes = write(fd, frame->bytes, frame->size)) == -1) return -1;                  
         printf("DATA - %d bytes sent\n", sentBytes);
 
+        //debug
+        /*
+        printf("sentFrame size: %lu\n", frame->size);
+        printf("sentFrame flag: %x\n", frame->bytes[0] & 0xff);
+        printf("sentFrame a: %x\n", frame->bytes[1]& 0xff);
+        printf("sentFrame c: %x\n", frame->bytes[2]& 0xff);
+        printf("sentFrame bcc: %x\n", frame->bytes[3]& 0xff);
+        printf("sentFrame flag: %x\n\n\n", frame->bytes[4]& 0xff);
+        */
         int receiveReturn = receiveNotIMessage(&responseFrame, fd, (frame->infoId + 1) % 2, 2);
-
+        // debug
+        /*
+        printf("responseFrame size: %lu\n", responseFrame.size);
+        printf("responseFrame flag: %x\n", responseFrame.bytes[0] & 0xff);
+        printf("responseFrame a: %x\n", responseFrame.bytes[1]& 0xff);
+        printf("responseFrame c: %x\n", responseFrame.bytes[2]& 0xff);
+        printf("responseFrame bcc: %x\n", responseFrame.bytes[3]& 0xff);
+        printf("responseFrame flag: %x\n\n\n", responseFrame.bytes[4]& 0xff);
+        */
         if (receiveReturn == -1) {
             printf("DATA - Timeout reading response, trying again...\n");
         }
@@ -463,7 +481,7 @@ void buildUAFrame(frame_t *frame, bool transmitterToReceiver)
     else
         frame->bytes[1] = RECEIVER_TO_TRANSMITTER;
     frame->bytes[2] = UA;
-    frame->bytes[3] = 1;    // BCC
+    frame->bytes[3] = bccCalculator(frame->bytes, 1, 2);    // BCC
     frame->bytes[4] = FLAG;
 }
 
@@ -481,7 +499,7 @@ void buildDISCFrame(frame_t *frame, bool transmitterToReceiver)
     else
         frame->bytes[1] = RECEIVER_TO_TRANSMITTER;
     frame->bytes[2] = DISC;
-    frame->bytes[3] = 1;    // BCC
+    frame->bytes[3] = bccCalculator(frame->bytes, 1, 2);    // BCC
     frame->bytes[4] = FLAG;
 }
 

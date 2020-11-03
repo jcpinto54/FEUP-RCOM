@@ -15,7 +15,7 @@ extern application app;
 
 void appRun() {
     if ((app.fd = llopen(app.port, app.status)) < 0) {
-        printf("error in llopen\n"); 
+        printf("error in llopen: %d\n", app.fd); 
         clearSerialPort(app.port);
         exit(1);
     }
@@ -31,7 +31,7 @@ void appRun() {
 
     int llcloseReturn = llclose(app.fd);
     if (llcloseReturn < 0) {
-        printf("error in llclose\n"); 
+        printf("error in llclose: %d\n", llcloseReturn); 
         clearSerialPort(app.port);
         exit(1);
     }
