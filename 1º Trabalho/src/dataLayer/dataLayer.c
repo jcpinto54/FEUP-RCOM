@@ -41,7 +41,7 @@ int llopen(char *port, int appStatus)
     newtio.c_lflag = 0;
 
     newtio.c_cc[VTIME] = 0; // time to time-out in deciseconds
-    newtio.c_cc[VMIN] = 0;  // min number of chars to read
+    newtio.c_cc[VMIN] = 1;  // min number of chars to read
 
     if (tcsetattr(fd, TCSANOW, &newtio) == -1) {
         perror("tcsetattr");
