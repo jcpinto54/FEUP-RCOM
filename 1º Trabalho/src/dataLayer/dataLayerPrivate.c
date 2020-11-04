@@ -19,27 +19,29 @@ void stuffFrame(frame_t * frame)
 {
     int stuffingCounter = 0;
     u_int8_t frameRealData[MAX_FRAME_SIZE];
-    for (int i = 0; i < 5; i++) frameRealData[i] = frame->bytes[i];
-    for (int i = 5; i < frame->size - 3 + stuffingCounter; i++) {
+    for (int i = 0; i < 6; i++) frameRealData[i] = frame->bytes[i];
+    for (int i = 6; i < frame->size - 3 + stuffingCounter; i++) {
         if (frame->bytes[i - stuffingCounter] == FLAG) {
             frameRealData[i] = ESC;
             frameRealData[++i] = FLAG_STUFFING;
-            frameRealData[4]++;
             stuffingCounter++;
             continue;
         }
         if (frame->bytes[i - stuffingCounter] == ESC) {
             frameRealData[i] = ESC;
             frameRealData[++i] = ESC_STUFFING;
-            frameRealData[4]++;
             stuffingCounter++;
             continue;
         }
         frameRealData[i] = frame->bytes[i - stuffingCounter];
     }
     for (int i = frame->size - 3; i < frame->size; i++) frameRealData[i + stuffingCounter] = frame->bytes[i];
+    
+    frameRealData[4] += stuffingCounter / 256;
+    frameRealData[5] += stuffingCounter % 256;
+
     frame->size += stuffingCounter;
-    frameRealData[frame->size - 2] = bccCalculator(frameRealData, 4, frameRealData[4] + 2);
+    frameRealData[frame->size - 2] = bccCalculator(frameRealData, 4, frameRealData[4] * 256 + frameRealData[5] + 3);
 
     memcpy(frame->bytes, frameRealData, frame->size);
 }
@@ -49,12 +51,11 @@ void destuffFrame(frame_t *frame) {
     bool destuffing = false;
     int destuffingCounter = 0;
     u_int8_t frameRealData[MAX_FRAME_SIZE];
-    for (int i = 0; i < 5; i++) frameRealData[i] = frame->bytes[i];
-    for (int i = 5; i < frame->size - 3; i++) {
+    for (int i = 0; i < 6; i++) frameRealData[i] = frame->bytes[i];
+    for (int i = 6; i < frame->size - 3; i++) {
         if (frame->bytes[i] == ESC) {
             destuffingCounter++;
             destuffing = true;
-            frameRealData[4]--;
             continue;
         }
         if (destuffing && frame->bytes[i] == FLAG_STUFFING) {
@@ -70,8 +71,12 @@ void destuffFrame(frame_t *frame) {
         frameRealData[i - destuffingCounter] = frame->bytes[i];
     }
     for (int i = frame->size-3; i < frame->size; i++) frameRealData[i - destuffingCounter] = frame->bytes[i];
+    
+    frameRealData[4] -= destuffingCounter / 256;
+    frameRealData[5] -= destuffingCounter % 256;
+
     frame->size -= destuffingCounter;
-    frameRealData[frame->size - 2] = bccCalculator(frameRealData, 4, frameRealData[4] + 2);
+    frameRealData[frame->size - 2] = bccCalculator(frameRealData, 4, frameRealData[4] * 256 + frameRealData[5] + 3);
 
     memcpy(frame->bytes, frameRealData, frame->size);
 }
@@ -82,7 +87,7 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
 {
     int framesNeeded = ceiling(1.0/(MAX_FRAME_DATA_LENGTH/(float)length));      // Division has got to be like this   
 
-    u_int8_t frameDataSize;
+    u_int8_t frameDataSize[2];
     frame_t **info = malloc(sizeof(frame_t *) * framesNeeded);
     for (int i = 0; i < framesNeeded; i++) {
         info[i] = malloc(sizeof(frame_t));
@@ -100,21 +105,23 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
         
     
         unsigned lengthInOtherFrames = 0;
-        if (i < framesNeeded - 1 && framesNeeded != 1) frameDataSize = MAX_FRAME_DATA_LENGTH;
+        if (i < framesNeeded - 1 && framesNeeded != 1) prepareFrameDataSize(MAX_FRAME_DATA_LENGTH, frameDataSize);
         else {
             for (int j = 0; j < i; j++) {
-                lengthInOtherFrames += info[j]->bytes[4];
+                lengthInOtherFrames += info[j]->bytes[4] * 256 + info[j]->bytes[5];
             }
-            frameDataSize = length - lengthInOtherFrames;
+            prepareFrameDataSize(length - lengthInOtherFrames, frameDataSize);
         }
 
-        info[i]->bytes[4] = frameDataSize;
+        info[i]->bytes[4] = frameDataSize[0];
+        info[i]->bytes[5] = frameDataSize[1];
+
         for (int j = 0; j < frameDataSize; j++) {
-            info[i]->bytes[5 + j] = data[j];
+            info[i]->bytes[6 + j] = data[j];
         }
 
 
-        int bcc2_byte_ix = 4 + 1 + frameDataSize + 1;
+        int bcc2_byte_ix = 4 + 2 + frameDataSize + 1;
 
         if (i == framesNeeded - 1) {
             info[i]->bytes[bcc2_byte_ix - 1] = FLAG_LAST_FRAME;        
@@ -123,9 +130,9 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
             info[i]->bytes[bcc2_byte_ix - 1] = FLAG_MORE_FRAMES_TO_COME;
         }
         
-        info[i]->bytes[bcc2_byte_ix] = bccCalculator(info[i]->bytes, 4, info[i]->bytes[4] + 2);  
+        info[i]->bytes[bcc2_byte_ix] = bccCalculator(info[i]->bytes, 4, info[i]->bytes[4] * 256 + info[i]->bytes[5] + 3);  
         info[i]->bytes[bcc2_byte_ix + 1] = FLAG;
-        info[i]->size = 8 + frameDataSize;
+        info[i]->size = 8 + frameDataSize[0] * 256 + frameDataSize[1];
 
         stuffFrame(info[i]);
 
@@ -150,7 +157,7 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
 int receiveIMessage(frame_t *frame, int fd, int timeout){
     u_int8_t c;
     receive_state_t state = INIT;
-    int dataCounter = -1, returnValue = 0;
+    int dataCounter = -2, returnValue = 0;
     time_t initTime, curTime;
     initTime = time(NULL);
     do {
@@ -210,33 +217,28 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 }
                 break;
             case RCV_BCC1:     
-                if (dataCounter == -1 && c > 0 && c <= MAX_FRAME_DATA_LENGTH * 2) {    // *2 because of possibility of byte stuffing in every byte
-                    frame->bytes[4] = c;
-                    dataCounter++;
-                    continue;
-                }
-                else if (dataCounter == -1 && (c < 0 || c > MAX_FRAME_DATA_LENGTH * 2)) {
-                    printf("DATA - First item is not a valid size value    -   frameDataSize: %d\n", c);
+                if (dataCounter < 0 && (c < 0 || c > MAX_FRAME_DATA_LENGTH * 2)) {
+                    printf("DATA - First items are not a valid size value    -   byte read: %d\n", c);
                     returnValue = -2;
                     break;
                 }
-                frame->bytes[5 + dataCounter] = c;
+                frame->bytes[6 + dataCounter] = c;
                 dataCounter++;
-                if (dataCounter == frame->bytes[4]) state = RCV_DATA;
+                if (dataCounter == (frame->bytes[4] * 256 + frame->bytes[5])) state = RCV_DATA;
                 break;
             case RCV_DATA:
                 if (c == FLAG_MORE_FRAMES_TO_COME || c == FLAG_LAST_FRAME) {
                     state = RCV_LAST_FRAME_FLAG;
-                    frame->bytes[4 + dataCounter + 1] = c;
+                    frame->bytes[4 + dataCounter + 2] = c;
                 }
                 else if (c == FLAG)
                     state = RCV_FLAG;
                 break;            
             case RCV_LAST_FRAME_FLAG:
-                printf("REPEATED byte: %x   -   state: %d   -   bcc: %x\n", c, state, bccCalculator(frame->bytes, 4, dataCounter + 2));
-                if (bccVerifier(frame->bytes, 4, dataCounter + 2, c)) {
+                printf("REPEATED byte: \n%x   -   state: %d   -   bcc: %x\n", c, state, bccCalculator(frame->bytes, 4, dataCounter + 3));
+                if (bccVerifier(frame->bytes, 4, dataCounter + 3, c)) {
                     state = RCV_BCC2;
-                    frame->bytes[4 + dataCounter + 2] = c;
+                    frame->bytes[4 + dataCounter + 3] = c;
                 }
                 else if (c == FLAG)
                     state = RCV_FLAG;
@@ -249,7 +251,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 printf("byte: %x   -   state: %d\n", c, state);
                 if (c == FLAG) {
                     state = COMPLETE;
-                    frame->bytes[4 + dataCounter + 3] = c;
+                    frame->bytes[4 + dataCounter + 4] = c;
                 }
                 else
                     state = INIT;
@@ -260,14 +262,14 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
     } while (state != COMPLETE && returnValue == 0);
     if (lastFrameReceivedId != -1 && lastFrameReceivedId == frame->infoId && returnValue == 0) {
         printf("DATA - Read a duplicate frame\n");
-        if (frame->bytes[4 + dataCounter + 1] == FLAG_LAST_FRAME) returnValue = 2;
-        else if (frame->bytes[4 + dataCounter + 1] == FLAG_MORE_FRAMES_TO_COME) returnValue = 3;
+        if (frame->bytes[4 + dataCounter + 2] == FLAG_LAST_FRAME) returnValue = 2;
+        else if (frame->bytes[4 + dataCounter + 2] == FLAG_MORE_FRAMES_TO_COME) returnValue = 3;
     }
     else if (returnValue == 0) {
-        frame->size = 5 + dataCounter + 3;
+        frame->size = 5 + dataCounter + 4;
         destuffFrame(frame);
-        if (frame->bytes[4 + dataCounter + 1] == FLAG_LAST_FRAME) returnValue = 0;
-        else if (frame->bytes[4 + dataCounter + 1] == FLAG_MORE_FRAMES_TO_COME) returnValue = 1;
+        if (frame->bytes[4 + dataCounter + 2] == FLAG_LAST_FRAME) returnValue = 0;
+        else if (frame->bytes[4 + dataCounter + 2] == FLAG_MORE_FRAMES_TO_COME) returnValue = 1;
     }
 
     return returnValue;
@@ -520,6 +522,11 @@ bool isDISCFrame(frame_t *frame) {
 void prepareToReceive(frame_t *frame, size_t size)
 {
     frame->size = size;
+}
+
+void prepareFrameDataSize(int frameSize, u_int8_t *sizeBytes) {
+    sizeBytes[0] = (u_int8_t) frameSize;
+    sizeBytes[1] = (u_int8_t) (frameSize >> 8);
 }
 
 void printFrame(frame_t *frame) {

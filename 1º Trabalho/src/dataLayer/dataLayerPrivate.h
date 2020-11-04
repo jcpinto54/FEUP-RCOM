@@ -36,6 +36,7 @@ void destuffFrame(frame_t *frame);
 int prepareI(char* data, int size, frame_t*** infoNew);
 void prepareResponse(frame_t *frame, bool valid, int id);
 
+void prepareFrameDataSize(int frameSize, u_int8_t *sizeBytes);
 void prepareToReceive(frame_t *frame, size_t size);
 void printFrame(frame_t *frame);
 
