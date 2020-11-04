@@ -154,7 +154,7 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
         idFrameSent = (idFrameSent + 1) % 2;
         printf("problema n e meu caralho 7\n");
     }
-    memcpy(*infoNew, info, sizeof(frame_t) * framesNeeded);
+    memcpy(**infoNew, info, sizeof(frame_t *) * framesNeeded);
     printf("O problema nao e do memcpy\n");
     return framesNeeded;
     
