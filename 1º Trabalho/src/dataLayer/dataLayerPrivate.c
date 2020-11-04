@@ -19,7 +19,9 @@ void stuffFrame(frame_t * frame)
 {
     int stuffingCounter = 0;
     u_int8_t frameRealData[MAX_FRAME_SIZE];
+    printf("subproblema n e meu caralho 1\n");
     for (int i = 0; i < 6; i++) frameRealData[i] = frame->bytes[i];
+    printf("subproblema n e meu caralho 2\n");
     for (int i = 6; i < frame->size - 3 + stuffingCounter; i++) {
         if (frame->bytes[i - stuffingCounter] == FLAG) {
             frameRealData[i] = ESC;
@@ -35,15 +37,20 @@ void stuffFrame(frame_t * frame)
         }
         frameRealData[i] = frame->bytes[i - stuffingCounter];
     }
+    printf("subproblema n e meu caralho 6\n");
     for (int i = frame->size - 3; i < frame->size; i++) frameRealData[i + stuffingCounter] = frame->bytes[i];
+    printf("subproblema n e meu caralho 7\n");
     
     frameRealData[4] += stuffingCounter / 256;
     frameRealData[5] += stuffingCounter % 256;
+    printf("subproblema n e meu caralho 8\n");
 
     frame->size += stuffingCounter;
     frameRealData[frame->size - 2] = bccCalculator(frameRealData, 4, frameRealData[4] * 256 + frameRealData[5] + 3);
+    printf("subproblema n e meu caralho 9\n");
 
     memcpy(frame->bytes, frameRealData, frame->size);
+    printf("subproblema n e meu caralho 10\n");
 }
 
 
@@ -113,13 +120,18 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
             prepareFrameDataSize(length - lengthInOtherFrames, frameDataSize);
         }
 
+        printf("problema n e meu caralho 1\n");
+
         info[i]->bytes[4] = frameDataSize[0];
         info[i]->bytes[5] = frameDataSize[1];
+
+        printf("problema n e meu caralho 2\n");
 
         for (int j = 0; j < frameDataSize[0] * 256 + frameDataSize[1]; j++) {
             info[i]->bytes[6 + j] = data[j];
         }
 
+        printf("problema n e meu caralho 3\n");
 
         int bcc2_byte_ix = 4 + 2 + frameDataSize[0] * 256 + frameDataSize[1] + 1;
 
@@ -129,17 +141,21 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
         else {
             info[i]->bytes[bcc2_byte_ix - 1] = FLAG_MORE_FRAMES_TO_COME;
         }
+        printf("problema n e meu caralho 4\n");
         
         info[i]->bytes[bcc2_byte_ix] = bccCalculator(info[i]->bytes, 4, info[i]->bytes[4] * 256 + info[i]->bytes[5] + 3);  
         info[i]->bytes[bcc2_byte_ix + 1] = FLAG;
         info[i]->size = 8 + frameDataSize[0] * 256 + frameDataSize[1];
+        printf("problema n e meu caralho 5\n");
 
         stuffFrame(info[i]);
+        printf("problema n e meu caralho 6\n");
 
         data += frameDataSize[0] * 256 + frameDataSize[1];
         idFrameSent = (idFrameSent + 1) % 2;
+        printf("problema n e meu caralho 7\n");
     }
-    *infoNew = info;
+    memcpy(*infoNew, info, sizeof(frame_t *) * framesNeeded);
     return framesNeeded;
     
 }
