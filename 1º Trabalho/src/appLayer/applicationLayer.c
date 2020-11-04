@@ -132,10 +132,9 @@ packet_t * createDataPacket(u_int8_t * string, int number, size_t size){
     return packet;
 }
 
-int parseDataPacket(u_int8_t * packetArray, u_int8_t ** bytes) {
+int parseDataPacket(u_int8_t * packetArray, u_int8_t * bytes) {
     int packetDataSize = packetArray[2]*256 + packetArray[3];
-    *bytes = (u_int8_t *)malloc(packetDataSize);
-    memcpy(*bytes, packetArray + 4, packetDataSize);
+    memcpy(bytes, packetArray + 4, packetDataSize);
     return packetDataSize;
 }
 
@@ -165,19 +164,18 @@ int receiveFile(){
         return -1;
     }
 
-    u_int8_t *bytes;
+    u_int8_t bytes[MAX_PACKET_LENGTH];
     for(int i = 0 ; i < (fileSize / MAX_PACKET_DATA_LENGTH) + 1 ; i++){
         if(llread(app.fd, &receive) < 0){
             printf("APP - Error receiving data packet in applicationLayer.c ...\n");
             return -1;
         }
-        int packetDataSize = parseDataPacket((u_int8_t *)receive, &bytes);
+        int packetDataSize = parseDataPacket((u_int8_t *)receive, bytes);
         
         if(write(fileFd, bytes, packetDataSize) < 0){
             perror("APP - Error writing to file ...\n");
             return -1;
         }
-        free(bytes);
         free(receive);
     }
 
