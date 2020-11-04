@@ -112,7 +112,7 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
             }
             prepareFrameDataSize(length - lengthInOtherFrames, frameDataSize);
         }
-
+        printf("problema n e meu caralho\n");
         info[i]->bytes[4] = frameDataSize[0];
         info[i]->bytes[5] = frameDataSize[1];
 
