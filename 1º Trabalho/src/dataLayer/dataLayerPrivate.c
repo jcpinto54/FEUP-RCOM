@@ -119,7 +119,7 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
             }
             prepareFrameDataSize(length - lengthInOtherFrames, frameDataSize);
         }
-        
+
         printf("problema n e meu caralho 1\n");
         info[i]->bytes[4] = frameDataSize[0];
         info[i]->bytes[5] = frameDataSize[1];
@@ -155,6 +155,7 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
         printf("problema n e meu caralho 7\n");
     }
     memcpy(*infoNew, info, sizeof(frame_t *) * framesNeeded);
+    printf("O problema nao e do memcpy\n");
     return framesNeeded;
     
 }
