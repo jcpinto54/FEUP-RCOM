@@ -40,7 +40,7 @@
 #define MAX_WRITE_ATTEMPTS 3
 #define MAX_READ_ATTEMPTS 3
 
-#define MAX_FRAME_SIZE 1024                               // minimum is 16
+#define MAX_FRAME_SIZE 128                               // minimum is 16
 #define MAX_FRAME_DATA_LENGTH (MAX_FRAME_SIZE - 8)/2     // if all bytes are stuffed it takes the MAX_FRAME_SIZE
 #define MAX_FRAME_RETRANSMISSIONS 3
 
