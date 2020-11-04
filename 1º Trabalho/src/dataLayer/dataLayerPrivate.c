@@ -116,12 +116,12 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
         info[i]->bytes[4] = frameDataSize[0];
         info[i]->bytes[5] = frameDataSize[1];
 
-        for (int j = 0; j < frameDataSize; j++) {
+        for (int j = 0; j < frameDataSize[0] * 256 + frameDataSize[1]; j++) {
             info[i]->bytes[6 + j] = data[j];
         }
 
 
-        int bcc2_byte_ix = 4 + 2 + frameDataSize + 1;
+        int bcc2_byte_ix = 4 + 2 + frameDataSize[0] * 256 + frameDataSize[1] + 1;
 
         if (i == framesNeeded - 1) {
             info[i]->bytes[bcc2_byte_ix - 1] = FLAG_LAST_FRAME;        
@@ -136,7 +136,7 @@ int prepareI(char* data, int length, frame_t *** infoNew) //Testar
 
         stuffFrame(info[i]);
 
-        data += frameDataSize;
+        data += frameDataSize[0] * 256 + frameDataSize[1];
         idFrameSent = (idFrameSent + 1) % 2;
     }
     *infoNew = info;
