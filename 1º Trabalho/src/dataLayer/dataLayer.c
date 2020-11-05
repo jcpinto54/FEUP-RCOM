@@ -218,9 +218,11 @@ int llread(int fd, char * buffer){
             if (sendNotIFrame(&response, fd) == -1) return -1;
         }
         printf("11\n");
-        if (receiveIMessageReturn == 0)
-            printf("a");
-            memcpy(buffer, frame.bytes + 6, frame.bytes[4] * 256 + frame.bytes[5]);        
+        if (receiveIMessageReturn == 0){
+            memcpy(buffer, frame.bytes + 6, frame.bytes[4] * 256 + frame.bytes[5]);      
+            printf("12\n");
+        }
+              
 
         printf("12\n");
         if (receiveIMessageReturn == -3) {
