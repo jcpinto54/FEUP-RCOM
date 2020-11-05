@@ -234,14 +234,15 @@ int llread(int fd, char ** buffer){
 
 int llwrite(int fd, char * buffer, int length)
 {
-    frame_t **info = NULL;
+    frame_t *info = NULL;
     int framesToSend = prepareI(buffer, length, &info); //Prepara a trama de informação
 
     printf("DATA - Divided the data in %d frames. Sending all frames...\n", framesToSend);
     for (int i = 0; i < framesToSend; i++) {
-        printFrame(info[i]);
-        if (sendIFrame(info[i], fd) == -1) return -1;
+        printFrame(&(info[i]));
+        if (sendIFrame(&(info[i]), fd) == -1) return -1;
     }
+    free(info);
     return 0;
 }
 

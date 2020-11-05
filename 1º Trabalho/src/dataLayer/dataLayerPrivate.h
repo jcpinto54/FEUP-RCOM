@@ -33,7 +33,7 @@ bool isDISCFrame(frame_t *frame);
 void stuffFrame(frame_t * frame);
 void destuffFrame(frame_t *frame);
 
-int prepareI(char* data, int size, frame_t*** infoNew);
+int prepareI(char* data, int size, frame_t ** infoNew);
 void prepareResponse(frame_t *frame, bool valid, int id);
 
 void prepareFrameDataSize(int frameSize, u_int8_t *sizeBytes);
