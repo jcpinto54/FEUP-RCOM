@@ -16,6 +16,9 @@ extern int idFrameSent;
 extern int lastFrameReceivedId;
 extern int baudrate;
 
+extern int maxFrameSize;
+extern int maxFrameDataLength;
+
 int llopen(char *port, int appStatus)
 {
     status = appStatus;
@@ -54,6 +57,12 @@ int llopen(char *port, int appStatus)
     frame_t responseFrame;
     frame_t receiverFrame;
     frame_t uaFrame;
+
+    setFrame.bytes = (u_int8_t *)malloc(maxFrameSize);
+    responseFrame.bytes = (u_int8_t *)malloc(maxFrameSize);
+    receiverFrame.bytes = (u_int8_t *)malloc(maxFrameSize);
+    uaFrame.bytes = (u_int8_t *)malloc(maxFrameSize);
+    
 
     switch (appStatus) {
         case TRANSMITTER:;
@@ -101,11 +110,15 @@ int llopen(char *port, int appStatus)
 }
 
 int llclose(int fd) {
-            printf("isUAF: \n");
 
     frame_t discFrame;
     frame_t receiveFrame;
     frame_t uaFrame;
+    
+    discFrame.bytes = (u_int8_t *)malloc(maxFrameSize);
+    receiveFrame.bytes = (u_int8_t *)malloc(maxFrameSize);
+    uaFrame.bytes = (u_int8_t *)malloc(maxFrameSize);
+
 
     int receiveReturn;
     switch (status) {
@@ -134,18 +147,14 @@ int llclose(int fd) {
         case RECEIVER:;
             for (int i = 0; i < MAX_READ_ATTEMPTS; i++) {
                 prepareToReceive(&receiveFrame, 5);
-            printf("isUAF: \n");
                 int receiveReturn = receiveNotIMessage(&receiveFrame, fd, RESPONSE_WITHOUT_ID, 7);
                 if (receiveReturn == -1) continue;
                 else if (receiveReturn) return -7;
-            printf("isUAF: \n");
                 if (!isDISCFrame(&receiveFrame)) return -5;
                 break;
             }
             buildDISCFrame(&discFrame, true);
-            printf("isUAF: \n");
             if (sendNotIFrame(&discFrame, fd)) return -2;
-            printf("isUAF: \n");
             prepareToReceive(&receiveFrame, 5);
             int receiveNotIMessageReturn = receiveNotIMessage(&receiveFrame, fd, RESPONSE_WITHOUT_ID, 3);
             if (receiveNotIMessageReturn) return -4;
@@ -161,6 +170,8 @@ int llclose(int fd) {
 
 int llread(int fd, char * buffer){
     frame_t frame, response;
+    frame.bytes = (u_int8_t *)malloc(maxFrameSize);
+    response.bytes = (u_int8_t *)malloc(maxFrameSize);
     int receiveIMessageReturn, sameReadAttempts = 1;
     do {
         receiveIMessageReturn = receiveIMessage(&frame, fd, 3);
@@ -220,10 +231,10 @@ int llread(int fd, char * buffer){
 
 int llwrite(int fd, char * buffer, int length)
 {
-    printf("2\n");
 
-    frame_t info = prepareI(buffer, length); //Prepara a trama de informação
-    printf("2\n");
+    frame_t info;
+    info.bytes = (u_int8_t *)malloc(maxFrameSize);
+    info = prepareI(buffer, length); //Prepara a trama de informação
 
     printFrame(&info);
     if (sendIFrame(&info, fd) == -1) return -1;

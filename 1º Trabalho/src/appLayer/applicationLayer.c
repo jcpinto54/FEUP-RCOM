@@ -43,6 +43,7 @@ void appRun() {
 
 int sendFile(char * filename){
     packet_t packet;
+    packet.bytes = (u_int8_t *)malloc(maxPacketLength);
     int fileFd;
 
     fileFd = open(filename, O_RDONLY | O_NONBLOCK);
@@ -88,6 +89,7 @@ int sendFile(char * filename){
 
 packet_t createControlPacket(u_int8_t type, unsigned size, char * filename){
     packet_t packet;
+    packet.bytes = (u_int8_t *)malloc(maxPacketLength);
     packet.bytes[0] = type;
     
     packet.bytes[1] = FILESIZE;
@@ -125,6 +127,7 @@ int parseControlPacket(u_int8_t* controlPacket, unsigned* fileSize, char* filena
 
 packet_t createDataPacket(u_int8_t * string, int number, int size){
     packet_t packet;
+    packet.bytes = (u_int8_t *)malloc(maxPacketLength);
     packet.size = size + 4;
     packet.bytes[0] = DATA;
     packet.bytes[1] = number;
@@ -176,7 +179,6 @@ int receiveFile(){
     if (fileSize > maxPacketDataLength) forCond = (fileSize / maxPacketDataLength) + 1;
     else forCond = (fileSize / maxPacketDataLength) + 1;
     for(int i = 0 ; i < forCond; i++){
-        printf("i: %d\n", i);
         if(llread(app.fd, receive) < 0){
             printf("APP - Error receiving data packet in applicationLayer.c ...\n");
             return -1;
@@ -189,8 +191,6 @@ int receiveFile(){
             return -1;
         }
     }
-    printf("cheguei caralho\n");
-    // free(bytes);
 
     if(llread(app.fd, receive) < 0){
         printf("APP - Error receiving end control packet in applicationLayer.c ...\n");
@@ -205,7 +205,6 @@ int receiveFile(){
     }
 
     close(fileFd);
-    free(receive);
     return 0;
 
 }

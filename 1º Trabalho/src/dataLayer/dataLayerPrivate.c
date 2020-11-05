@@ -48,7 +48,6 @@ void stuffFrame(frame_t * frame)
     frameRealData[frame->size - 2] = bccCalculator(frameRealData, 4, frameRealData[4] * 256 + frameRealData[5] + 2);
 
     memcpy(frame->bytes, frameRealData, frame->size);
-    free(frameRealData);
 }
 
 
@@ -84,17 +83,15 @@ void destuffFrame(frame_t *frame) {
     frameRealData[frame->size - 2] = bccCalculator(frameRealData, 4, frameRealData[4] * 256 + frameRealData[5] + 2);
 
     memcpy(frame->bytes, frameRealData, frame->size);
-    free(frameRealData);
 }
 
 
 // pode ser necessário ter os dados em mais que uma frame
 frame_t prepareI(char* data, int length) //Testar
 {
-    printf("length: %d\n", length);
-    printf("3\n");
     u_int8_t frameDataSize[2];
     frame_t info;
+    info.bytes = (u_int8_t *)malloc(maxFrameSize);
 
         //debug
     info.bytes[0] = FLAG; //F
@@ -102,35 +99,28 @@ frame_t prepareI(char* data, int length) //Testar
     info.bytes[2] = idFrameSent << 6 | I;
     info.infoId = idFrameSent;
     info.bytes[3] = bccCalculator(info.bytes, 1, 2); //BCC1, calculado com A e C
-    printf("3\n");
     
 
     prepareFrameDataSize(length, frameDataSize);
 
-    printf("3\n");
     info.bytes[4] = frameDataSize[0];
     info.bytes[5] = frameDataSize[1];
 
-    printf("3\n");
     for (int j = 0; j < length; j++) {
-        printf("j: %d\n", j);
         info.bytes[6 + j] = data[j];
     }
-    printf("3\n");
 
-    int bcc2_byte_ix = 4 + 2 + info.bytes[4] * 256 + info.bytes[5];
+    int bcc2_byte_ix = 4 + 2 + (info.bytes[4] << 8)  + info.bytes[5];
 
-    info.bytes[bcc2_byte_ix] = bccCalculator(info.bytes, 4, info.bytes[4] * 256 + info.bytes[5] + 2);  
+    info.bytes[bcc2_byte_ix] = bccCalculator(info.bytes, 4, (info.bytes[4] << 8) + info.bytes[5] + 2);  
     info.bytes[bcc2_byte_ix + 1] = FLAG;
+    printf("I: %d   -   info: %d", bcc2_byte_ix, info.bytes[bcc2_byte_ix]);
     info.size = 4 + 2 + info.bytes[4] * 256 + info.bytes[5] + 2;
-    printf("3\n");
 
 
     stuffFrame(&info);
-    printf("3\n");
 
     idFrameSent = (idFrameSent + 1) % 2;
-    printf("3\n");
 
     return info;
     
@@ -353,6 +343,7 @@ int sendNotIFrame(frame_t *frame, int fd) {
 int sendIFrame(frame_t *frame, int fd) {
     int attempts = 0, sentBytes = 0;
     frame_t responseFrame;
+    responseFrame.bytes = (u_int8_t *)malloc(maxFrameSize);
     while (1) {
         if(attempts >= MAX_WRITE_ATTEMPTS) 
         {
@@ -503,7 +494,7 @@ void printFrame(frame_t *frame) {
     printf("\nStarting printFrame...\n\tSize: %d\n", frame->size);
     for (int i = 0; i < frame->size; i++)
     {
-        printf("\tByte %d: %c \n", i, frame->bytes[i]);
+        printf("\tByte %d: %x \n", i, frame->bytes[i]);
     }
     printf("printFrame ended\n\n");
 }

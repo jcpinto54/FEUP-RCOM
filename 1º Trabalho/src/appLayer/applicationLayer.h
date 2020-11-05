@@ -10,7 +10,7 @@ typedef struct {
 
 
 typedef struct {
-    u_int8_t bytes[MAX_FRAME_SIZE];
+    u_int8_t *bytes;
     int size;
 } packet_t;
 
