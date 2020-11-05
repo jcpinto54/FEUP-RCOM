@@ -144,7 +144,9 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
     u_int8_t c;
     receive_state_t state = INIT;
     int dataCounter = -2, returnValue = 0;
+    printf("1\n");
     do {
+        printf("1\n");
         alarm(3); 
         justRead = false;
         int bytesRead = read(fd, &c, 1);
@@ -155,7 +157,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
             perror("read error");
             return -3;
         }
-
+        printf("1\n");
         switch (state) {
             case INIT:
                 if (c == FLAG) {
@@ -226,8 +228,11 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 break;
             case COMPLETE: break;
         }
+        printf("1\n");
         // sleep(1);
     } while (state != COMPLETE && returnValue == 0);
+
+    printf("1\n");
     if (lastFrameReceivedId != -1 && lastFrameReceivedId == frame->infoId && returnValue == 0) {
         printf("DATA - Read a duplicate frame\n");
         returnValue = 1;
@@ -237,6 +242,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
         destuffFrame(frame);
         returnValue = 0;
     }
+    printf("1\n");
 
     return returnValue;
 }
