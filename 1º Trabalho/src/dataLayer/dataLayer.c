@@ -219,7 +219,7 @@ int llread(int fd, char * buffer){
         }
         printf("11\n");
         if (receiveIMessageReturn == 0)
-            printf("a")
+            printf("a");
             memcpy(buffer, frame.bytes + 6, frame.bytes[4] * 256 + frame.bytes[5]);        
 
         printf("12\n");
