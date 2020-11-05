@@ -46,7 +46,7 @@ int llopen(char *port, int appStatus)
     newtio.c_lflag = 0;
 
     newtio.c_cc[VTIME] = 0; // time to time-out in deciseconds
-    newtio.c_cc[VMIN] = 5;  // min number of chars to read
+    newtio.c_cc[VMIN] = 1;  // min number of chars to read
 
     if (tcsetattr(fd, TCSANOW, &newtio) == -1) {
         perror("tcsetattr");
@@ -74,8 +74,6 @@ int llopen(char *port, int appStatus)
 
                 buildSETFrame(&setFrame, true);
             
-                
-                
                 if (sendNotIFrame(&setFrame, fd)) {
                     perror("sendNotIFrame\n");
                     return -5;
