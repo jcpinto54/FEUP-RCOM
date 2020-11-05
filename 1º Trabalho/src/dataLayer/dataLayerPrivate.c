@@ -14,11 +14,13 @@
 
 int idFrameSent = 0;
 int lastFrameReceivedId = -1;
+extern int maxFrameSize;
+extern int maxFrameDataLength;
 
 void stuffFrame(frame_t * frame)
 {
     int stuffingCounter = 0;
-    u_int8_t frameRealData[MAX_FRAME_SIZE];
+    u_int8_t frameRealData[maxFrameSize];
     for (int i = 0; i < 6; i++) frameRealData[i] = frame->bytes[i];
     for (int i = 6; i < frame->size - 3 + stuffingCounter; i++) {
         if (frame->bytes[i - stuffingCounter] == FLAG) {
@@ -50,7 +52,7 @@ void stuffFrame(frame_t * frame)
 void destuffFrame(frame_t *frame) {
     bool destuffing = false;
     int destuffingCounter = 0;
-    u_int8_t frameRealData[MAX_FRAME_SIZE];
+    u_int8_t frameRealData[maxFrameSize];
     for (int i = 0; i < 6; i++) frameRealData[i] = frame->bytes[i];
     for (int i = 6; i < frame->size - 3; i++) {
         if (frame->bytes[i] == ESC) {
@@ -191,7 +193,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 }
                 break;
             case RCV_BCC1:     
-                if (dataCounter < 0 && (c < 0 || c > MAX_FRAME_DATA_LENGTH * 2)) {
+                if (dataCounter < 0 && (c < 0 || c > maxFrameDataLength * 2)) {
                     printf("DATA - First items are not a valid size value    -   byte read: %d\n", c);
                     returnValue = -1;
                     break;

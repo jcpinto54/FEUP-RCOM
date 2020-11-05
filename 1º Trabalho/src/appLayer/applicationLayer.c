@@ -12,6 +12,9 @@
 #include "../utils/utils.h"
 
 extern application app;
+extern int maxFrameDataLength;
+extern int maxPacketLength;
+extern int maxPacketDataLength;
 
 void appRun() {
     if ((app.fd = llopen(app.port, app.status)) < 0) {
@@ -59,8 +62,8 @@ int sendFile(char * filename){
     }
 
     int size = 0, number = 0;
-    u_int8_t buffer[MAX_PACKET_DATA_LENGTH];
-    while((size = read(fileFd, (char *)buffer, MAX_PACKET_DATA_LENGTH)) > 0){
+    u_int8_t buffer[maxPacketLength];
+    while((size = read(fileFd, (char *)buffer, maxPacketLength)) > 0){
         packet = createDataPacket(buffer, (number % 256), size);
         if(llwrite(app.fd, (char *)packet->bytes, packet->size) < 0){
             printf("APP - Error transmitting data packet in applicationLayer.c ...\n");
@@ -140,7 +143,7 @@ int parseDataPacket(u_int8_t * packetArray, u_int8_t * bytes) {
 
 int receiveFile(){
 
-    char receive[MAX_FRAME_DATA_LENGTH];
+    char receive[maxFrameDataLength];
     if(llread(app.fd, receive) < 0){
         printf("APP - Error receiving start control packet in applicationLayer.c ...\n");
         return -1;
@@ -164,8 +167,8 @@ int receiveFile(){
         return -1;
     }
 
-    u_int8_t bytes[MAX_PACKET_LENGTH];
-    for(int i = 0 ; i < (fileSize / MAX_PACKET_DATA_LENGTH) + 1 ; i++){
+    u_int8_t bytes[maxPacketLength];
+    for(int i = 0 ; i < (fileSize / maxPacketDataLength) + 1 ; i++){
         if(llread(app.fd, receive) < 0){
             printf("APP - Error receiving data packet in applicationLayer.c ...\n");
             return -1;

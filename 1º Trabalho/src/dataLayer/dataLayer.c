@@ -13,6 +13,7 @@
 int status;
 extern int idFrameSent;
 extern int lastFrameReceivedId;
+extern int baudrate;
 
 int llopen(char *port, int appStatus)
 {
@@ -33,7 +34,7 @@ int llopen(char *port, int appStatus)
 
 
     bzero(&newtio, sizeof(newtio));
-    newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
+    newtio.c_cflag = baudrate | CS8 | CLOCAL | CREAD;
     newtio.c_iflag = IGNPAR;
     newtio.c_oflag = 0;
 
