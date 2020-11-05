@@ -45,7 +45,7 @@ void stuffFrame(frame_t * frame)
     frameRealData[5] += stuffingCounter % 256;
 
     frame->size += stuffingCounter;
-    frameRealData[frame->size - 2] = bccCalculator(frameRealData, 4, frameRealData[4] * 255 + frameRealData[5] + 2);
+    frameRealData[frame->size - 2] = bccCalculator(frameRealData, 4, frameRealData[4] * 256 + frameRealData[5] + 2);
 
     memcpy(frame->bytes, frameRealData, frame->size);
 }
@@ -80,7 +80,7 @@ void destuffFrame(frame_t *frame) {
     frameRealData[5] -= destuffingCounter % 256;
 
     frame->size -= destuffingCounter;
-    frameRealData[frame->size - 2] = bccCalculator(frameRealData, 4, frameRealData[4] * 255 + frameRealData[5] + 2);
+    frameRealData[frame->size - 2] = bccCalculator(frameRealData, 4, frameRealData[4] * 256 + frameRealData[5] + 2);
 
     memcpy(frame->bytes, frameRealData, frame->size);
 }
@@ -115,7 +115,7 @@ frame_t prepareI(char* data, int length) //Testar
     info.bytes[bcc2_byte_ix] = bccCalculator(info.bytes, 4, (info.bytes[4] << 8) + info.bytes[5] + 2);  
     info.bytes[bcc2_byte_ix + 1] = FLAG;
     printf("I: %d   -   info: %d", bcc2_byte_ix, info.bytes[bcc2_byte_ix]);
-    info.size = 4 + 2 + info.bytes[4] * 255 + info.bytes[5] + 2;
+    info.size = 4 + 2 + info.bytes[4] * 256 + info.bytes[5] + 2;
 
 
     stuffFrame(&info);
@@ -199,7 +199,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
             case RCV_BCC1:     
                 frame->bytes[4 + 2 + dataCounter] = c;
                 dataCounter++;
-                if (dataCounter == (frame->bytes[4] * 255 + frame->bytes[5])) state = RCV_DATA;
+                if (dataCounter == (frame->bytes[4] * 256 + frame->bytes[5])) state = RCV_DATA;
                 break;
             case RCV_DATA:
                 // printf("REPEATED byte: %x   -   state: %d   -   bcc: %x\n", c, state, bccCalculator(frame->bytes, 4, dataCounter + 2));
@@ -237,12 +237,15 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
         returnValue = 1;
     }
     else if (returnValue == 0) {
+        printf("aqui");
         frame->size = 4 + 2 + dataCounter + 1 + 1;
+        printf("aqui");
         destuffFrame(frame);
+        printf("aqui");
         returnValue = 0;
     }
     printf("1\n");
-
+    
     return returnValue;
 }
 
