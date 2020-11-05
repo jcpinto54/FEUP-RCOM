@@ -144,9 +144,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
     u_int8_t c;
     receive_state_t state = INIT;
     int dataCounter = -2, returnValue = 0;
-    printf("1\n");
     do {
-        printf("1\n");
         alarm(3); 
         justRead = false;
         int bytesRead = read(fd, &c, 1);
@@ -157,7 +155,6 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
             perror("read error");
             return -3;
         }
-        printf("1\n");
         switch (state) {
             case INIT:
                 if (c == FLAG) {
@@ -221,7 +218,9 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 // printf("byte: %x   -   state: %d\n", c, state);
                 if (c == FLAG) {
                     state = COMPLETE;
+                    printf("2\n");
                     frame->bytes[4 + 2 + dataCounter + 1] = c;
+                    printf("3\n");
                 }
                 else
                     state = INIT;
