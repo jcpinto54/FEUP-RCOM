@@ -353,13 +353,16 @@ int sendNotIFrame(frame_t *frame, int fd) {
 int sendIFrame(frame_t *frame, int fd) {
     int attempts = 0, sentBytes = 0;
     frame_t responseFrame;
+    printf("BBBB\n");
     responseFrame.bytes = (u_int8_t *)malloc(maxFrameSize);
+    printf("BBBB\n");
     while (1) {
         if(attempts >= MAX_WRITE_ATTEMPTS) 
         {
             printf("DATA - Too many write attempts\n");
             return -1;
         }
+    printf("BBBB\n");
         if ((sentBytes = write(fd, frame->bytes, frame->size)) == -1) return -1;                  
         printf("DATA - %d bytes sent\n", sentBytes);
 
@@ -372,6 +375,7 @@ int sendIFrame(frame_t *frame, int fd) {
         printf("sentFrame bcc: %x\n", frame->bytes[3]& 0xff);
         printf("sentFrame flag: %x\n\n\n", frame->bytes[4]& 0xff);
         */
+    printf("BBBB\n");
         int receiveReturn = receiveNotIMessage(&responseFrame, fd, (frame->infoId + 1) % 2, 2);
         // debug
         /*
@@ -404,6 +408,7 @@ int sendIFrame(frame_t *frame, int fd) {
         attempts++;
     }
     free(responseFrame.bytes);
+    free(frame->bytes);
     return 0;
 }
 
