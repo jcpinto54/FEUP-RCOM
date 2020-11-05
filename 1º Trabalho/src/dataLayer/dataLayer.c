@@ -233,7 +233,7 @@ int llwrite(int fd, char * buffer, int length)
 {
 
     frame_t info;
-    info.bytes = (u_int8_t *)malloc(maxFrameSize);
+    //info.bytes = (u_int8_t *)malloc(maxFrameSize);
     info = prepareI(buffer, length); //Prepara a trama de informação
 
     printFrame(&info);
