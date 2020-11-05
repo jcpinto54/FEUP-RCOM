@@ -49,18 +49,16 @@ int sendFile(char * filename){
 
     int fileFd;
 
-    printf("AAAA\n");
+    printf("filename: %s\n", filename);
     fileFd = open(filename, O_RDONLY | O_NONBLOCK);
     if (fileFd == -1) {
         perror("file not opened correctly");
         return -1;
     }
-    printf("AAAA\n");
 
     struct stat st;
     stat(filename, &st);
     unsigned fileSize = st.st_size;
-    printf("AAAA\n");
 
     packet = createControlPacket(START, fileSize, filename);
 
@@ -68,23 +66,22 @@ int sendFile(char * filename){
         printf("APP - Error transmitting start control packet in applicationLayer.c ...\n");
         return -1;
     }
-    printf("AAAA\n");
 
     int size = 0, number = 0;
     u_int8_t *buffer = (u_int8_t *)malloc(maxPacketLength);
-    while((size = read(fileFd, (char *)buffer, maxPacketLength)) > 0){
-        printf("SIZE READ: %d\n", size);
-    printf("AAAA\n");
+    do {
+        printf("filename: %s\n", filename);
+        printf("fileFd: %d\n", fileFd);
+        size = read(fileFd, (char *)buffer, maxPacketLength);
+        printf("size: %d\n", size);
+        printf("reading a data packet from file");
         packet = createDataPacket(buffer, (number % 256), size);
-        printf("REAL SIZE: %d\n", packet.size);
         if(llwrite(app.fd, (char *)(*(packet.bytes)), packet.size) < 0){
             printf("APP - Error transmitting data packet in applicationLayer.c ...\n");
-    printf("AAAA\n");
             return -1;
         }
         number++;
-    }
-    printf("AAAA\n");
+    } while (size > 0);
     packet = createControlPacket(END, fileSize, filename);
 
     if(llwrite(app.fd, (char *)(*(packet.bytes)), packet.size) < 0){
@@ -186,17 +183,13 @@ int receiveFile(){
     }
 
     u_int8_t *bytes = (u_int8_t *)malloc(maxPacketDataLength);
-    int forCond;
-    if (fileSize == maxPacketDataLength) forCond = (fileSize / maxPacketDataLength);
-    else forCond = (fileSize / maxPacketDataLength) + 1;
-    for(int i = 0 ; i < forCond; i++){
-        printf("Iteração: %d\n", i);
+
+    for(int i = 0 ; i < (fileSize / maxPacketDataLength) + 1; i++){
         if(llread(app.fd, receive) < 0){
             printf("APP - Error receiving data packet in applicationLayer.c ...\n");
             return -1;
         }
         int packetDataSize = parseDataPacket((u_int8_t *)receive, bytes);
-        printf("\nfileSize:%d   -   mP: %d\nifCond: %d\n\n\n", fileSize, maxPacketDataLength, (int)((float)fileSize / (float)maxPacketDataLength) + 1);
         if(write(fileFd, bytes, packetDataSize) < 0){
             perror("APP - Error writing to file ...");
             return -1;

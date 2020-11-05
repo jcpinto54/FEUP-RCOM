@@ -87,44 +87,40 @@ void destuffFrame(frame_t *frame) {
 
 
 // pode ser necessário ter os dados em mais que uma frame
-frame_t prepareI(char* data, int length) //Testar
+void prepareI(frame_t *info, char* data, int length) //Testar
 {
     u_int8_t frameDataSize[2];
-    frame_t info;
-    info.bytes = (u_int8_t **) malloc(sizeof(u_int8_t *));
-    (*(info.bytes)) = (u_int8_t *)malloc(maxFrameSize);
+    info->bytes = (u_int8_t **) malloc(sizeof(u_int8_t *));
+    (*(info->bytes)) = (u_int8_t *)malloc(maxFrameSize);
 
         //debug
-    (*(info.bytes))[0] = FLAG; //F
-    (*(info.bytes))[1] = TRANSMITTER_TO_RECEIVER; //A
-    (*(info.bytes))[2] = idFrameSent << 6 | I;
-    info.infoId = idFrameSent;
-    (*(info.bytes))[3] = bccCalculator((*(info.bytes)), 1, 2); //BCC1, calculado com A e C
+    (*(info->bytes))[0] = FLAG; //F
+    (*(info->bytes))[1] = TRANSMITTER_TO_RECEIVER; //A
+    (*(info->bytes))[2] = idFrameSent << 6 | I;
+    info->infoId = idFrameSent;
+    (*(info->bytes))[3] = bccCalculator((*(info->bytes)), 1, 2); //BCC1, calculado com A e C
     
 
     prepareFrameDataSize(length, frameDataSize);
 
-    (*(info.bytes))[4] = frameDataSize[0];
-    (*(info.bytes))[5] = frameDataSize[1];
+    (*(info->bytes))[4] = frameDataSize[0];
+    (*(info->bytes))[5] = frameDataSize[1];
 
     for (int j = 0; j < length; j++) {
-        (*(info.bytes))[6 + j] = data[j];
+        (*(info->bytes))[6 + j] = data[j];
     }
 
-    int bcc2_byte_ix = 4 + 2 + ((*(info.bytes))[4] << 8)  + (*(info.bytes))[5];
+    int bcc2_byte_ix = 4 + 2 + ((*(info->bytes))[4] << 8)  + (*(info->bytes))[5];
 
-    (*(info.bytes))[bcc2_byte_ix] = bccCalculator((*(info.bytes)), 4, ((*(info.bytes))[4] << 8) + (*(info.bytes))[5] + 2);  
-    (*(info.bytes))[bcc2_byte_ix + 1] = FLAG;
-    printf("I: %d   -   info: %d", bcc2_byte_ix, (*(info.bytes))[bcc2_byte_ix]);
-    info.size = 4 + 2 + (*(info.bytes))[4] * 256 + (*(info.bytes))[5] + 2;
+    (*(info->bytes))[bcc2_byte_ix] = bccCalculator((*(info->bytes)), 4, ((*(info->bytes))[4] << 8) + (*(info->bytes))[5] + 2);  
+    (*(info->bytes))[bcc2_byte_ix + 1] = FLAG;
+    info->size = 4 + 2 + (*(info->bytes))[4] * 256 + (*(info->bytes))[5] + 2;
 
 
-    stuffFrame(&info);
+    stuffFrame(info);
 
     idFrameSent = (idFrameSent + 1) % 2;
 
-    return info;
-    
 }
 
 void readTimeoutHandler(int signo) {
@@ -151,7 +147,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
         int bytesRead = read(fd, &c, 1);
         justRead = true;
         
-        printf("byte: %x   -   state: %d  -  bytesRead: %d\n", c, state, bytesRead);
+        // printf("byte: %x   -   state: %d\n", c, state);
         if (bytesRead < 0) {
             perror("read error");
             return -3;
@@ -176,7 +172,6 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 }
                 break;
             case RCV_A:
-                printf("Hello\n");
                 if ((c & I_MASK) == I) {
                     state = RCV_C;
                     (*(frame->bytes))[2] = c;
@@ -204,7 +199,6 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 if (dataCounter == ((*(frame->bytes))[4] * 256 + (*(frame->bytes))[5])) state = RCV_DATA;
                 break;
             case RCV_DATA:
-                // printf("REPEATED byte: %x   -   state: %d   -   bcc: %x\n", c, state, bccCalculator((*(frame->bytes)), 4, dataCounter + 2));
                 if (bccVerifier((*(frame->bytes)), 4, dataCounter + 2, c)) {
                     state = RCV_BCC2;
                     (*(frame->bytes))[4 + 2 + dataCounter] = c;
@@ -217,37 +211,26 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 }
                 break;
             case RCV_BCC2:
-                // printf("byte: %x   -   state: %d\n", c, state);
                 if (c == FLAG) {
                     state = COMPLETE;
-                    //printf("2\n");
                     (*(frame->bytes))[4 + 2 + dataCounter + 1] = c;
-                    //printf("3\n");
                 }
                 else
                     state = INIT;
                 break;
             case COMPLETE: break;
         }
-        //printf("a\n");
         // sleep(1);
     } while (state != COMPLETE && returnValue == 0);
-
-    //printf("b\n");
     if (lastFrameReceivedId != -1 && lastFrameReceivedId == frame->infoId && returnValue == 0) {
-        //printf("aquo");
         printf("DATA - Read a duplicate frame\n");
         returnValue = 1;
     }
     else if (returnValue == 0) {
-        //printf("aqui");
         frame->size = 4 + 2 + dataCounter + 1 + 1;
-        //printf("aqui");
         destuffFrame(frame);
-        //printf("aqui");
         returnValue = 0;
     }
-    //printf("exit\n");
     
     return returnValue;
 }
@@ -266,7 +249,7 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
         justRead = false;
         int bytesRead = read(fd, &c, 1);
         justRead = true;
-        printf("byte: %x   -   state: %d\n", c, state);
+        // printf("byte: %x   -   state: %d\n", c, state);
         if (bytesRead < 0) {
             perror("read error");
             return -2;
@@ -354,39 +337,20 @@ int sendNotIFrame(frame_t *frame, int fd) {
 int sendIFrame(frame_t *frame, int fd) {
     int attempts = 0, sentBytes = 0;
     frame_t responseFrame;
-    printf("BBBB\n");
+    responseFrame.bytes = (u_int8_t **)malloc(sizeof(u_int8_t *));
     (*(responseFrame.bytes)) = (u_int8_t *)malloc(maxFrameSize);
-    printf("BBBB\n");
     while (1) {
         if(attempts >= MAX_WRITE_ATTEMPTS) 
         {
             printf("DATA - Too many write attempts\n");
             return -1;
         }
-    printf("BBBB\n");
         if ((sentBytes = write(fd, (*(frame->bytes)), frame->size)) == -1) return -1;                  
         printf("DATA - %d bytes sent\n", sentBytes);
 
-        //debug
-        /*
-        printf("sentFrame size: %lu\n", frame->size);
-        printf("sentFrame flag: %x\n", (*(frame->bytes))[0] & 0xff);
-        printf("sentFrame a: %x\n", (*(frame->bytes))[1]& 0xff);
-        printf("sentFrame c: %x\n", (*(frame->bytes))[2]& 0xff);
-        printf("sentFrame bcc: %x\n", (*(frame->bytes))[3]& 0xff);
-        printf("sentFrame flag: %x\n\n\n", (*(frame->bytes))[4]& 0xff);
-        */
-    printf("BBBB\n");
+    
         int receiveReturn = receiveNotIMessage(&responseFrame, fd, (frame->infoId + 1) % 2, 2);
-        // debug
-        /*
-        printf("responseFrame size: %lu\n", responseFrame.size);
-        printf("responseFrame flag: %x\n", responseFrame.bytes[0] & 0xff);
-        printf("responseFrame a: %x\n", responseFrame.bytes[1]& 0xff);
-        printf("responseFrame c: %x\n", responseFrame.bytes[2]& 0xff);
-        printf("responseFrame bcc: %x\n", responseFrame.bytes[3]& 0xff);
-        printf("responseFrame flag: %x\n\n\n", responseFrame.bytes[4]& 0xff);
-        */
+    
         if (receiveReturn == -1) {
             printf("DATA - Timeout reading response, trying again...\n");
         }
