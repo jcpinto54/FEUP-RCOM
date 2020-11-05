@@ -43,7 +43,7 @@ void appRun() {
 
 int sendFile(char * filename){
     packet_t packet;
-    packet.bytes = (u_int8_t *)malloc(maxPacketLength);
+    //packet.bytes = (u_int8_t *)malloc(maxPacketLength);
     int fileFd;
 
     fileFd = open(filename, O_RDONLY | O_NONBLOCK);
@@ -83,6 +83,8 @@ int sendFile(char * filename){
     }
 
     close(fileFd);
+    free(packet.bytes);
+    free(buffer);
     return 0;
 }
 
@@ -205,6 +207,7 @@ int receiveFile(){
     }
 
     close(fileFd);
+    free(receive);
     return 0;
 
 }
