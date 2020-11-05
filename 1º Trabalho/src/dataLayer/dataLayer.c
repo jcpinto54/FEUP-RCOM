@@ -14,7 +14,7 @@
 int status;
 extern int idFrameSent;
 extern int lastFrameReceivedId;
-int portFd;
+extern int baudrate;
 
 int llopen(char *port, int appStatus)
 {
@@ -35,7 +35,7 @@ int llopen(char *port, int appStatus)
 
 
     bzero(&newtio, sizeof(newtio));
-    newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
+    newtio.c_cflag = baudrate | CS8 | CLOCAL | CREAD;
     newtio.c_iflag = IGNPAR;
     newtio.c_oflag = 0;
 
@@ -64,13 +64,7 @@ int llopen(char *port, int appStatus)
                 }
 
                 buildSETFrame(&setFrame, true);
-                
-                printf("setframe size: %lu\n", setFrame.size);
-                printf("setframe flag: %x\n", setFrame.bytes[0] & 0xff);
-                printf("setframe a: %x\n", setFrame.bytes[1]& 0xff);
-                printf("setframe c: %x\n", setFrame.bytes[2]& 0xff);
-                printf("setframe bcc: %x\n", setFrame.bytes[3]& 0xff);
-                printf("setframe flag: %x\n\n\n", setFrame.bytes[4]& 0xff);
+            
                 
                 
                 if (sendNotIFrame(&setFrame, fd)) {
@@ -80,14 +74,6 @@ int llopen(char *port, int appStatus)
                 prepareToReceive(&responseFrame, 5);
                 printf("in receive");
                 int responseReceive = receiveNotIMessage(&responseFrame, fd, RESPONSE_WITHOUT_ID, 3); 
-                printf("out receive");
-                
-                printf("response size: %lu\n", responseFrame.size);
-                printf("response flag: %x\n", responseFrame.bytes[0] & 0xff);
-                printf("response a: %x\n", responseFrame.bytes[1]& 0xff);
-                printf("response c: %x\n", responseFrame.bytes[2]& 0xff);
-                printf("response bcc: %x\n", responseFrame.bytes[3]& 0xff);
-                printf("response flag: %x\n\n\n", responseFrame.bytes[4]& 0xff);
                 
 
                 if (responseReceive == -1) continue;         // in a timeout, retransmit frame
@@ -111,11 +97,11 @@ int llopen(char *port, int appStatus)
     }
     printf("DATA - Opened serial port connection\n");
 
-    portFd = fd;
     return fd;
 }
 
 int llclose(int fd) {
+            printf("isUAF: \n");
 
     frame_t discFrame;
     frame_t receiveFrame;
@@ -148,15 +134,18 @@ int llclose(int fd) {
         case RECEIVER:;
             for (int i = 0; i < MAX_READ_ATTEMPTS; i++) {
                 prepareToReceive(&receiveFrame, 5);
+            printf("isUAF: \n");
                 int receiveReturn = receiveNotIMessage(&receiveFrame, fd, RESPONSE_WITHOUT_ID, 7);
                 if (receiveReturn == -1) continue;
                 else if (receiveReturn) return -7;
+            printf("isUAF: \n");
                 if (!isDISCFrame(&receiveFrame)) return -5;
                 break;
             }
             buildDISCFrame(&discFrame, true);
+            printf("isUAF: \n");
             if (sendNotIFrame(&discFrame, fd)) return -2;
-
+            printf("isUAF: \n");
             prepareToReceive(&receiveFrame, 5);
             int receiveNotIMessageReturn = receiveNotIMessage(&receiveFrame, fd, RESPONSE_WITHOUT_ID, 3);
             if (receiveNotIMessageReturn) return -4;
@@ -231,7 +220,10 @@ int llread(int fd, char * buffer){
 
 int llwrite(int fd, char * buffer, int length)
 {
+    printf("2\n");
+
     frame_t info = prepareI(buffer, length); //Prepara a trama de informação
+    printf("2\n");
 
     printFrame(&info);
     if (sendIFrame(&info, fd) == -1) return -1;

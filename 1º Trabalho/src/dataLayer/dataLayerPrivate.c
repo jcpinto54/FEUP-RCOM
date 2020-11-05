@@ -14,14 +14,14 @@
 
 int idFrameSent = 0;
 int lastFrameReceivedId = -1;
-int portFd;
-
 bool justRead;     // used for timeout
+extern int maxFrameSize;
+extern int maxFrameDataLength;
 
 void stuffFrame(frame_t * frame)
 {
     int stuffingCounter = 0;
-    u_int8_t frameRealData[MAX_FRAME_SIZE];
+    u_int8_t *frameRealData = (u_int8_t *)malloc(maxFrameDataLength);
     for (int i = 0; i < 6; i++) frameRealData[i] = frame->bytes[i];
     for (int i = 6; i < frame->size - 3 + stuffingCounter; i++) {
         if (frame->bytes[i - stuffingCounter] == FLAG) {
@@ -39,7 +39,8 @@ void stuffFrame(frame_t * frame)
         frameRealData[i] = frame->bytes[i - stuffingCounter];
     }
     for (int i = frame->size - 3; i < frame->size; i++) frameRealData[i + stuffingCounter] = frame->bytes[i];
-    
+
+
     frameRealData[4] += stuffingCounter / 256;
     frameRealData[5] += stuffingCounter % 256;
 
@@ -47,13 +48,14 @@ void stuffFrame(frame_t * frame)
     frameRealData[frame->size - 2] = bccCalculator(frameRealData, 4, frameRealData[4] * 256 + frameRealData[5] + 2);
 
     memcpy(frame->bytes, frameRealData, frame->size);
+    free(frameRealData);
 }
 
 
 void destuffFrame(frame_t *frame) {
     bool destuffing = false;
     int destuffingCounter = 0;
-    u_int8_t frameRealData[MAX_FRAME_SIZE];
+    u_int8_t *frameRealData = (u_int8_t *)malloc(maxFrameDataLength);
     for (int i = 0; i < 6; i++) frameRealData[i] = frame->bytes[i];
     for (int i = 6; i < frame->size - 3; i++) {
         if (frame->bytes[i] == ESC) {
@@ -82,13 +84,15 @@ void destuffFrame(frame_t *frame) {
     frameRealData[frame->size - 2] = bccCalculator(frameRealData, 4, frameRealData[4] * 256 + frameRealData[5] + 2);
 
     memcpy(frame->bytes, frameRealData, frame->size);
+    free(frameRealData);
 }
 
 
 // pode ser necessário ter os dados em mais que uma frame
 frame_t prepareI(char* data, int length) //Testar
 {
-
+    printf("length: %d\n", length);
+    printf("3\n");
     u_int8_t frameDataSize[2];
     frame_t info;
 
@@ -98,27 +102,35 @@ frame_t prepareI(char* data, int length) //Testar
     info.bytes[2] = idFrameSent << 6 | I;
     info.infoId = idFrameSent;
     info.bytes[3] = bccCalculator(info.bytes, 1, 2); //BCC1, calculado com A e C
+    printf("3\n");
     
 
     prepareFrameDataSize(length, frameDataSize);
 
+    printf("3\n");
     info.bytes[4] = frameDataSize[0];
     info.bytes[5] = frameDataSize[1];
 
-    for (int j = 0; j < frameDataSize[0] * 256 + frameDataSize[1]; j++) {
+    printf("3\n");
+    for (int j = 0; j < length; j++) {
+        printf("j: %d\n", j);
         info.bytes[6 + j] = data[j];
     }
+    printf("3\n");
 
     int bcc2_byte_ix = 4 + 2 + info.bytes[4] * 256 + info.bytes[5];
 
     info.bytes[bcc2_byte_ix] = bccCalculator(info.bytes, 4, info.bytes[4] * 256 + info.bytes[5] + 2);  
     info.bytes[bcc2_byte_ix + 1] = FLAG;
     info.size = 4 + 2 + info.bytes[4] * 256 + info.bytes[5] + 2;
+    printf("3\n");
 
 
     stuffFrame(&info);
+    printf("3\n");
 
     idFrameSent = (idFrameSent + 1) % 2;
+    printf("3\n");
 
     return info;
     
@@ -148,7 +160,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
         int bytesRead = read(fd, &c, 1);
         justRead = true;
         
-        printf("byte: %x   -   state: %d  -  bytesRead: %d  -  \n", c, state, bytesRead);
+        printf("byte: %x   -   state: %d  -  bytesRead: %d\n", c, state, bytesRead);
         if (bytesRead < 0) {
             perror("read error");
             return -3;
@@ -196,17 +208,12 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 }
                 break;
             case RCV_BCC1:     
-                if (dataCounter < 0 && (c < 0 || c > MAX_FRAME_DATA_LENGTH * 2)) {
-                    printf("DATA - First items are not a valid size value    -   byte read: %d\n", c);
-                    returnValue = -1;
-                    break;
-                }
                 frame->bytes[4 + 2 + dataCounter] = c;
                 dataCounter++;
                 if (dataCounter == (frame->bytes[4] * 256 + frame->bytes[5])) state = RCV_DATA;
                 break;
             case RCV_DATA:
-                printf("REPEATED byte: %x   -   state: %d   -   bcc: %x\n", c, state, bccCalculator(frame->bytes, 4, dataCounter + 2));
+                // printf("REPEATED byte: %x   -   state: %d   -   bcc: %x\n", c, state, bccCalculator(frame->bytes, 4, dataCounter + 2));
                 if (bccVerifier(frame->bytes, 4, dataCounter + 2, c)) {
                     state = RCV_BCC2;
                     frame->bytes[4 + 2 + dataCounter] = c;
@@ -219,7 +226,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 }
                 break;
             case RCV_BCC2:
-                printf("byte: %x   -   state: %d\n", c, state);
+                // printf("byte: %x   -   state: %d\n", c, state);
                 if (c == FLAG) {
                     state = COMPLETE;
                     frame->bytes[4 + 2 + dataCounter + 1] = c;
@@ -229,7 +236,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 break;
             case COMPLETE: break;
         }
-        //sleep(1);
+        // sleep(1);
     } while (state != COMPLETE && returnValue == 0);
     if (lastFrameReceivedId != -1 && lastFrameReceivedId == frame->infoId && returnValue == 0) {
         printf("DATA - Read a duplicate frame\n");
@@ -323,7 +330,7 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
                 state = INIT;
                 break;
         }
-        //sleep(1);
+        // sleep(1);
     } while (state != COMPLETE);
     frame->size = 5;
     int returnValue = 0;
@@ -412,7 +419,7 @@ void prepareResponse(frame_t *frame, bool valid, int id) {
 
 // ---
 
-u_int8_t bccCalculator(u_int8_t bytes[], int start, size_t length)
+u_int8_t bccCalculator(u_int8_t bytes[], int start, int length)
 {
     int bcc = 0x00;
     for (int i = start; i < start + length; i++)
@@ -423,7 +430,7 @@ u_int8_t bccCalculator(u_int8_t bytes[], int start, size_t length)
 }
 
 // Return true if bcc verifies else otherwise 
-bool bccVerifier(u_int8_t bytes[], int start, size_t length, u_int8_t parity)
+bool bccVerifier(u_int8_t bytes[], int start, int length, u_int8_t parity)
 {
     return (bccCalculator(bytes, start, length) == parity);
 }
@@ -482,7 +489,7 @@ bool isDISCFrame(frame_t *frame) {
     return frame->bytes[2] == DISC;
 }
 
-void prepareToReceive(frame_t *frame, size_t size)
+void prepareToReceive(frame_t *frame, int size)
 {
     frame->size = size;
 }
@@ -493,10 +500,10 @@ void prepareFrameDataSize(int frameSize, u_int8_t *sizeBytes) {
 }
 
 void printFrame(frame_t *frame) {
-    printf("\nStarting printFrame...\n\tSize: %ld\n", frame->size);
+    printf("\nStarting printFrame...\n\tSize: %d\n", frame->size);
     for (int i = 0; i < frame->size; i++)
     {
-        printf("\tByte %d: %x \n", i, frame->bytes[i]);
+        printf("\tByte %d: %c \n", i, frame->bytes[i]);
     }
     printf("printFrame ended\n\n");
 }

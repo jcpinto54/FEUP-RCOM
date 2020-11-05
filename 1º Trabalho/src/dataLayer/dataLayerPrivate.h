@@ -21,8 +21,8 @@ int sendIFrame(frame_t *frame, int fd);
 int sendNotIFrame(frame_t *frame, int fd);
 
 
-u_int8_t bccCalculator(u_int8_t bytes[], int start, size_t length);
-bool bccVerifier(u_int8_t bytes[], int start, size_t length, u_int8_t parity);
+u_int8_t bccCalculator(u_int8_t bytes[], int start, int length);
+bool bccVerifier(u_int8_t bytes[], int start, int length, u_int8_t parity);
 
 void buildSETFrame(frame_t *frame, bool transmitterToReceiver);
 bool isSETFrame(frame_t *frame);
@@ -37,7 +37,7 @@ frame_t prepareI(char* data, int size);
 void prepareResponse(frame_t *frame, bool valid, int id);
 
 void prepareFrameDataSize(int frameSize, u_int8_t *sizeBytes);
-void prepareToReceive(frame_t *frame, size_t size);
+void prepareToReceive(frame_t *frame, int size);
 void printFrame(frame_t *frame);
 
 void readTimeoutHandler(int signo);

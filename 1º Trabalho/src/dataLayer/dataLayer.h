@@ -3,7 +3,7 @@
 
 typedef struct {
     u_int8_t bytes[MAX_FRAME_SIZE];
-    size_t size;
+    int size;
     int infoId;
 } frame_t;
 
