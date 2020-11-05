@@ -89,8 +89,6 @@ int sendFile(char * filename){
     }
 
     close(fileFd);
-    free(packet.bytes);
-    free(buffer);
     return 0;
 }
 
@@ -213,7 +211,6 @@ int receiveFile(){
     }
 
     close(fileFd);
-    free(receive);
     return 0;
 
 }
