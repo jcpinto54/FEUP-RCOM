@@ -402,6 +402,7 @@ int sendIFrame(frame_t *frame, int fd) {
         }
         attempts++;
     }
+    free(responseFrame.bytes);
     return 0;
 }
 
