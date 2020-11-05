@@ -234,8 +234,8 @@ int llread(int fd, char * buffer){
         printf("DATA - Max read attempts of the same frame reached.\n");
         return -1;
     }
-    free(frame.bytes);
-    free(response.bytes);
+    // free(frame.bytes);
+    // free(response.bytes);
     return 0;
 }
 
