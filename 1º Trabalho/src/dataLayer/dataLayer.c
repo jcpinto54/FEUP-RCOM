@@ -170,28 +170,33 @@ int llclose(int fd) {
 
 int llread(int fd, char * buffer){
     frame_t frame, response;
+    printf("a\n");
     frame.bytes = (u_int8_t *)malloc(maxFrameSize);
+    printf("a\n");
     response.bytes = (u_int8_t *)malloc(maxFrameSize);
+    printf("a\n");
     int receiveIMessageReturn, sameReadAttempts = 1;
     do {
+        printf("a\n");
         receiveIMessageReturn = receiveIMessage(&frame, fd, 3);
-        
+        printf("a\n");
         if (receiveIMessageReturn == -4) {
             printf("DATA - Read timeout. Exiting llread...\n");
             return -1;
         }
-        
+        printf("a\n");
         if (receiveIMessageReturn < -4 || receiveIMessageReturn > 1) {
             printf("DATA - receiveIMessage returned unexpected value\n");
             return -1;
         }
-        
+        printf("a\n");
         if (receiveIMessageReturn >= 0) {
             prepareResponse(&response, true, (frame.infoId + 1) % 2);
             printf("DATA - Sent RR frame to the transmitter\n");
             sameReadAttempts = 0;
         }
         else if (receiveIMessageReturn == -1 || receiveIMessageReturn == -2) {
+            printf("b\n");
             if (lastFrameReceivedId != -1 && frame.infoId == lastFrameReceivedId) {
                 prepareResponse(&response, true, (frame.infoId + 1) % 2);
                 printf("DATA - Read a duplicate frame\nDATA - Sent RR frame to the transmitter\n");
@@ -203,22 +208,24 @@ int llread(int fd, char * buffer){
                 sameReadAttempts++;
             }
         }
+        printf("a\n");
         if (receiveIMessageReturn >= 0) {
             lastFrameReceivedId = frame.infoId;
         }
+        printf("a\n");
         if (receiveIMessageReturn != -3) {
             if (sendNotIFrame(&response, fd) == -1) return -1;
         }
-        
+        printf("a\n");
         if (receiveIMessageReturn == 0)
             memcpy(buffer, frame.bytes + 6, frame.bytes[4] * 256 + frame.bytes[5]);        
 
-
+        printf("a\n");
         if (receiveIMessageReturn == -3) {
             printf("DATA - Serial Port couldn't be read. Exiting llread...\n");
             return -1;
         }
-
+        printf("a\n");
     } while (receiveIMessageReturn != 0 && sameReadAttempts < MAX_READ_ATTEMPTS);
 
     if (sameReadAttempts == MAX_READ_ATTEMPTS) {
