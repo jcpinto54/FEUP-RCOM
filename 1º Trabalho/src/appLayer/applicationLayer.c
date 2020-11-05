@@ -43,18 +43,20 @@ void appRun() {
 
 int sendFile(char * filename){
     packet_t packet;
-    //packet.bytes = (u_int8_t *)malloc(maxPacketLength);
     int fileFd;
 
+    printf("AAAA\n");
     fileFd = open(filename, O_RDONLY | O_NONBLOCK);
     if (fileFd == -1) {
         perror("file not opened correctly");
         return -1;
     }
+    printf("AAAA\n");
 
     struct stat st;
     stat(filename, &st);
     unsigned fileSize = st.st_size;
+    printf("AAAA\n");
 
     packet = createControlPacket(START, fileSize, filename);
 
@@ -62,19 +64,23 @@ int sendFile(char * filename){
         printf("APP - Error transmitting start control packet in applicationLayer.c ...\n");
         return -1;
     }
+    printf("AAAA\n");
 
     int size = 0, number = 0;
     u_int8_t *buffer = (u_int8_t *)malloc(maxPacketLength);
     while((size = read(fileFd, (char *)buffer, maxPacketLength)) > 0){
         printf("SIZE READ: %d\n", size);
+    printf("AAAA\n");
         packet = createDataPacket(buffer, (number % 256), size);
         printf("REAL SIZE: %d\n", packet.size);
         if(llwrite(app.fd, (char *)packet.bytes, packet.size) < 0){
             printf("APP - Error transmitting data packet in applicationLayer.c ...\n");
+    printf("AAAA\n");
             return -1;
         }
         number++;
     }
+    printf("AAAA\n");
     packet = createControlPacket(END, fileSize, filename);
 
     if(llwrite(app.fd, (char *)packet.bytes, packet.size) < 0){
