@@ -227,12 +227,13 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 break;
             case COMPLETE: break;
         }
-        printf("1\n");
+        printf("a\n");
         // sleep(1);
     } while (state != COMPLETE && returnValue == 0);
 
-    printf("1\n");
+    printf("b\n");
     if (lastFrameReceivedId != -1 && lastFrameReceivedId == frame->infoId && returnValue == 0) {
+        printf("aquo");
         printf("DATA - Read a duplicate frame\n");
         returnValue = 1;
     }
@@ -244,7 +245,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
         printf("aqui");
         returnValue = 0;
     }
-    printf("1\n");
+    printf("exit\n");
     
     return returnValue;
 }
