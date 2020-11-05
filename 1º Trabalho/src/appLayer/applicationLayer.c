@@ -178,7 +178,7 @@ int receiveFile(){
 
     u_int8_t *bytes = (u_int8_t *)malloc(maxPacketDataLength);
     int forCond;
-    if (fileSize > maxPacketDataLength) forCond = (fileSize / maxPacketDataLength) + 1;
+    if (fileSize == maxPacketDataLength) forCond = (fileSize / maxPacketDataLength);
     else forCond = (fileSize / maxPacketDataLength) + 1;
     for(int i = 0 ; i < forCond; i++){
         printf("Iteração: %d\n", i);

@@ -175,6 +175,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 }
                 break;
             case RCV_A:
+                printf("Hello\n");
                 if ((c & I_MASK) == I) {
                     state = RCV_C;
                     frame->bytes[2] = c;
@@ -218,34 +219,34 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 // printf("byte: %x   -   state: %d\n", c, state);
                 if (c == FLAG) {
                     state = COMPLETE;
-                    printf("2\n");
+                    //printf("2\n");
                     frame->bytes[4 + 2 + dataCounter + 1] = c;
-                    printf("3\n");
+                    //printf("3\n");
                 }
                 else
                     state = INIT;
                 break;
             case COMPLETE: break;
         }
-        printf("a\n");
+        //printf("a\n");
         // sleep(1);
     } while (state != COMPLETE && returnValue == 0);
 
-    printf("b\n");
+    //printf("b\n");
     if (lastFrameReceivedId != -1 && lastFrameReceivedId == frame->infoId && returnValue == 0) {
-        printf("aquo");
+        //printf("aquo");
         printf("DATA - Read a duplicate frame\n");
         returnValue = 1;
     }
     else if (returnValue == 0) {
-        printf("aqui");
+        //printf("aqui");
         frame->size = 4 + 2 + dataCounter + 1 + 1;
-        printf("aqui");
+        //printf("aqui");
         destuffFrame(frame);
-        printf("aqui");
+        //printf("aqui");
         returnValue = 0;
     }
-    printf("exit\n");
+    //printf("exit\n");
     
     return returnValue;
 }
