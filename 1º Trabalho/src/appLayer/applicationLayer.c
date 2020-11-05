@@ -181,7 +181,7 @@ int receiveFile(){
     if (fileSize > maxPacketDataLength) forCond = (fileSize / maxPacketDataLength) + 1;
     else forCond = (fileSize / maxPacketDataLength) + 1;
     for(int i = 0 ; i < forCond; i++){
-        printf("Iteração: %d", i);
+        printf("Iteração: %d\n", i);
         if(llread(app.fd, receive) < 0){
             printf("APP - Error receiving data packet in applicationLayer.c ...\n");
             return -1;
