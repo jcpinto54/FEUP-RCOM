@@ -248,7 +248,7 @@ int llwrite(int fd, char * buffer, int length)
 
     printFrame(&info);
     if (sendIFrame(&info, fd) == -1) return -1;
-
+    free(info.bytes);
     return 0;
 }
 
