@@ -177,7 +177,7 @@ int receiveFile(){
 
    //strcpy(filename, "output.gif");    // comment to test in the same pc 
     
-    int fileFd = open("output.gif", O_WRONLY | O_CREAT , S_IRWXG | S_IRWXU | S_IRWXO);
+    int fileFd = open("output.jpeg", O_WRONLY | O_CREAT , S_IRWXG | S_IRWXU | S_IRWXO);
     if (fileFd <= -1) {
         perror("file not opened correctly");
         return -1;
@@ -185,7 +185,7 @@ int receiveFile(){
 
     u_int8_t *bytes = (u_int8_t *)malloc(maxPacketLength/2 - 4);
 
-    for(int i = 0 ; i < (fileSize / (maxPacketLength/2 - 4)) - 1; i++){
+    for(int i = 0 ; i < (fileSize / (maxPacketLength/2 - 4)); i++){
         if(llread(app.fd, receive) < 0){
             printf("APP - Error receiving data packet in applicationLayer.c ...\n");
             return -1;
