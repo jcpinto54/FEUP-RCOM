@@ -57,11 +57,15 @@ int llopen(char *port, int appStatus)
     frame_t responseFrame;
     frame_t receiverFrame;
     frame_t uaFrame;
+    setFrame.bytes = (u_int8_t **)malloc(sizeof(u_int8_t **));
+    responseFrame.bytes = (u_int8_t **)malloc(sizeof(u_int8_t **));
+    receiverFrame.bytes = (u_int8_t **)malloc(sizeof(u_int8_t **));
+    uaFrame.bytes = (u_int8_t **)malloc(sizeof(u_int8_t **));
 
-    setFrame.bytes = (u_int8_t *)malloc(maxFrameSize);
-    responseFrame.bytes = (u_int8_t *)malloc(maxFrameSize);
-    receiverFrame.bytes = (u_int8_t *)malloc(maxFrameSize);
-    uaFrame.bytes = (u_int8_t *)malloc(maxFrameSize);
+    (*(setFrame.bytes)) = (u_int8_t *)malloc(maxFrameSize);
+    (*(responseFrame.bytes)) = (u_int8_t *)malloc(maxFrameSize);
+    (*(receiverFrame.bytes)) = (u_int8_t *)malloc(maxFrameSize);
+    (*(uaFrame.bytes)) = (u_int8_t *)malloc(maxFrameSize);
     
 
     switch (appStatus) {
@@ -113,9 +117,13 @@ int llclose(int fd) {
     frame_t receiveFrame;
     frame_t uaFrame;
     
-    discFrame.bytes = (u_int8_t *)malloc(maxFrameSize);
-    receiveFrame.bytes = (u_int8_t *)malloc(maxFrameSize);
-    uaFrame.bytes = (u_int8_t *)malloc(maxFrameSize);
+    discFrame.bytes = (u_int8_t **)malloc(sizeof(u_int8_t **));
+    receiveFrame.bytes = (u_int8_t **)malloc(sizeof(u_int8_t **));
+    uaFrame.bytes = (u_int8_t **)malloc(sizeof(u_int8_t **));
+
+    (*(discFrame.bytes)) = (u_int8_t *)malloc(maxFrameSize);
+    (*(receiveFrame.bytes)) = (u_int8_t *)malloc(maxFrameSize);
+    (*(uaFrame.bytes)) = (u_int8_t *)malloc(maxFrameSize);
 
 
     int receiveReturn;
@@ -169,9 +177,9 @@ int llclose(int fd) {
 int llread(int fd, char * buffer){
     frame_t frame, response;
     printf("1\n");
-    frame.bytes = (u_int8_t *)malloc(maxFrameSize);
+    (*(frame.bytes)) = (u_int8_t *)malloc(maxFrameSize);
     printf("2\n");
-    response.bytes = (u_int8_t *)malloc(maxFrameSize);
+    (*(response.bytes)) = (u_int8_t *)malloc(maxFrameSize);
     printf("3\n");
     int receiveIMessageReturn, sameReadAttempts = 1;
     do {
@@ -217,7 +225,7 @@ int llread(int fd, char * buffer){
         }
         printf("11\n");
         if (receiveIMessageReturn == 0){
-            memcpy(buffer, frame.bytes + 6, frame.bytes[4] * 256 + frame.bytes[5]);      
+            memcpy(buffer, (*(frame.bytes)) + 6, (*(frame.bytes))[4] * 256 + (*(frame.bytes))[5]);      
             
         }
               

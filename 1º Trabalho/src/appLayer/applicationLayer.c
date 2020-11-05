@@ -43,6 +43,10 @@ void appRun() {
 
 int sendFile(char * filename){
     packet_t packet;
+
+    packet.bytes = (u_int8_t **) malloc(sizeof(u_int8_t *));
+    (*(packet.bytes)) = (u_int8_t *)malloc(maxPacketLength);
+
     int fileFd;
 
     printf("AAAA\n");
@@ -60,7 +64,7 @@ int sendFile(char * filename){
 
     packet = createControlPacket(START, fileSize, filename);
 
-    if(llwrite(app.fd, (char *)packet.bytes, packet.size) < 0){
+    if(llwrite(app.fd, (char *)(*(packet.bytes)), packet.size) < 0){
         printf("APP - Error transmitting start control packet in applicationLayer.c ...\n");
         return -1;
     }
@@ -73,7 +77,7 @@ int sendFile(char * filename){
     printf("AAAA\n");
         packet = createDataPacket(buffer, (number % 256), size);
         printf("REAL SIZE: %d\n", packet.size);
-        if(llwrite(app.fd, (char *)packet.bytes, packet.size) < 0){
+        if(llwrite(app.fd, (char *)(*(packet.bytes)), packet.size) < 0){
             printf("APP - Error transmitting data packet in applicationLayer.c ...\n");
     printf("AAAA\n");
             return -1;
@@ -83,7 +87,7 @@ int sendFile(char * filename){
     printf("AAAA\n");
     packet = createControlPacket(END, fileSize, filename);
 
-    if(llwrite(app.fd, (char *)packet.bytes, packet.size) < 0){
+    if(llwrite(app.fd, (char *)(*(packet.bytes)), packet.size) < 0){
         printf("APP - Error transmitting end control packet in applicationLayer.c ...\n");
         return -1;
     }
@@ -95,22 +99,22 @@ int sendFile(char * filename){
 
 packet_t createControlPacket(u_int8_t type, unsigned size, char * filename){
     packet_t packet;
-    packet.bytes = (u_int8_t *)malloc(maxPacketLength);
-    packet.bytes[0] = type;
-    
-    packet.bytes[1] = FILESIZE;
-    packet.bytes[2] = 4;
-    packet.bytes[3] = (u_int8_t)(size >> 24);
-    packet.bytes[4] = (u_int8_t)(size >> 16);
-    packet.bytes[5] = (u_int8_t)(size >> 8);
-    packet.bytes[6] = (u_int8_t)size; //LSB
-
-    packet.bytes[7] = FILENAME;
-    packet.bytes[8] = strlen(filename) + 1;         // got to have +1
-    for(int i = 0; i < packet.bytes[8] ; i++){
-        packet.bytes[9 + i] = filename[i];
+    packet.bytes = (u_int8_t **) malloc(sizeof(u_int8_t *));
+    (*(packet.bytes)) = (u_int8_t *)malloc(maxPacketLength);
+    (*(packet.bytes)) = (u_int8_t *)malloc(maxPacketLength);
+    (*(packet.bytes))[0] = type;
+    (*(packet.bytes))[1] = FILESIZE;
+    (*(packet.bytes))[2] = 4;
+    (*(packet.bytes))[3] = (u_int8_t)(size >> 24);
+    (*(packet.bytes))[4] = (u_int8_t)(size >> 16);
+    (*(packet.bytes))[5] = (u_int8_t)(size >> 8);
+    (*(packet.bytes))[6] = (u_int8_t)size; //LSB
+    (*(packet.bytes))[7] = FILENAME;
+    (*(packet.bytes))[8] = strlen(filename) + 1;         // got to have +1
+    for(int i = 0; i < (*(packet.bytes))[8] ; i++){
+        (*(packet.bytes))[9 + i] = filename[i];
     }
-    packet.size = 8 + packet.bytes[8];
+    packet.size = 8 + (*(packet.bytes))[8];
 
     return packet;
 }
@@ -133,14 +137,15 @@ int parseControlPacket(u_int8_t* controlPacket, unsigned* fileSize, char* filena
 
 packet_t createDataPacket(u_int8_t * string, int number, int size){
     packet_t packet;
-    packet.bytes = (u_int8_t *)malloc(maxPacketLength);
+    packet.bytes = (u_int8_t **) malloc(sizeof(u_int8_t *));
+    (*(packet.bytes)) = (u_int8_t *)malloc(maxPacketLength);
     packet.size = size + 4;
-    packet.bytes[0] = DATA;
-    packet.bytes[1] = number;
-    packet.bytes[2] = (int) (size / 256);
-    packet.bytes[3] = size % 256;
+    (*(packet.bytes))[0] = DATA;
+    (*(packet.bytes))[1] = number;
+    (*(packet.bytes))[2] = (int) (size / 256);
+    (*(packet.bytes))[3] = size % 256;
     for(int i = 0; i < size ; i++){
-        packet.bytes[4 + i] = string[i];
+        (*(packet.bytes))[4 + i] = string[i];
     }
 
     return packet;
@@ -219,7 +224,7 @@ void printPacket(packet_t *packet) {
     printf("\nStarting printPacket...\n\tSize: %d\n", packet->size);
     for (int i = 0; i < packet->size; i++)
     {
-        printf("\tByte %d: %x \n", i, packet->bytes[i]);
+        printf("\tByte %d: %x \n", i, (*(packet->bytes))[i]);
     }
     printf("printPacket ended\n\n");
 }

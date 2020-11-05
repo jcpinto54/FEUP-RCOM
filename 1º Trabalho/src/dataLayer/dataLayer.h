@@ -2,7 +2,7 @@
 #include "../macros.h"
 
 typedef struct {
-    u_int8_t *bytes;
+    u_int8_t **bytes;
     int size;
     int infoId;
 } frame_t;
