@@ -16,7 +16,7 @@ extern application app;
 void appRun() {
     if ((app.fd = llopen(app.port, app.status)) < 0) {
         printf("error in llopen: %d\n", app.fd); 
-//        clearSerialPort(app.port);
+       clearSerialPort(app.port);
         exit(1);
     }
     printf("done llopen\n");
@@ -32,7 +32,7 @@ void appRun() {
     int llcloseReturn = llclose(app.fd);
     if (llcloseReturn < 0) {
         printf("error in llclose: %d\n", llcloseReturn); 
-//        clearSerialPort(app.port);
+       clearSerialPort(app.port);
         exit(1);
     }
 }
@@ -140,8 +140,8 @@ int parseDataPacket(u_int8_t * packetArray, u_int8_t * bytes) {
 
 int receiveFile(){
 
-    char* receive;
-    if(llread(app.fd, &receive) < 0){
+    char receive[MAX_FRAME_DATA_LENGTH];
+    if(llread(app.fd, receive) < 0){
         printf("APP - Error receiving start control packet in applicationLayer.c ...\n");
         return -1;
     }
@@ -149,14 +149,14 @@ int receiveFile(){
     unsigned fileSize;
     int controlStatus;
     char filename[MAX_FILENAME_LENGTH];
-    controlStatus = parseControlPacket((u_int8_t *)receive, &fileSize, filename);  // fileSize is returning negative numbers
+    controlStatus = parseControlPacket((u_int8_t *)receive, &fileSize, filename); 
 
     if(controlStatus != START){
         printf("APP - Error receiving start control packet in applicationLayer.c ...\n");
         return -1;
     }
 
-//    strcpy(filename, "output.gif");    // comment to test in the same pc 
+   strcpy(filename, "output.gif");    // comment to test in the same pc 
     
     int fileFd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXG | S_IRWXU | S_IRWXO);
     if (fileFd == -1) {
@@ -166,7 +166,7 @@ int receiveFile(){
 
     u_int8_t bytes[MAX_PACKET_LENGTH];
     for(int i = 0 ; i < (fileSize / MAX_PACKET_DATA_LENGTH) + 1 ; i++){
-        if(llread(app.fd, &receive) < 0){
+        if(llread(app.fd, receive) < 0){
             printf("APP - Error receiving data packet in applicationLayer.c ...\n");
             return -1;
         }
@@ -176,10 +176,9 @@ int receiveFile(){
             perror("APP - Error writing to file ...\n");
             return -1;
         }
-        free(receive);
     }
 
-    if(llread(app.fd, &receive) < 0){
+    if(llread(app.fd, receive) < 0){
         printf("APP - Error receiving end control packet in applicationLayer.c ...\n");
         return -1;
     }

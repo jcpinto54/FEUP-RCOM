@@ -40,9 +40,9 @@
 #define MAX_WRITE_ATTEMPTS 3
 #define MAX_READ_ATTEMPTS 3
 
-#define MAX_FRAME_SIZE 128                               // minimum is 16
+#define MAX_FRAME_SIZE 300                         // minimum is 16
 #define MAX_FRAME_DATA_LENGTH (MAX_FRAME_SIZE - 9)/2     // if all bytes are stuffed it takes the MAX_FRAME_SIZE
-#define MAX_FRAME_RETRANSMISSIONS 3
+#define MAX_FRAME_RETRANSMISSIONS 5
 
 #define MAX_PACKET_LENGTH (MAX_FRAME_DATA_LENGTH)
 #define MAX_PACKET_DATA_LENGTH (MAX_FRAME_DATA_LENGTH - 4)

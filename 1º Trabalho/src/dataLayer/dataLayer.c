@@ -165,29 +165,28 @@ int llclose(int fd) {
 }
 
 
-int llread(int fd, char ** buffer){
+int llread(int fd, char * buffer){
     frame_t frame, response;
-    int receiveIMessageReturn, bufferLength = MAX_FRAME_DATA_LENGTH, sameReadAttempts = 1;
-    *buffer = (char *)malloc(MAX_FRAME_DATA_LENGTH);
+    int receiveIMessageReturn, sameReadAttempts = 1;
     do {
         receiveIMessageReturn = receiveIMessage(&frame, fd, 3);
         
-        if (receiveIMessageReturn == -5) {
+        if (receiveIMessageReturn == -4) {
             printf("DATA - Read timeout. Exiting llread...\n");
             return -1;
         }
         
-        if (receiveIMessageReturn < -5 || receiveIMessageReturn > 3) {
+        if (receiveIMessageReturn < -4 || receiveIMessageReturn > 1) {
             printf("DATA - receiveIMessage returned unexpected value\n");
             return -1;
         }
         
-        if (receiveIMessageReturn >= 0 && receiveIMessageReturn <= 3) {
+        if (receiveIMessageReturn >= 0) {
             prepareResponse(&response, true, (frame.infoId + 1) % 2);
             printf("DATA - Sent RR frame to the transmitter\n");
             sameReadAttempts = 0;
         }
-        else if (receiveIMessageReturn == -2 || receiveIMessageReturn == -3) {
+        else if (receiveIMessageReturn == -1 || receiveIMessageReturn == -2) {
             if (lastFrameReceivedId != -1 && frame.infoId == lastFrameReceivedId) {
                 prepareResponse(&response, true, (frame.infoId + 1) % 2);
                 printf("DATA - Read a duplicate frame\nDATA - Sent RR frame to the transmitter\n");
@@ -202,27 +201,20 @@ int llread(int fd, char ** buffer){
         if (receiveIMessageReturn >= 0) {
             lastFrameReceivedId = frame.infoId;
         }
-        if (receiveIMessageReturn != -1 || receiveIMessageReturn != -4) {
+        if (receiveIMessageReturn != -3) {
             if (sendNotIFrame(&response, fd) == -1) return -1;
         }
         
-        if (receiveIMessageReturn == 0 || receiveIMessageReturn == 1)
-            memcpy(*buffer + bufferLength - MAX_FRAME_DATA_LENGTH, frame.bytes + 5, frame.bytes[4]);        
-
-        if (receiveIMessageReturn == 1) {
-            *buffer = (char *)realloc(*buffer, bufferLength);
-            bufferLength += MAX_FRAME_DATA_LENGTH;
-        }
+        if (receiveIMessageReturn == 0)
+            memcpy(buffer, frame.bytes + 6, frame.bytes[4] * 256 + frame.bytes[5]);        
 
 
-        if (receiveIMessageReturn == -4) {
+        if (receiveIMessageReturn == -3) {
             printf("DATA - Serial Port couldn't be read. Exiting llread...\n");
             return -1;
         }
-        else if (receiveIMessageReturn == -1)
-            printf("DATA - No action was done\n");
 
-    } while (receiveIMessageReturn != 0 && receiveIMessageReturn != 2 && sameReadAttempts < MAX_READ_ATTEMPTS);
+    } while (receiveIMessageReturn != 0 && sameReadAttempts < MAX_READ_ATTEMPTS);
 
     if (sameReadAttempts == MAX_READ_ATTEMPTS) {
         printf("DATA - Max read attempts of the same frame reached.\n");
@@ -234,25 +226,46 @@ int llread(int fd, char ** buffer){
 
 int llwrite(int fd, char * buffer, int length)
 {
-    frame_t *info = NULL;
-    int framesToSend = prepareI(buffer, length, &info); //Prepara a trama de informação
+    frame_t info = prepareI(buffer, length); //Prepara a trama de informação
 
-    printf("DATA - Divided the data in %d frames. Sending all frames...\n", framesToSend);
-    for (int i = 0; i < framesToSend; i++) {
-        printFrame(&(info[i]));
-        if (sendIFrame(&(info[i]), fd) == -1) return -1;
-    }
-    free(info);
+    printFrame(&info);
+    if (sendIFrame(&info, fd) == -1) return -1;
+
     return 0;
 }
 
 
 int clearSerialPort(char *port) {
-    int auxFd = open(port, O_RDWR | O_NOCTTY | O_NONBLOCK);
+    int auxFd = open(port, O_RDWR | O_NOCTTY);
     if (auxFd == -1) {
         perror("error clearing serialPort");
         return 1;
     }
+
+    struct termios oldtio, newtio;
+
+    if (tcgetattr(auxFd, &oldtio) == -1) {
+        perror("tcgetattr");
+        return -2;
+    }
+
+
+    bzero(&newtio, sizeof(newtio));
+    newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
+    newtio.c_iflag = IGNPAR;
+    newtio.c_oflag = 0;
+
+    // set input mode (non-canonical, no echo,...)
+    newtio.c_lflag = 0;
+
+    newtio.c_cc[VTIME] = 0; // time to time-out in deciseconds
+    newtio.c_cc[VMIN] = 1;  // min number of chars to read
+
+    if (tcsetattr(auxFd, TCSANOW, &newtio) == -1) {
+        perror("tcsetattr");
+        return -3;
+    }
+
     char c;
     while (read(auxFd, &c, 1) != 0) printf("DATA - byte cleared: %x\n", c);
     if (close(auxFd) == -1) return 2;

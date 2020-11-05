@@ -8,7 +8,6 @@ typedef enum {
     RCV_C,
     RCV_BCC1,
     RCV_DATA,
-    RCV_LAST_FRAME_FLAG,
     RCV_BCC2,
     COMPLETE
 } receive_state_t;
@@ -33,7 +32,7 @@ bool isDISCFrame(frame_t *frame);
 void stuffFrame(frame_t * frame);
 void destuffFrame(frame_t *frame);
 
-int prepareI(char* data, int size, frame_t ** infoNew);
+frame_t prepareI(char* data, int size);
 void prepareResponse(frame_t *frame, bool valid, int id);
 
 void prepareFrameDataSize(int frameSize, u_int8_t *sizeBytes);
