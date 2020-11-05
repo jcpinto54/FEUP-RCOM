@@ -14,6 +14,9 @@
 
 int idFrameSent = 0;
 int lastFrameReceivedId = -1;
+int portFd;
+
+bool justRead;     // used for timeout
 
 void stuffFrame(frame_t * frame)
 {
@@ -106,11 +109,12 @@ frame_t prepareI(char* data, int length) //Testar
         info.bytes[6 + j] = data[j];
     }
 
-    int bcc2_byte_ix = 4 + 2 + frameDataSize[0] * 256 + frameDataSize[1];
+    int bcc2_byte_ix = 4 + 2 + info.bytes[4] * 256 + info.bytes[5];
 
     info.bytes[bcc2_byte_ix] = bccCalculator(info.bytes, 4, info.bytes[4] * 256 + info.bytes[5] + 2);  
     info.bytes[bcc2_byte_ix + 1] = FLAG;
-    info.size = 9 + frameDataSize[0] * 256 + frameDataSize[1];
+    info.size = 4 + 2 + info.bytes[4] * 256 + info.bytes[5] + 2;
+
 
     stuffFrame(&info);
 
@@ -118,6 +122,13 @@ frame_t prepareI(char* data, int length) //Testar
 
     return info;
     
+}
+
+void readTimeoutHandler(int signo) {
+    if (!justRead) {
+        printf("Timeout occured while reading a frame. Exiting Program...\n");
+        exit(1);
+    }
 }
 
 
@@ -131,24 +142,18 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
     u_int8_t c;
     receive_state_t state = INIT;
     int dataCounter = -2, returnValue = 0;
-    time_t initTime, curTime;
-    initTime = time(NULL);
     do {
+        alarm(3); 
+        justRead = false;
         int bytesRead = read(fd, &c, 1);
-        printf("byte: %x   -   state: %d\n", c, state);
+        justRead = true;
+        
+        printf("byte: %x   -   state: %d  -  bytesRead: %d  -  \n", c, state, bytesRead);
         if (bytesRead < 0) {
             perror("read error");
             return -3;
         }
-        // else if (bytesRead > 0) {
-        //     initTime = time(NULL);
-        // }
-        // curTime = time(NULL);
-        // time_t seconds = curTime - initTime;
-        // if (seconds >= timeout) {
-        //     return -4;
-        // }
-        
+
         switch (state) {
             case INIT:
                 if (c == FLAG) {
@@ -164,7 +169,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 else if (c == FLAG) {
                     state = RCV_FLAG;
                 }
-                else{
+                else {
                     state = INIT;
                 }
                 break;
@@ -248,23 +253,17 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
 {
     u_int8_t c;
     receive_state_t state = INIT;
-    time_t initTime, curTime;
-    initTime = time(NULL);
     do {
+        alarm(3); 
+        justRead = false;
         int bytesRead = read(fd, &c, 1);
+        justRead = true;
         printf("byte: %x   -   state: %d\n", c, state);
         if (bytesRead < 0) {
             perror("read error");
             return -2;
         }
-        // else if (bytesRead > 0) {
-        //     initTime = time(NULL);
-        // }
-        // curTime = time(NULL);
-        // time_t seconds = curTime - initTime;
-        // if (seconds >= timeout) {
-        //     return -1;
-        // }
+
 
         switch (state) {
             case INIT:
@@ -426,7 +425,6 @@ u_int8_t bccCalculator(u_int8_t bytes[], int start, size_t length)
 // Return true if bcc verifies else otherwise 
 bool bccVerifier(u_int8_t bytes[], int start, size_t length, u_int8_t parity)
 {
-    printf("comoe bcc: %x\n", bccCalculator(bytes, start, length) == parity);
     return (bccCalculator(bytes, start, length) == parity);
 }
 

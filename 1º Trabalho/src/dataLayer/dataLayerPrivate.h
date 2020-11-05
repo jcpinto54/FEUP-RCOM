@@ -20,6 +20,7 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout);
 int sendIFrame(frame_t *frame, int fd);
 int sendNotIFrame(frame_t *frame, int fd);
 
+
 u_int8_t bccCalculator(u_int8_t bytes[], int start, size_t length);
 bool bccVerifier(u_int8_t bytes[], int start, size_t length, u_int8_t parity);
 
@@ -38,4 +39,6 @@ void prepareResponse(frame_t *frame, bool valid, int id);
 void prepareFrameDataSize(int frameSize, u_int8_t *sizeBytes);
 void prepareToReceive(frame_t *frame, size_t size);
 void printFrame(frame_t *frame);
+
+void readTimeoutHandler(int signo);
 

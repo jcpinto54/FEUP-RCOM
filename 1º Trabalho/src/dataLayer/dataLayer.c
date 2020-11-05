@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 #include <time.h>
 #include "dataLayer.h"
 #include "dataLayerPrivate.h"
@@ -13,6 +14,7 @@
 int status;
 extern int idFrameSent;
 extern int lastFrameReceivedId;
+int portFd;
 
 int llopen(char *port, int appStatus)
 {
@@ -41,7 +43,7 @@ int llopen(char *port, int appStatus)
     newtio.c_lflag = 0;
 
     newtio.c_cc[VTIME] = 0; // time to time-out in deciseconds
-    newtio.c_cc[VMIN] = 1;  // min number of chars to read
+    newtio.c_cc[VMIN] = 5;  // min number of chars to read
 
     if (tcsetattr(fd, TCSANOW, &newtio) == -1) {
         perror("tcsetattr");
@@ -96,6 +98,7 @@ int llopen(char *port, int appStatus)
             }
             break;
         case RECEIVER:;
+            signal(SIGALRM, readTimeoutHandler);
             prepareToReceive(&receiverFrame, 5);
             int error = receiveNotIMessage(&receiverFrame, fd, RESPONSE_WITHOUT_ID, 3);
             if (error) {printf("receiveNotIMessage returned %d\n", error); return -7;}
@@ -107,6 +110,8 @@ int llopen(char *port, int appStatus)
             break;
     }
     printf("DATA - Opened serial port connection\n");
+
+    portFd = fd;
     return fd;
 }
 
