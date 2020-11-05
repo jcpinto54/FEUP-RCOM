@@ -72,7 +72,8 @@ int sendFile(char * filename){
     do {
         printf("filename: %s\n", filename);
         printf("fileFd: %d\n", fileFd);
-        size = read(fileFd, (char *)buffer, maxPacketLength);
+        printf("maxPacketLenght: %d\n", maxPacketLength);
+        size = read(fileFd, buffer, maxPacketLength/2 - 4);
         printf("size: %d\n", size);
         printf("reading a data packet from file");
         packet = createDataPacket(buffer, (number % 256), size);
@@ -135,7 +136,7 @@ int parseControlPacket(u_int8_t* controlPacket, unsigned* fileSize, char* filena
 packet_t createDataPacket(u_int8_t * string, int number, int size){
     packet_t packet;
     packet.bytes = (u_int8_t **) malloc(sizeof(u_int8_t *));
-    (*(packet.bytes)) = (u_int8_t *)malloc(maxPacketLength);
+    (*(packet.bytes)) = (u_int8_t *)malloc(maxPacketLength/2);
     packet.size = size + 4;
     (*(packet.bytes))[0] = DATA;
     (*(packet.bytes))[1] = number;
@@ -176,15 +177,15 @@ int receiveFile(){
 
    //strcpy(filename, "output.gif");    // comment to test in the same pc 
     
-    int fileFd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXG | S_IRWXU | S_IRWXO);
+    int fileFd = open("output.gif", O_WRONLY | O_CREAT , S_IRWXG | S_IRWXU | S_IRWXO);
     if (fileFd <= -1) {
         perror("file not opened correctly");
         return -1;
     }
 
-    u_int8_t *bytes = (u_int8_t *)malloc(maxPacketDataLength);
+    u_int8_t *bytes = (u_int8_t *)malloc(maxPacketLength/2 - 4);
 
-    for(int i = 0 ; i < (fileSize / maxPacketDataLength) + 1; i++){
+    for(int i = 0 ; i < (fileSize / (maxPacketLength/2 - 4)) - 1; i++){
         if(llread(app.fd, receive) < 0){
             printf("APP - Error receiving data packet in applicationLayer.c ...\n");
             return -1;

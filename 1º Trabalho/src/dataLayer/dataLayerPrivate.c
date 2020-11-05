@@ -325,7 +325,8 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
 
 // Returns -1 if timeout, 0 if ok 
 int sendNotIFrame(frame_t *frame, int fd) {
-    int writeReturn = write(fd, (*(frame->bytes)), frame->size);   
+    int writeReturn = write(fd, (*(frame->bytes)), frame->size);
+    printf("sendNotIFrame");
     printf("DATA - %d bytes sent\n", writeReturn);
 
     if (writeReturn == -1) return -1; 

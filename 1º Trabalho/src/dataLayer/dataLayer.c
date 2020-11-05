@@ -192,6 +192,7 @@ int llread(int fd, char * buffer){
     int receiveIMessageReturn, sameReadAttempts = 1;
     do {
         receiveIMessageReturn = receiveIMessage(&frame, fd, 3);
+        printf("Receive I message Return: %d\n", receiveIMessageReturn);
         if (receiveIMessageReturn == -4) {
             printf("DATA - Read timeout. Exiting llread...\n");
             return -1;

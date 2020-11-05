@@ -75,7 +75,6 @@ int main(int argc, char *argv[])
     else if (app.status == RECEIVER) {
         strcpy(app.port, argv[2]);
     }
-
     appRun();
 
     return 0;
