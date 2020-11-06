@@ -105,8 +105,8 @@ int llopen(char *port, int appStatus)
             break;
         case RECEIVER:;
             prepareToReceive(&receiverFrame, 5);
-                printf("here\n");
-            int error = receiveNotIMessage(&receiverFrame, fd, RESPONSE_WITHOUT_ID, NO_TIMEOUT);
+                printf("here: %d\n", fd);
+            int error = receiveNotIMessage(&receiverFrame, fd, RESPONSE_WITHOUT_ID, TIMEOUT_3_SEC);
                 printf("here\n");
             if (error) {
                 printf("DATA - ReceiveNotIMessage returned %d\n", error); 
