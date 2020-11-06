@@ -191,10 +191,6 @@ int receiveFile(){
 
     u_int8_t *bytes = (u_int8_t *)malloc(maxPacketLength/2 - 4);
     for(int i = 0 ; i < (fileSize / (maxPacketLength/2 - 4)) + 1; i++){
-        if (i ==  (fileSize / (maxPacketLength/2 - 4)) -1) {
-            sleep(4);
-            printf("sleeping...\n");
-        }
         counter++;
         printf("Counter: %d\n", counter);
         printf("Control size 1: %d\n", controlSize1);
