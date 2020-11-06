@@ -36,3 +36,7 @@ void printString(char *str)
 }
 
 
+void displayStats(clock_t diff) {
+    printf("\n\nPROGRAM STATS:\nNumber of clock ticks: %ld\nClock Ticks in seconds: %lf\n", diff, ((double)diff)/(double)CLOCKS_PER_SEC);
+}
+

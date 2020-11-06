@@ -24,6 +24,7 @@ void appRun() {
         exit(1);
     }
     printf("DATA - Done llopen\n");
+    clock_t beforeSendingFile = clock();
     switch (app.status) {
         case TRANSMITTER:;
             sendFile(app.filename);
@@ -32,6 +33,7 @@ void appRun() {
             receiveFile();
         break;
     }
+    clock_t afterSendingFile = clock();
 
     int llcloseReturn = llclose(app.fd);
     if (llcloseReturn < 0) {
@@ -39,6 +41,8 @@ void appRun() {
         clearSerialPort(app.port);
         exit(1);
     }
+
+    displayStats(afterSendingFile - beforeSendingFile);
 }
 
 int sendFile(char * filename){

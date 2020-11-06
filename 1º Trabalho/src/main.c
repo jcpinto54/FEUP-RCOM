@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 #include "appLayer/applicationLayer.h"
 #include "dataLayer/dataLayer.h"
 #include "macros.h"
@@ -67,6 +68,8 @@ int main(int argc, char *argv[])
     else if (app.status == RECEIVER) {
         strcpy(app.port, argv[2]);
     }
+
+
     appRun();
 
     return 0;

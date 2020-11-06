@@ -12,3 +12,5 @@ u_int64_t bit(unsigned n);
 u_int8_t getBit(int byte, int b);
 
 void printString(char *str);
+
+void displayStats(clock_t diff);
