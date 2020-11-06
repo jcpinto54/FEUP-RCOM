@@ -257,6 +257,7 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
         int bytesRead = read(fd, &c, 1);
         justRead = true;
         if (timeoutOccured == 1) {
+            timeoutOccured = -1;
             return -1;
         }
         // printf("byte: %x   -   state: %d\n", c, state);
@@ -330,7 +331,6 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
     if ((*(frame->bytes))[2] == (RR | (responseId << 7))) returnValue = 1;
     if ((*(frame->bytes))[2] == (REJ | (responseId << 7))) returnValue = 2;
 
-    timeoutOccured = -1;
     return returnValue;
 }
 
