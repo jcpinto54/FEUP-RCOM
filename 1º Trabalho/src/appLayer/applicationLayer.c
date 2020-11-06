@@ -42,6 +42,7 @@ void appRun() {
 }
 
 int sendFile(char * filename){
+    int counter = 0;
     packet_t packet;
 
     packet.bytes = (u_int8_t **) malloc(sizeof(u_int8_t *));
@@ -70,10 +71,12 @@ int sendFile(char * filename){
     int size = 0, number = 0;
     u_int8_t *buffer = (u_int8_t *)malloc(maxPacketLength);
     do {
+        counter++;
         printf("filename: %s\n", filename);
         printf("fileFd: %d\n", fileFd);
         printf("maxPacketLenght: %d\n", maxPacketLength);
         size = read(fileFd, buffer, maxPacketLength/2 - 4);
+        if(size == 0) break;
         printf("size: %d\n", size);
         printf("reading a data packet from file");
         packet = createDataPacket(buffer, (number % 256), size);
@@ -83,6 +86,7 @@ int sendFile(char * filename){
         }
         number++;
     } while (size > 0);
+    printf("Counter: %d", counter);
     packet = createControlPacket(END, fileSize, filename);
 
     if(llwrite(app.fd, (char *)(*(packet.bytes)), packet.size) < 0){
@@ -158,7 +162,7 @@ int parseDataPacket(u_int8_t * packetArray, u_int8_t * bytes) {
 }
 
 int receiveFile(){
-
+    int counter = 0;
     char *receive = (char *)malloc(maxPacketLength);
     if(llread(app.fd, receive) < 0){
         printf("APP - Error receiving start control packet in applicationLayer.c ...\n");
@@ -177,15 +181,19 @@ int receiveFile(){
 
    //strcpy(filename, "output.gif");    // comment to test in the same pc 
     
-    int fileFd = open("output.jpeg", O_WRONLY | O_CREAT , S_IRWXG | S_IRWXU | S_IRWXO);
+    int fileFd = open(filename, O_WRONLY | O_CREAT , S_IRWXG | S_IRWXU | S_IRWXO);
     if (fileFd <= -1) {
         perror("file not opened correctly");
         return -1;
     }
 
-    u_int8_t *bytes = (u_int8_t *)malloc(maxPacketLength/2 - 4);
+    int controlSize1 = receive[2] * 256 + receive[3];
 
-    for(int i = 0 ; i < (fileSize / (maxPacketLength/2 - 4)); i++){
+    u_int8_t *bytes = (u_int8_t *)malloc(maxPacketLength/2 - 4);
+    for(int i = 0 ; i < (fileSize / (maxPacketLength/2 - 4)) + 1; i++){
+        counter++;
+        printf("Counter: %d\n", counter);
+        printf("Control size 1: %d\n", controlSize1);
         if(llread(app.fd, receive) < 0){
             printf("APP - Error receiving data packet in applicationLayer.c ...\n");
             return -1;
@@ -197,6 +205,7 @@ int receiveFile(){
         }
     }
 
+
     if(llread(app.fd, receive) < 0){
         printf("APP - Error receiving end control packet in applicationLayer.c ...\n");
         return -1;
@@ -207,6 +216,10 @@ int receiveFile(){
     if(controlStatus != END){
         printf("APP - Error receiving end control packet in applicationLayer.c ...\n");
         return -1;
+    }
+
+    if(controlStatus == END){
+        printf("APP - Received END Control Packet ...\n");
     }
 
     close(fileFd);
