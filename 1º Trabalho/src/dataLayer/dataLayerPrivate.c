@@ -7,6 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <signal.h>
 #include "dataLayer.h"
 #include "dataLayerPrivate.h"
 #include "../macros.h"
@@ -21,6 +22,8 @@ extern int maxFrameDataLength;
 bool justRead;     // used for timeout
 int timeoutOccured = -1;
 int portFd;
+
+extern sigset_t blockAlarm;
 
 void stuffFrame(frame_t * frame)
 {
@@ -141,8 +144,9 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
     int i = -1;
     do {
         i++;
+        sigprocmask(SIG_BLOCK, &blockAlarm, NULL);
         int bytesRead = read(fd, &c, 1);
-        
+        sigprocmask(SIG_UNBLOCK, &blockAlarm, NULL);
         // printf("i: %d   -   byte: %x   -   state: %d\n", i, c, state);  // uncomment for debug
         if (bytesRead < 0) {
             perror("read error");
@@ -256,7 +260,9 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
     do {
         alarm(timeout); 
         justRead = false;
+        sigprocmask(SIG_BLOCK, &blockAlarm, NULL);
         int bytesRead = read(fd, &c, 1);
+        sigprocmask(SIG_UNBLOCK, &blockAlarm, NULL);
         justRead = true;
         if (timeoutOccured == 1) {
             timeoutOccured = -1;

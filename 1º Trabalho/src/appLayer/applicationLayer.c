@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 #include <time.h>
 #include "applicationLayer.h"
 #include "../dataLayer/dataLayer.h"
@@ -15,7 +16,7 @@ extern application app;
 extern int maxFrameDataLength;
 extern int maxPacketLength;
 extern int maxPacketDataLength;
-
+extern sigset_t blockAlarm;
 
 void appRun() {
     if ((app.fd = llopen(app.port, app.status)) < 0) {
@@ -75,7 +76,9 @@ int sendFile(char * filename){
     u_int8_t *buffer = (u_int8_t *)malloc(maxPacketLength);
     do {
         counter++;
+        sigprocmask(SIG_BLOCK, &blockAlarm, NULL);
         size = read(fileFd, buffer, maxPacketLength/2 - 4);
+        sigprocmask(SIG_UNBLOCK, &blockAlarm, NULL);
         if(size == 0) break;
         printf("APP - Read a data packet from file.\n");
         packet = createDataPacket(buffer, (number % 256), size);

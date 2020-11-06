@@ -7,6 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <signal.h>
 #include "appLayer/applicationLayer.h"
 #include "dataLayer/dataLayer.h"
 #include "macros.h"
@@ -18,6 +19,8 @@ unsigned maxFrameSize = MAX_FRAME_SIZE;
 unsigned maxFrameDataLength = MAX_FRAME_DATA_LENGTH;
 unsigned maxPacketLength = MAX_PACKET_LENGTH;
 unsigned maxPacketDataLength = MAX_PACKET_DATA_LENGTH;
+
+sigset_t blockAlarm;
 
 int main(int argc, char *argv[])
 {
@@ -69,6 +72,8 @@ int main(int argc, char *argv[])
         strcpy(app.port, argv[2]);
     }
 
+    sigemptyset(&blockAlarm);
+    sigaddset(&blockAlarm, SIGALRM);
 
     appRun();
 
