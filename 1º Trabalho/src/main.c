@@ -24,13 +24,13 @@ int main(int argc, char *argv[])
     system("umask 0077");
 
     if (argc == 3 || argc == 5) {
-        if ((strcmp("-r", argv[1]) != 0) || ((strcmp(SERIAL_PORT_1, argv[2]) != 0) && (strcmp(SERIAL_PORT_2, argv[2]) != 0)) ) {
+        if ((strcmp("-r", argv[1]) != 0)) {
             printf("Receiver usage: %s -r <port> [baudrate maxFrameSize]\nTransmitter usage: %s -s <port> <filename> [baudrate maxFrameSize]\n", argv[0], argv[0]);
             exit(1);
         }
     }
     else if (argc == 4 || argc == 6) {
-        if ((strcmp("-s", argv[1]) != 0) || ((strcmp(SERIAL_PORT_1, argv[2]) != 0) && (strcmp(SERIAL_PORT_2, argv[2]) != 0)) ) {
+        if ((strcmp("-s", argv[1]) != 0)) {
             printf("Receiver usage: %s -r <port> [baudrate maxFrameSize]\nTransmitter usage: %s -s <port> <filename> [baudrate maxFrameSize]\n", argv[0], argv[0]);
             exit(1);
         }
