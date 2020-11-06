@@ -256,9 +256,11 @@ int llwrite(int fd, char * buffer, int length)
 
 
 int clearSerialPort(char *port) {
+    printf("Clearing serial port in case of errors. Quit program with Ctrl-C\n");
+
     int auxFd = open(port, O_RDWR | O_NOCTTY);
     if (auxFd == -1) {
-        perror("error clearing serialPort");
+        perror("DATA - error clearing serialPort");
         return 1;
     }
 
