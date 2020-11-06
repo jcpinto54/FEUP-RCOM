@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
         if(argc == 6) {
             baudrate = atoi(argv[4]);
             maxFrameSize = atoi(argv[5]);
-            maxFrameDataLength = (maxFrameSize - 8)/2;
+            maxFrameDataLength = (maxFrameSize - 8);
             maxPacketLength = maxFrameDataLength;
             maxPacketDataLength = maxFrameDataLength - 4;
         }
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
         if(argc == 5) {
             baudrate = atoi(argv[3]);
             maxFrameSize = atoi(argv[4]);
-            maxFrameDataLength = (maxFrameSize - 8)/2;
+            maxFrameDataLength = (maxFrameSize - 8);
             maxPacketLength = maxFrameDataLength;
             maxPacketDataLength = maxFrameDataLength - 4;
         }
