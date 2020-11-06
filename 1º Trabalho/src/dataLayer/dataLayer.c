@@ -68,7 +68,11 @@ int llopen(char *port, int appStatus)
     (*(receiverFrame.bytes)) = (u_int8_t *)malloc(maxFrameSize);
     (*(uaFrame.bytes)) = (u_int8_t *)malloc(maxFrameSize);
     
-    signal(SIGALRM, readTimeoutHandler);
+    // signal(SIGALRM, readTimeoutHandler);
+    struct sigaction sigAux;
+    sigaction(SIGALRM, NULL, &sigAux);
+    sigAux.sa_handler = readTimeoutHandler;
+    sigaction(SIGALRM, &sigAux, NULL);
 
     switch (appStatus) {
         case TRANSMITTER:;

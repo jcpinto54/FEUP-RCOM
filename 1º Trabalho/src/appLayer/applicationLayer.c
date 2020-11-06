@@ -163,6 +163,7 @@ int parseDataPacket(u_int8_t * packetArray, u_int8_t * bytes) {
 
 int receiveFile(){
     int counter = 0;
+    printf("MPL: %d\n", maxPacketLength);
     char *receive = (char *)malloc(maxPacketLength);
     if(llread(app.fd, receive) < 0){
         printf("APP - Error receiving start control packet in applicationLayer.c ...\n");
@@ -187,13 +188,11 @@ int receiveFile(){
         return -1;
     }
 
-    int controlSize1 = receive[2] * 256 + receive[3];
 
     u_int8_t *bytes = (u_int8_t *)malloc(maxPacketLength/2 - 4);
     for(int i = 0 ; i < (fileSize / (maxPacketLength/2 - 4)) + 1; i++){
         counter++;
         printf("Counter: %d\n", counter);
-        printf("Control size 1: %d\n", controlSize1);
         if(llread(app.fd, receive) < 0){
             printf("APP - Error receiving data packet in applicationLayer.c ...\n");
             return -1;

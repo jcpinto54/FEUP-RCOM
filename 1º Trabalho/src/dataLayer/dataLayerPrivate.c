@@ -138,10 +138,12 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
     u_int8_t c;
     receive_state_t state = INIT;
     int dataCounter = -2, returnValue = 0;
+    int i = -1;
     do {
+        i++;
         int bytesRead = read(fd, &c, 1);
         
-        // printf("byte: %x   -   state: %d\n", c, state);
+        printf("i: %d   -   byte: %x   -   state: %d   -  dataSize: %d\n", i, c, state, (*(frame->bytes))[4] * 256 + (*(frame->bytes))[5]);
         if (bytesRead < 0) {
             perror("read error");
             return -3;
@@ -222,10 +224,10 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
     }
     else if (returnValue == 0) {
         frame->size = 4 + 2 + dataCounter + 1 + 1;
+        printf("Received %d bytes\n", frame->size);
         destuffFrame(frame);
         returnValue = 0;
     }
-    
     return returnValue;
 }
 
@@ -352,6 +354,7 @@ int sendIFrame(frame_t *frame, int fd) {
     responseFrame.bytes = (u_int8_t **)malloc(sizeof(u_int8_t *));
     (*(responseFrame.bytes)) = (u_int8_t *)malloc(maxFrameSize);
     while (1) {
+        printf("writeAttempts: %d\n", attempts);
         if(attempts >= MAX_WRITE_ATTEMPTS) 
         {
             printf("DATA - Too many write attempts\n");
