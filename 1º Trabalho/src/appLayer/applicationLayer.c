@@ -20,7 +20,7 @@ extern int maxPacketDataLength;
 void appRun() {
     if ((app.fd = llopen(app.port, app.status)) < 0) {
         printf("DATA - Error in llopen: %d\n", app.fd); 
-        // clearSerialPort(app.port);
+        clearSerialPort(app.port);
         exit(1);
     }
     printf("DATA - Done llopen\n");
@@ -36,7 +36,7 @@ void appRun() {
     int llcloseReturn = llclose(app.fd);
     if (llcloseReturn < 0) {
         printf("DATA - Error in llclose: %d\n", llcloseReturn); 
-        // clearSerialPort(app.port);
+        clearSerialPort(app.port);
         exit(1);
     }
 }
