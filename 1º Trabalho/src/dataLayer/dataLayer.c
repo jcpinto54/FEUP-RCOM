@@ -25,7 +25,6 @@ int llopen(char *port, int appStatus)
     status = appStatus;
 
     struct termios oldtio, newtio;
-    printf("here\n");
 
     int fd = open(port, O_RDWR | O_NOCTTY);
     if (fd < 0) {
@@ -38,7 +37,6 @@ int llopen(char *port, int appStatus)
         return -2;
     }
 
-    printf("here\n");
 
     bzero(&newtio, sizeof(newtio));
     newtio.c_cflag = baudrate | CS8 | CLOCAL | CREAD;
@@ -55,7 +53,6 @@ int llopen(char *port, int appStatus)
         perror("tcsetattr");
         return -3;
     }
-    printf("here\n");
 
     frame_t setFrame;
     frame_t responseFrame;
@@ -77,7 +74,6 @@ int llopen(char *port, int appStatus)
     sigAux.sa_handler = readTimeoutHandler;
     sigaction(SIGALRM, &sigAux, NULL);
 
-    printf("here\n");
     switch (appStatus) {
         case TRANSMITTER:;
             for (int i = 0;; i++) {
@@ -105,9 +101,7 @@ int llopen(char *port, int appStatus)
             break;
         case RECEIVER:;
             prepareToReceive(&receiverFrame, 5);
-                printf("here: %d\n", fd);
             int error = receiveNotIMessage(&receiverFrame, fd, RESPONSE_WITHOUT_ID, TIMEOUT_3_SEC);
-                printf("here\n");
             if (error) {
                 printf("DATA - ReceiveNotIMessage returned %d\n", error); 
                 return -7;
