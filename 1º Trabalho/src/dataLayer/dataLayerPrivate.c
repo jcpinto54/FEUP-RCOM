@@ -392,7 +392,7 @@ void prepareResponse(frame_t *frame, bool valid, int id) {
 
 u_int8_t bccCalculator(u_int8_t bytes[], int start, int length)
 {
-    int bcc = 0x00;
+  int bcc = 0x00;
     for (int i = start; i < start + length; i++)
     {
         bcc ^= bytes[i];
