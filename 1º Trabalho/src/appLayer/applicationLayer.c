@@ -19,11 +19,11 @@ extern int maxPacketDataLength;
 
 void appRun() {
     if ((app.fd = llopen(app.port, app.status)) < 0) {
-        printf("error in llopen: %d\n", app.fd); 
+        printf("DATA - Error in llopen: %d\n", app.fd); 
         // clearSerialPort(app.port);
         exit(1);
     }
-    printf("done llopen\n");
+    printf("DATA - Done llopen\n");
     switch (app.status) {
         case TRANSMITTER:;
             sendFile(app.filename);
@@ -35,7 +35,7 @@ void appRun() {
 
     int llcloseReturn = llclose(app.fd);
     if (llcloseReturn < 0) {
-        printf("error in llclose: %d\n", llcloseReturn); 
+        printf("DATA - Error in llclose: %d\n", llcloseReturn); 
         // clearSerialPort(app.port);
         exit(1);
     }
@@ -50,10 +50,9 @@ int sendFile(char * filename){
 
     int fileFd;
 
-    printf("filename: %s\n", filename);
     fileFd = open(filename, O_RDONLY | O_NONBLOCK);
     if (fileFd == -1) {
-        perror("file not opened correctly");
+        perror("DATA - file not opened correctly");
         return -1;
     }
 
@@ -72,13 +71,9 @@ int sendFile(char * filename){
     u_int8_t *buffer = (u_int8_t *)malloc(maxPacketLength);
     do {
         counter++;
-        printf("filename: %s\n", filename);
-        printf("fileFd: %d\n", fileFd);
-        printf("maxPacketLenght: %d\n", maxPacketLength);
         size = read(fileFd, buffer, maxPacketLength/2 - 4);
         if(size == 0) break;
-        printf("size: %d\n", size);
-        printf("reading a data packet from file");
+        printf("APP - Read a data packet from file.\n");
         packet = createDataPacket(buffer, (number % 256), size);
         if(llwrite(app.fd, (char *)(*(packet.bytes)), packet.size) < 0){
             printf("APP - Error transmitting data packet in applicationLayer.c ...\n");
@@ -86,8 +81,8 @@ int sendFile(char * filename){
         }
         number++;
     } while (size > 0);
-    printf("Counter: %d", counter);
     packet = createControlPacket(END, fileSize, filename);
+    printf("APP - Sent whole file.\n");
 
     if(llwrite(app.fd, (char *)(*(packet.bytes)), packet.size) < 0){
         printf("APP - Error transmitting end control packet in applicationLayer.c ...\n");
@@ -163,7 +158,6 @@ int parseDataPacket(u_int8_t * packetArray, u_int8_t * bytes) {
 
 int receiveFile(){
     int counter = 0;
-    printf("MPL: %d\n", maxPacketLength);
     char *receive = (char *)malloc(maxPacketLength);
     if(llread(app.fd, receive) < 0){
         printf("APP - Error receiving start control packet in applicationLayer.c ...\n");
@@ -192,7 +186,6 @@ int receiveFile(){
     u_int8_t *bytes = (u_int8_t *)malloc(maxPacketLength/2 - 4);
     for(int i = 0 ; i < (fileSize / (maxPacketLength/2 - 4)) + 1; i++){
         counter++;
-        printf("Counter: %d\n", counter);
         if(llread(app.fd, receive) < 0){
             printf("APP - Error receiving data packet in applicationLayer.c ...\n");
             return -1;
@@ -202,7 +195,10 @@ int receiveFile(){
             perror("APP - Error writing to file ...");
             return -1;
         }
+        printf("APP - Wrote a data packet to file.\n");
     }
+    
+    printf("APP - Received whole file.\n");
 
 
     if(llread(app.fd, receive) < 0){

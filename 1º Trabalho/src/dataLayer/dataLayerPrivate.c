@@ -143,7 +143,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
         i++;
         int bytesRead = read(fd, &c, 1);
         
-        printf("i: %d   -   byte: %x   -   state: %d   -  dataSize: %d\n", i, c, state, (*(frame->bytes))[4] * 256 + (*(frame->bytes))[5]);
+        // printf("i: %d   -   byte: %x   -   state: %d\n", i, c, state);  // uncomment for debug
         if (bytesRead < 0) {
             perror("read error");
             return -3;
@@ -224,7 +224,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
     }
     else if (returnValue == 0) {
         frame->size = 4 + 2 + dataCounter + 1 + 1;
-        printf("Received %d bytes\n", frame->size);
+        printf("DATA - Received %d bytes\n", frame->size);
         destuffFrame(frame);
         returnValue = 0;
     }
@@ -233,7 +233,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
 
 void readTimeoutHandler(int signo) {
     if (!justRead) {
-        printf("Timeout occured while reading a frame!\n");
+        printf("DATA - Timeout occured while reading a frame!\n");
         timeoutOccured = 1;
         char timeoutChar = TIMEOUT_CHAR;
         write(portFd, &timeoutChar, 1);
@@ -262,7 +262,7 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
             timeoutOccured = -1;
             return -1;
         }
-        // printf("byte: %x   -   state: %d\n", c, state);
+        // printf("byte: %x   -   state: %d\n", c, state);  // uncomment to debug
         if (bytesRead < 0) {
             perror("read error");
             return -2;
@@ -307,7 +307,7 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
                 else if (c == FLAG)
                     state = RCV_FLAG;
                 else {
-                    printf("BCC1 not correct\n");
+                    printf("DATA - BCC1 not correct\n");
                     state = INIT;
                 }
                 break;
@@ -339,7 +339,6 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
 // Returns -1 if timeout, 0 if ok 
 int sendNotIFrame(frame_t *frame, int fd) {
     int writeReturn = write(fd, (*(frame->bytes)), frame->size);
-    printf("sendNotIFrame");
     printf("DATA - %d bytes sent\n", writeReturn);
 
     if (writeReturn == -1) return -1; 
@@ -354,7 +353,6 @@ int sendIFrame(frame_t *frame, int fd) {
     responseFrame.bytes = (u_int8_t **)malloc(sizeof(u_int8_t *));
     (*(responseFrame.bytes)) = (u_int8_t *)malloc(maxFrameSize);
     while (1) {
-        printf("writeAttempts: %d\n", attempts);
         if(attempts >= MAX_WRITE_ATTEMPTS) 
         {
             printf("DATA - Too many write attempts\n");

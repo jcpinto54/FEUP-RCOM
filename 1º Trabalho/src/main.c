@@ -48,8 +48,6 @@ int main(int argc, char *argv[])
             maxPacketLength = maxFrameDataLength;
             maxPacketDataLength = maxFrameDataLength - 4;
         }
-        printf("Baudrate: %d\n", baudrate);
-        printf("maxFrameSize: %d\n", maxFrameSize);
     }
     else if (strcmp("-r", argv[1])== 0) {
         app.status = RECEIVER;
@@ -60,8 +58,6 @@ int main(int argc, char *argv[])
             maxPacketLength = maxFrameDataLength;
             maxPacketDataLength = maxFrameDataLength - 4;
         }
-        printf("Baudrate: %d\n", baudrate);
-        printf("maxFrameSize: %d\n", maxFrameSize);
     }
     
     if (app.status == TRANSMITTER) {

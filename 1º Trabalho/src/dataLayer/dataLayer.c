@@ -21,7 +21,7 @@ extern int maxFrameDataLength;
 
 int llopen(char *port, int appStatus)
 {
-    printf("entered llopen\n");
+    printf("DATA - Entered llopen\n");
     status = appStatus;
 
     struct termios oldtio, newtio;
@@ -103,17 +103,17 @@ int llopen(char *port, int appStatus)
             prepareToReceive(&receiverFrame, 5);
             int error = receiveNotIMessage(&receiverFrame, fd, RESPONSE_WITHOUT_ID, NO_TIMEOUT);
             if (error) {
-                printf("receiveNotIMessage returned %d\n", error); 
+                printf("DATA - ReceiveNotIMessage returned %d\n", error); 
                 return -7;
             }
             if (!isSETFrame(&receiverFrame)) {
-                printf("frame is not of type SET\n"); 
+                printf("DATA - Frame is not of type SET\n"); 
                 return -8;
             }
 
             buildUAFrame(&uaFrame, true);
             if (sendNotIFrame(&uaFrame, fd)) {
-                printf("Problem in sendNotIFrame\n"); 
+                printf("DATA - Problem in sendNotIFrame\n"); 
                 return -5;
             }
             
@@ -125,7 +125,7 @@ int llopen(char *port, int appStatus)
 }
 
 int llclose(int fd) {
-    printf("entered llclose\n");
+    printf("DATA - Entered llclose\n");
     frame_t discFrame;
     frame_t receiveFrame;
     frame_t uaFrame;
@@ -196,7 +196,6 @@ int llread(int fd, char * buffer){
     int receiveIMessageReturn, sameReadAttempts = 1;
     do {
         receiveIMessageReturn = receiveIMessage(&frame, fd, 3);
-        printf("Receive I message Return: %d\n", receiveIMessageReturn);
         if (receiveIMessageReturn < -3 || receiveIMessageReturn > 1) {
             printf("DATA - receiveIMessage returned unexpected value\n");
             return -1;
@@ -248,10 +247,9 @@ int llwrite(int fd, char * buffer, int length)
 {
 
     frame_t info;
-    //info.bytes = (u_int8_t *)malloc(maxFrameSize);
     prepareI(&info, buffer, length); //Prepara a trama de informação
 
-    printFrame(&info);
+    // printFrame(&info); // uncomment for debug
     if (sendIFrame(&info, fd) == -1) return -1;
     return 0;
 }
