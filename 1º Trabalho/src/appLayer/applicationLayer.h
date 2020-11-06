@@ -10,16 +10,16 @@ typedef struct {
 
 
 typedef struct {
-    u_int8_t bytes[MAX_FRAME_SIZE];
-    size_t size;
+    u_int8_t **bytes;
+    int size;
 } packet_t;
 
 void appRun();
 
 int sendFile(char * filename);
-packet_t * createDataPacket(u_int8_t * string, int number, size_t size);
-packet_t * createControlPacket(u_int8_t type, unsigned size, char * filename);
-int parseDataPacket(u_int8_t * packetArray, u_int8_t ** bytes);
+packet_t createDataPacket(u_int8_t * string, int number, int size);
+packet_t createControlPacket(u_int8_t type, unsigned size, char * filename);
+int parseDataPacket(u_int8_t * packetArray, u_int8_t * bytes);
 int parseControlPacket(u_int8_t* controlPacket, unsigned* fileSize, char* filename);
 int receiveFile();
 void printPacket(packet_t *packet);
