@@ -67,10 +67,6 @@ int main(int argc, char *argv[])
     if (app.status == TRANSMITTER) {
         strcpy(app.port, argv[2]);
         strcpy(app.filename, argv[3]);
-        // int fd = open(app.filename, O_RDONLY);
-        // char bytes[5];
-        // read(fd, bytes, 4);
-        // printf("bytes: %s\n", bytes);
     }
     else if (app.status == RECEIVER) {
         strcpy(app.port, argv[2]);

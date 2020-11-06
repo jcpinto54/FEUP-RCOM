@@ -50,3 +50,6 @@
 #define MAX_FILENAME_LENGTH 512
 
 #define RESPONSE_WITHOUT_ID -1
+#define TIMEOUT_CHAR 0xFF // used to unblock read in case of timeout
+#define TIMEOUT_3_SEC 3
+#define NO_TIMEOUT -1

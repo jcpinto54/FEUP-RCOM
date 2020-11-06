@@ -68,6 +68,7 @@ int llopen(char *port, int appStatus)
     (*(receiverFrame.bytes)) = (u_int8_t *)malloc(maxFrameSize);
     (*(uaFrame.bytes)) = (u_int8_t *)malloc(maxFrameSize);
     
+    signal(SIGALRM, readTimeoutHandler);
 
     switch (appStatus) {
         case TRANSMITTER:;
@@ -84,7 +85,7 @@ int llopen(char *port, int appStatus)
                     return -5;
                 }
                 prepareToReceive(&responseFrame, 5);
-                int responseReceive = receiveNotIMessage(&responseFrame, fd, RESPONSE_WITHOUT_ID, 3); 
+                int responseReceive = receiveNotIMessage(&responseFrame, fd, RESPONSE_WITHOUT_ID, TIMEOUT_3_SEC); 
                 
 
                 if (responseReceive == -1) continue;         // in a timeout, retransmit frame
@@ -95,9 +96,8 @@ int llopen(char *port, int appStatus)
             }
             break;
         case RECEIVER:;
-            signal(SIGALRM, readTimeoutHandler);
             prepareToReceive(&receiverFrame, 5);
-            int error = receiveNotIMessage(&receiverFrame, fd, RESPONSE_WITHOUT_ID, 3);
+            int error = receiveNotIMessage(&receiverFrame, fd, RESPONSE_WITHOUT_ID, NO_TIMEOUT);
             if (error) {
                 printf("receiveNotIMessage returned %d\n", error); 
                 return -7;
@@ -148,7 +148,7 @@ int llclose(int fd) {
                 if (sendNotIFrame(&discFrame, fd)) return -2;
 
                 prepareToReceive(&receiveFrame, 5);
-                receiveReturn = receiveNotIMessage(&receiveFrame, fd, RESPONSE_WITHOUT_ID, 7);
+                receiveReturn = receiveNotIMessage(&receiveFrame, fd, RESPONSE_WITHOUT_ID, TIMEOUT_3_SEC);
                 if (receiveReturn == -1) continue;        //in a timeout, retransmit frame
                 else if (receiveReturn < -1) return -4;
                 if (!isDISCFrame(&receiveFrame)) continue;      // wrong frame received
@@ -162,7 +162,7 @@ int llclose(int fd) {
         case RECEIVER:;
             for (int i = 0; i < MAX_READ_ATTEMPTS; i++) {
                 prepareToReceive(&receiveFrame, 5);
-                int receiveReturn = receiveNotIMessage(&receiveFrame, fd, RESPONSE_WITHOUT_ID, 7);
+                int receiveReturn = receiveNotIMessage(&receiveFrame, fd, RESPONSE_WITHOUT_ID, TIMEOUT_3_SEC);
                 if (receiveReturn == -1) continue;
                 else if (receiveReturn) return -7;
                 if (!isDISCFrame(&receiveFrame)) return -5;
@@ -171,7 +171,7 @@ int llclose(int fd) {
             buildDISCFrame(&discFrame, true);
             if (sendNotIFrame(&discFrame, fd)) return -2;
             prepareToReceive(&receiveFrame, 5);
-            int receiveNotIMessageReturn = receiveNotIMessage(&receiveFrame, fd, RESPONSE_WITHOUT_ID, 3);
+            int receiveNotIMessageReturn = receiveNotIMessage(&receiveFrame, fd, RESPONSE_WITHOUT_ID, NO_TIMEOUT);
             if (receiveNotIMessageReturn) return -4;
             if (!isUAFrame(&receiveFrame)) return -5;
 
@@ -193,11 +193,7 @@ int llread(int fd, char * buffer){
     do {
         receiveIMessageReturn = receiveIMessage(&frame, fd, 3);
         printf("Receive I message Return: %d\n", receiveIMessageReturn);
-        if (receiveIMessageReturn == -4) {
-            printf("DATA - Read timeout. Exiting llread...\n");
-            return -1;
-        }
-        if (receiveIMessageReturn < -4 || receiveIMessageReturn > 1) {
+        if (receiveIMessageReturn < -3 || receiveIMessageReturn > 1) {
             printf("DATA - receiveIMessage returned unexpected value\n");
             return -1;
         }

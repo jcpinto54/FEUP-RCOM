@@ -179,7 +179,7 @@ int receiveFile(){
         return -1;
     }
 
-   //strcpy(filename, "output.gif");    // comment to test in the same pc 
+   strcpy(filename, "output.gif");    // comment to test in the same pc 
     
     int fileFd = open(filename, O_WRONLY | O_CREAT , S_IRWXG | S_IRWXU | S_IRWXO);
     if (fileFd <= -1) {
@@ -191,6 +191,10 @@ int receiveFile(){
 
     u_int8_t *bytes = (u_int8_t *)malloc(maxPacketLength/2 - 4);
     for(int i = 0 ; i < (fileSize / (maxPacketLength/2 - 4)) + 1; i++){
+        if (i ==  (fileSize / (maxPacketLength/2 - 4)) -1) {
+            sleep(4);
+            printf("sleeping...\n");
+        }
         counter++;
         printf("Counter: %d\n", counter);
         printf("Control size 1: %d\n", controlSize1);

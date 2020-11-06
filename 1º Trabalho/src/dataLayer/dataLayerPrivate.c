@@ -14,9 +14,13 @@
 
 int idFrameSent = 0;
 int lastFrameReceivedId = -1;
-bool justRead;     // used for timeout
 extern int maxFrameSize;
 extern int maxFrameDataLength;
+
+
+bool justRead;     // used for timeout
+int timeoutOccured = -1;
+int portFd;
 
 void stuffFrame(frame_t * frame)
 {
@@ -123,15 +127,8 @@ void prepareI(frame_t *info, char* data, int length) //Testar
 
 }
 
-void readTimeoutHandler(int signo) {
-    if (!justRead) {
-        printf("Timeout occured while reading a frame. Exiting Program...\n");
-        exit(1);
-    }
-}
 
 
-// Returns -4 if there was a timeout
 // Returns -3 if there is an error with reading from the serial port
 // Returns -2 if there is an error with bcc2 
 // Returns -1 if there is an error with data size value
@@ -142,10 +139,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
     receive_state_t state = INIT;
     int dataCounter = -2, returnValue = 0;
     do {
-        alarm(3); 
-        justRead = false;
         int bytesRead = read(fd, &c, 1);
-        justRead = true;
         
         // printf("byte: %x   -   state: %d\n", c, state);
         if (bytesRead < 0) {
@@ -235,6 +229,15 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
     return returnValue;
 }
 
+void readTimeoutHandler(int signo) {
+    if (!justRead) {
+        printf("Timeout occured while reading a frame!\n");
+        timeoutOccured = 1;
+        char timeoutChar = TIMEOUT_CHAR;
+        write(portFd, &timeoutChar, 1);
+    }
+}
+
 // Returns 0 if received ok
 // Returns 1 if received RR ok
 // Returns 2 if received REJ ok
@@ -244,17 +247,23 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
 {
     u_int8_t c;
     receive_state_t state = INIT;
+    if (timeout > -1) {
+        timeoutOccured = 0;
+        portFd = fd;
+    }
     do {
-        alarm(3); 
+        alarm(timeout); 
         justRead = false;
         int bytesRead = read(fd, &c, 1);
         justRead = true;
+        if (timeoutOccured == 1) {
+            return -1;
+        }
         // printf("byte: %x   -   state: %d\n", c, state);
         if (bytesRead < 0) {
             perror("read error");
             return -2;
         }
-
 
         switch (state) {
             case INIT:
@@ -320,6 +329,8 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
     int returnValue = 0;
     if ((*(frame->bytes))[2] == (RR | (responseId << 7))) returnValue = 1;
     if ((*(frame->bytes))[2] == (REJ | (responseId << 7))) returnValue = 2;
+
+    timeoutOccured = -1;
     return returnValue;
 }
 
@@ -350,7 +361,7 @@ int sendIFrame(frame_t *frame, int fd) {
         printf("DATA - %d bytes sent\n", sentBytes);
 
     
-        int receiveReturn = receiveNotIMessage(&responseFrame, fd, (frame->infoId + 1) % 2, 2);
+        int receiveReturn = receiveNotIMessage(&responseFrame, fd, (frame->infoId + 1) % 2, TIMEOUT_3_SEC);
     
         if (receiveReturn == -1) {
             printf("DATA - Timeout reading response, trying again...\n");
