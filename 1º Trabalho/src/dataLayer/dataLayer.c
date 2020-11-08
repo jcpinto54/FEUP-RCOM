@@ -93,7 +93,7 @@ int llopen(char *port, int appStatus)
                 
 
                 if (responseReceive == -1) continue;         // in a timeout, retransmit frame
-                else if (responseReceive < -2) {perror("responseReceive\n");  return -7;}
+                else if (responseReceive < -2) {printf("Error in receiveNotIMessage from llopen\n");  return -7;}
                 if (!isUAFrame(&responseFrame)) continue;       // wrong frame received
 
                 break;
