@@ -235,10 +235,10 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
 
 void readTimeoutHandler(int signo) {
     if (!justRead) {
-        // printf("DATA - Timeout occured while reading a frame!\n");
-        // timeoutOccured = 1;
-        // char timeoutChar = TIMEOUT_CHAR;
-        // write(portFd, &timeoutChar, 1);
+        printf("DATA - Timeout occured while reading a frame!\n");
+        timeoutOccured = 1;
+        char timeoutChar = TIMEOUT_CHAR;
+        write(portFd, &timeoutChar, 1);
     }
 }
 

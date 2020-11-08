@@ -292,3 +292,32 @@ int clearSerialPort(char *port) {
     if (close(auxFd) == -1) return 2;
     return 0;
 }
+
+
+int convertBaudrate(int baudArg) {
+    switch(baudArg) {
+        case 0:         return 0000000;		/* hang up */
+        case 50:        return 0000001;
+        case 75:        return 0000002;
+        case 110:       return 0000003;
+        case 134:       return 0000004;
+        case 150:       return 0000005;
+        case 200:       return 0000006;
+        case 300:       return 0000007;
+        case 600:       return 0000010;
+        case 1200:      return 0000011;
+        case 1800:      return 0000012;
+        case 2400:      return 0000013;
+        case 4800:      return 0000014;
+        case 9600:      return 0000015;
+        case 19200:     return 0000016;
+        case 38400:     return 0000017;
+        case 57600:     return 0010001;
+        case 115200:    return 0010002;
+        default: 
+            printf("\nArgument is not a valid baudrate. Using default Baudrate 38400\n");
+            printf("Valid baudrates are:\n0, 50, 75, 110, 134, 150, 200, 300, 600, 1200, 1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200\n\n");
+            break;
+    }
+    return 0000017;
+}

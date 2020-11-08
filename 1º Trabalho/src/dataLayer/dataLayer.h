@@ -13,3 +13,5 @@ int llread(int fd, char *buffer);
 int llwrite(int fd, char * buffer, int length);
 
 int clearSerialPort(char *port);
+
+int convertBaudrate(int baudArg);

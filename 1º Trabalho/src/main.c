@@ -29,24 +29,27 @@ int main(int argc, char *argv[])
     if (argc == 3 || argc == 5) {
         if ((strcmp("-r", argv[1]) != 0)) {
             printf("Receiver usage: %s -r <port> [baudrate maxFrameSize]\nTransmitter usage: %s -s <port> <filename> [baudrate maxFrameSize]\n", argv[0], argv[0]);
+            printf("Valid baudrates are:\n0, 50, 75, 110, 134, 150, 200, 300, 600, 1200, 1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200\n");
             exit(1);
         }
     }
     else if (argc == 4 || argc == 6) {
         if ((strcmp("-s", argv[1]) != 0)) {
             printf("Receiver usage: %s -r <port> [baudrate maxFrameSize]\nTransmitter usage: %s -s <port> <filename> [baudrate maxFrameSize]\n", argv[0], argv[0]);
+            printf("Valid baudrates are:\n0, 50, 75, 110, 134, 150, 200, 300, 600, 1200, 1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200\n");
             exit(1);
         }
     }
     else {
         printf("Receiver usage: %s -r <port> [baudrate maxFrameSize]\nTransmitter usage: %s -s <port> <filename> [baudrate maxFrameSize]\n", argv[0], argv[0]);
+        printf("Valid baudrates are:\n0, 50, 75, 110, 134, 150, 200, 300, 600, 1200, 1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200\n");
         exit(1);
     }
 
     if (strcmp("-s", argv[1])== 0) {
         app.status = TRANSMITTER;
         if(argc == 6) {
-            baudrate = atoi(argv[4]);
+            baudrate = convertBaudrate(atoi(argv[4]));
             maxFrameSize = atoi(argv[5]);
             maxFrameDataLength = (maxFrameSize - 8);
             maxPacketLength = maxFrameDataLength;
@@ -56,7 +59,7 @@ int main(int argc, char *argv[])
     else if (strcmp("-r", argv[1])== 0) {
         app.status = RECEIVER;
         if(argc == 5) {
-            baudrate = atoi(argv[3]);
+            baudrate = convertBaudrate(atoi(argv[3]));
             maxFrameSize = atoi(argv[4]);
             maxFrameDataLength = (maxFrameSize - 8);
             maxPacketLength = maxFrameDataLength;
