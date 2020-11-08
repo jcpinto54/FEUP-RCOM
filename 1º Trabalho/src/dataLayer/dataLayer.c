@@ -249,7 +249,6 @@ int llwrite(int fd, char * buffer, int length)
     frame_t info;
     prepareI(&info, buffer, length); //Prepara a trama de informação
 
-    // printFrame(&info); // uncomment for debug
     if (sendIFrame(&info, fd) == -1) return -1;
     return 0;
 }

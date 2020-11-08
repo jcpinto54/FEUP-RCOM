@@ -24,7 +24,6 @@ void appRun() {
         // clearSerialPort(app.port);
         exit(1);
     }
-    printf("DATA - Done llopen\n");
     clock_t beforeSendingFile = clock();
     switch (app.status) {
         case TRANSMITTER:;
@@ -47,7 +46,7 @@ void appRun() {
 }
 
 int sendFile(char * filename){
-    int counter = 0;
+    printf("APP - Starting to send file...\n");
     packet_t packet;
 
     packet.bytes = (u_int8_t **) malloc(sizeof(u_int8_t *));
@@ -75,13 +74,15 @@ int sendFile(char * filename){
     int size = 0, number = 0;
     u_int8_t *buffer = (u_int8_t *)malloc(maxPacketLength);
     do {
-        counter++;
         sigprocmask(SIG_BLOCK, &blockAlarm, NULL);
         size = read(fileFd, buffer, maxPacketLength/2 - 4);
         sigprocmask(SIG_UNBLOCK, &blockAlarm, NULL);
+        
         if(size == 0) break;
+        
         printf("APP - Read a data packet from file.\n");
         packet = createDataPacket(buffer, (number % 256), size);
+
         if(llwrite(app.fd, (char *)(*(packet.bytes)), packet.size) < 0){
             printf("APP - Error transmitting data packet in applicationLayer.c ...\n");
             return -1;
@@ -164,7 +165,8 @@ int parseDataPacket(u_int8_t * packetArray, u_int8_t * bytes) {
 }
 
 int receiveFile(){
-    int counter = 0;
+    printf("APP - Starting to receive file...\n");
+
     char *receive = (char *)malloc(maxPacketLength);
     if(llread(app.fd, receive) < 0){
         printf("APP - Error receiving start control packet in applicationLayer.c ...\n");
@@ -181,7 +183,11 @@ int receiveFile(){
         return -1;
     }
 
-   strcpy(filename, "output.gif");    // comment to test in the same pc 
+    if(controlStatus == START){
+        printf("APP - Received START Control Packet ...\n");
+    }
+
+
     
     int fileFd = open(filename, O_WRONLY | O_CREAT , S_IRWXG | S_IRWXU | S_IRWXO);
     if (fileFd <= -1) {
@@ -192,7 +198,6 @@ int receiveFile(){
 
     u_int8_t *bytes = (u_int8_t *)malloc(maxPacketLength/2 - 4);
     for(int i = 0 ; i < (fileSize / (maxPacketLength/2 - 4)) + 1; i++){
-        counter++;
         if(llread(app.fd, receive) < 0){
             printf("APP - Error receiving data packet in applicationLayer.c ...\n");
             return -1;
@@ -233,7 +238,7 @@ void printPacket(packet_t *packet) {
     printf("\nStarting printPacket...\n\tSize: %d\n", packet->size);
     for (int i = 0; i < packet->size; i++)
     {
-        printf("\tByte %d: %x \n", i, (*(packet->bytes))[i]);
+        printf("\tByte %d: %x\n", i, (*(packet->bytes))[i]);
     }
     printf("printPacket ended\n\n");
 }

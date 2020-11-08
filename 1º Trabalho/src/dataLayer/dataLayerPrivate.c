@@ -48,10 +48,11 @@ void stuffFrame(frame_t * frame)
     for (int i = frame->size - 3; i < frame->size; i++) frameRealData[i + stuffingCounter] = (*(frame->bytes))[i];
 
 
-    frameRealData[4] += stuffingCounter / 256;
-    frameRealData[5] += stuffingCounter % 256;
-
     frame->size += stuffingCounter;
+
+    frameRealData[4] = (frame->size - 8) / 256;
+    frameRealData[5] = (frame->size - 8) % 256;
+
     frameRealData[frame->size - 2] = bccCalculator(frameRealData, 4, frameRealData[4] * 256 + frameRealData[5] + 2);
 
     memcpy((*(frame->bytes)), frameRealData, frame->size);
@@ -82,11 +83,12 @@ void destuffFrame(frame_t *frame) {
         frameRealData[i - destuffingCounter] = (*(frame->bytes))[i];
     }
     for (int i = frame->size-3; i < frame->size; i++) frameRealData[i - destuffingCounter] = (*(frame->bytes))[i];
-    
-    frameRealData[4] -= destuffingCounter / 256;
-    frameRealData[5] -= destuffingCounter % 256;
 
     frame->size -= destuffingCounter;
+
+    frameRealData[4] = (frame->size - 8) / 256;
+    frameRealData[5] = (frame->size - 8) % 256;
+
     frameRealData[frame->size - 2] = bccCalculator(frameRealData, 4, frameRealData[4] * 256 + frameRealData[5] + 2);
 
     memcpy((*(frame->bytes)), frameRealData, frame->size);
@@ -109,7 +111,6 @@ void prepareI(frame_t *info, char* data, int length) //Testar
     
 
     prepareFrameDataSize(length, frameDataSize);
-
     (*(info->bytes))[4] = frameDataSize[0];
     (*(info->bytes))[5] = frameDataSize[1];
 
@@ -122,7 +123,6 @@ void prepareI(frame_t *info, char* data, int length) //Testar
     (*(info->bytes))[bcc2_byte_ix] = bccCalculator((*(info->bytes)), 4, ((*(info->bytes))[4] << 8) + (*(info->bytes))[5] + 2);  
     (*(info->bytes))[bcc2_byte_ix + 1] = FLAG;
     info->size = 4 + 2 + (*(info->bytes))[4] * 256 + (*(info->bytes))[5] + 2;
-
 
     stuffFrame(info);
 
@@ -141,13 +141,11 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
     u_int8_t c;
     receive_state_t state = INIT;
     int dataCounter = -2, returnValue = 0;
-    int i = -1;
     do {
-        i++;
         sigprocmask(SIG_BLOCK, &blockAlarm, NULL);
         int bytesRead = read(fd, &c, 1);
         sigprocmask(SIG_UNBLOCK, &blockAlarm, NULL);
-        // printf("i: %d   -   byte: %x   -   state: %d\n", i, c, state);  // uncomment for debug
+
         if (bytesRead < 0) {
             perror("read error");
             return -3;
@@ -220,7 +218,7 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
                 break;
             case COMPLETE: break;
         }
-        // sleep(1);
+
     } while (state != COMPLETE && returnValue == 0);
     if (lastFrameReceivedId != -1 && lastFrameReceivedId == frame->infoId && returnValue == 0) {
         printf("DATA - Read a duplicate frame\n");
@@ -237,10 +235,10 @@ int receiveIMessage(frame_t *frame, int fd, int timeout){
 
 void readTimeoutHandler(int signo) {
     if (!justRead) {
-        printf("DATA - Timeout occured while reading a frame!\n");
-        timeoutOccured = 1;
-        char timeoutChar = TIMEOUT_CHAR;
-        write(portFd, &timeoutChar, 1);
+        // printf("DATA - Timeout occured while reading a frame!\n");
+        // timeoutOccured = 1;
+        // char timeoutChar = TIMEOUT_CHAR;
+        // write(portFd, &timeoutChar, 1);
     }
 }
 
@@ -259,16 +257,18 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
     }
     do {
         alarm(timeout); 
+        
         justRead = false;
         sigprocmask(SIG_BLOCK, &blockAlarm, NULL);
         int bytesRead = read(fd, &c, 1);
         sigprocmask(SIG_UNBLOCK, &blockAlarm, NULL);
         justRead = true;
+        
         if (timeoutOccured == 1) {
             timeoutOccured = -1;
             return -1;
         }
-        // printf("byte: %x   -   state: %d\n", c, state);  // uncomment to debug
+
         if (bytesRead < 0) {
             perror("read error");
             return -2;
