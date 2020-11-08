@@ -195,7 +195,7 @@ int llread(int fd, char * buffer){
     (*(response.bytes)) = (u_int8_t *)malloc(maxFrameSize);
     int receiveIMessageReturn, sameReadAttempts = 1;
     do {
-        receiveIMessageReturn = receiveIMessage(&frame, fd, 3);
+        receiveIMessageReturn = receiveIMessage(&frame, fd);
         if (receiveIMessageReturn < -3 || receiveIMessageReturn > 1) {
             printf("DATA - receiveIMessage returned unexpected value\n");
             return -1;

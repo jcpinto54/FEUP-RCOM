@@ -137,14 +137,13 @@ void prepareI(frame_t *info, char* data, int length) //Testar
 // Returns -1 if there is an error with data size value
 // Returns 0 if received ok
 // Returns 1 if received a repeated frame
-int receiveIMessage(frame_t *frame, int fd, int timeout){
+int receiveIMessage(frame_t *frame, int fd){
     u_int8_t c;
     receive_state_t state = INIT;
     int dataCounter = -2, returnValue = 0;
     do {
-        sigprocmask(SIG_BLOCK, &blockAlarm, NULL);
+
         int bytesRead = read(fd, &c, 1);
-        sigprocmask(SIG_UNBLOCK, &blockAlarm, NULL);
 
         if (bytesRead < 0) {
             perror("read error");
