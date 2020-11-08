@@ -143,7 +143,9 @@ int receiveIMessage(frame_t *frame, int fd){
     int dataCounter = -2, returnValue = 0;
     do {
 
+        sigprocmask(SIG_BLOCK, &blockAlarm, NULL);
         int bytesRead = read(fd, &c, 1);
+        sigprocmask(SIG_UNBLOCK, &blockAlarm, NULL);
 
         if (bytesRead < 0) {
             perror("read error");
