@@ -12,6 +12,7 @@
 #include "dataLayerPrivate.h"
 
 int status;
+int timeoutLength;
 extern int idFrameSent;
 extern int lastFrameReceivedId;
 extern int baudrate;
@@ -85,7 +86,7 @@ int llopen(char *port, int appStatus)
                     return -5;
                 }
                 prepareToReceive(&responseFrame, 5);
-                int responseReceive = receiveNotIMessage(&responseFrame, fd, RESPONSE_WITHOUT_ID, TIMEOUT_3_SEC); 
+                int responseReceive = receiveNotIMessage(&responseFrame, fd, RESPONSE_WITHOUT_ID, timeoutLength); 
                 
 
                 if (responseReceive == -1) continue;         // in a timeout, retransmit frame
@@ -97,7 +98,7 @@ int llopen(char *port, int appStatus)
             break;
         case RECEIVER:;
             prepareToReceive(&receiverFrame, 5);
-            int error = receiveNotIMessage(&receiverFrame, fd, RESPONSE_WITHOUT_ID, TIMEOUT_3_SEC);
+            int error = receiveNotIMessage(&receiverFrame, fd, RESPONSE_WITHOUT_ID, NO_TIMEOUT);
             if (error) {
                 printf("DATA - ReceiveNotIMessage returned %d\n", error); 
                 return -7;
@@ -148,7 +149,7 @@ int llclose(int fd) {
                 if (sendNotIFrame(&discFrame, fd)) return -2;
 
                 prepareToReceive(&receiveFrame, 5);
-                receiveReturn = receiveNotIMessage(&receiveFrame, fd, RESPONSE_WITHOUT_ID, TIMEOUT_3_SEC);
+                receiveReturn = receiveNotIMessage(&receiveFrame, fd, RESPONSE_WITHOUT_ID, timeoutLength);
                 if (receiveReturn == -1) continue;        //in a timeout, retransmit frame
                 else if (receiveReturn < -1) return -4;
                 if (!isDISCFrame(&receiveFrame)) continue;      // wrong frame received
@@ -162,7 +163,7 @@ int llclose(int fd) {
         case RECEIVER:;
             for (int i = 0; i < MAX_READ_ATTEMPTS; i++) {
                 prepareToReceive(&receiveFrame, 5);
-                int receiveReturn = receiveNotIMessage(&receiveFrame, fd, RESPONSE_WITHOUT_ID, TIMEOUT_3_SEC);
+                int receiveReturn = receiveNotIMessage(&receiveFrame, fd, RESPONSE_WITHOUT_ID, timeoutLength);
                 if (receiveReturn == -1) continue;
                 else if (receiveReturn) return -7;
                 if (!isDISCFrame(&receiveFrame)) return -5;

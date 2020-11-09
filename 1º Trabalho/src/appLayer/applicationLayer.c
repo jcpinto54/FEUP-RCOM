@@ -75,8 +75,6 @@ int sendFile(char * filename){
     int size = 0, number = 0;
     u_int8_t *buffer = (u_int8_t *)malloc(maxPacketLength);
     do {
-        if (number == 1) printf("\n\n HERE\n\n");
-
         size = read(fileFd, buffer, maxPacketLength/2 - 4);
         
         if(size == 0) break;
@@ -199,12 +197,6 @@ int receiveFile(){
 
     u_int8_t *bytes = (u_int8_t *)malloc(maxPacketLength/2 - 4);
     for(int i = 0 ; i < (fileSize / (maxPacketLength/2 - 4)) + 1; i++){
-
-        // if (i == 1) {
-        //     printf("SLEEPING\n");
-        //     sleep(4);
-        //     sleep(4);
-        // }
 
         if(llread(app.fd, receive) < 0){
             printf("APP - Error receiving data packet in applicationLayer.c ...\n");

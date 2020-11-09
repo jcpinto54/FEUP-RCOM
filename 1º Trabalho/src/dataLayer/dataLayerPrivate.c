@@ -16,6 +16,7 @@
 
 int idFrameSent = 0;
 int lastFrameReceivedId = -1;
+extern int timeoutLength;
 extern int maxFrameSize;
 extern int maxFrameDataLength;
 
@@ -249,7 +250,8 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
     siginterrupt(SIGALRM, 1);
 
     do {
-        alarm(timeout);
+        if (timeout != NO_TIMEOUT)
+            alarm(timeout);
 
         int bytesRead = read(fd, &c, 1);
         if (bytesRead < 0) {
@@ -355,7 +357,7 @@ int sendIFrame(frame_t *frame, int fd) {
         printf("DATA - %d bytes sent\n", sentBytes);
 
 
-        int receiveReturn = receiveNotIMessage(&responseFrame, fd, (frame->infoId + 1) % 2, TIMEOUT_3_SEC);
+        int receiveReturn = receiveNotIMessage(&responseFrame, fd, (frame->infoId + 1) % 2, timeoutLength);
 
         if (receiveReturn == -1) {
             printf("DATA - Timeout reading response, trying again...\n");

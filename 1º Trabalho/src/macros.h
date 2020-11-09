@@ -48,5 +48,4 @@
 #define MAX_FILENAME_LENGTH 512
 
 #define RESPONSE_WITHOUT_ID -1
-#define TIMEOUT_3_SEC 3
 #define NO_TIMEOUT -1

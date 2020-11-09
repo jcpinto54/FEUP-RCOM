@@ -1,4 +1,5 @@
 #pragma once
+#include <sys/time.h>
 
 typedef enum {
     false,
