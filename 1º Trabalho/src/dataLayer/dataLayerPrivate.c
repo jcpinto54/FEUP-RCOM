@@ -146,7 +146,7 @@ int receiveIMessage(frame_t *frame, int fd){
         sigprocmask(SIG_BLOCK, &blockAlarm, NULL);
         int bytesRead = read(fd, &c, 1);
         sigprocmask(SIG_UNBLOCK, &blockAlarm, NULL);
-
+        // printf("rI  -  byte: %x  -  state: %d\n", c, state);
         if (bytesRead < 0) {
             perror("read error");
             return -3;
