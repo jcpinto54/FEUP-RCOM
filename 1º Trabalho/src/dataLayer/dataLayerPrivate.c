@@ -19,8 +19,6 @@ int lastFrameReceivedId = -1;
 extern int maxFrameSize;
 extern int maxFrameDataLength;
 
-int portFd;
-
 void stuffFrame(frame_t * frame)
 {
     int stuffingCounter = 0;

@@ -19,7 +19,6 @@ extern int baudrate;
 extern int maxFrameSize;
 extern int maxFrameDataLength;
 
-extern int portFd;
 
 int llopen(char *port, int appStatus)
 {
@@ -55,8 +54,6 @@ int llopen(char *port, int appStatus)
         perror("tcsetattr");
         return -3;
     }
-
-    portFd = fd;
 
     frame_t setFrame;
     frame_t responseFrame;

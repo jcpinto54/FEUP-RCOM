@@ -7,6 +7,7 @@ typedef struct {
     int infoId;
 } frame_t;
 
+
 int llopen(char *port, int appStatus);
 int llclose(int fd);
 int llread(int fd, char *buffer);
