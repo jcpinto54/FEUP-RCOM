@@ -13,4 +13,4 @@ u_int8_t getBit(int byte, int b);
 
 void printString(char *str);
 
-void displayStats(clock_t diff);
+void displayStats(struct timeval begin, struct timeval end);

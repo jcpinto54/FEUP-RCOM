@@ -20,8 +20,6 @@ unsigned maxFrameDataLength = MAX_FRAME_DATA_LENGTH;
 unsigned maxPacketLength = MAX_PACKET_LENGTH;
 unsigned maxPacketDataLength = MAX_PACKET_DATA_LENGTH;
 
-sigset_t blockAlarm;
-
 int main(int argc, char *argv[])
 {
     system("umask 0077");
@@ -74,9 +72,6 @@ int main(int argc, char *argv[])
     else if (app.status == RECEIVER) {
         strcpy(app.port, argv[2]);
     }
-
-    sigemptyset(&blockAlarm);
-    sigaddset(&blockAlarm, SIGALRM);
 
     appRun();
 

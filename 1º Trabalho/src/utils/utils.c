@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <termios.h>
@@ -36,7 +37,7 @@ void printString(char *str)
 }
 
 
-void displayStats(clock_t diff) {
-    printf("\n\nPROGRAM STATS:\nNumber of clock ticks: %ld\nClock Ticks in seconds: %lf\n", diff, ((double)diff)/(double)CLOCKS_PER_SEC);
+void displayStats(struct timeval begin, struct timeval end) {
+    printf("\n\nPROGRAM STATS:\nExecution in seconds: %lf\n", (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec)/1000000.0);
 }
 

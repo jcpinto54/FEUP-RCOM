@@ -19,6 +19,8 @@ extern int baudrate;
 extern int maxFrameSize;
 extern int maxFrameDataLength;
 
+extern int portFd;
+
 int llopen(char *port, int appStatus)
 {
     printf("DATA - Entered llopen\n");
@@ -54,6 +56,8 @@ int llopen(char *port, int appStatus)
         return -3;
     }
 
+    portFd = fd;
+
     frame_t setFrame;
     frame_t responseFrame;
     frame_t receiverFrame;
@@ -67,12 +71,7 @@ int llopen(char *port, int appStatus)
     (*(responseFrame.bytes)) = (u_int8_t *)malloc(maxFrameSize);
     (*(receiverFrame.bytes)) = (u_int8_t *)malloc(maxFrameSize);
     (*(uaFrame.bytes)) = (u_int8_t *)malloc(maxFrameSize);
-    
-    // signal(SIGALRM, readTimeoutHandler);
-    struct sigaction sigAux;
-    sigaction(SIGALRM, NULL, &sigAux);
-    sigAux.sa_handler = readTimeoutHandler;
-    sigaction(SIGALRM, &sigAux, NULL);
+
 
     switch (appStatus) {
         case TRANSMITTER:;

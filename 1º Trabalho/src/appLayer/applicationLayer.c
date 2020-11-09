@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <termios.h>
@@ -16,7 +17,6 @@ extern application app;
 extern int maxFrameDataLength;
 extern int maxPacketLength;
 extern int maxPacketDataLength;
-extern sigset_t blockAlarm;
 
 void appRun() {
     if ((app.fd = llopen(app.port, app.status)) < 0) {
@@ -24,7 +24,8 @@ void appRun() {
         // clearSerialPort(app.port);
         exit(1);
     }
-    clock_t beforeSendingFile = clock();
+    struct timeval begin, end;
+    gettimeofday(&begin, NULL);
     switch (app.status) {
         case TRANSMITTER:;
             sendFile(app.filename);
@@ -33,7 +34,7 @@ void appRun() {
             receiveFile();
         break;
     }
-    clock_t afterSendingFile = clock();
+    gettimeofday(&end, NULL);
 
     int llcloseReturn = llclose(app.fd);
     if (llcloseReturn < 0) {
@@ -42,7 +43,7 @@ void appRun() {
         exit(1);
     }
 
-    displayStats(afterSendingFile - beforeSendingFile);
+    displayStats(begin, end);
 }
 
 int sendFile(char * filename){
@@ -74,9 +75,9 @@ int sendFile(char * filename){
     int size = 0, number = 0;
     u_int8_t *buffer = (u_int8_t *)malloc(maxPacketLength);
     do {
-        sigprocmask(SIG_BLOCK, &blockAlarm, NULL);
+        if (number == 1) printf("\n\n HERE\n\n");
+
         size = read(fileFd, buffer, maxPacketLength/2 - 4);
-        sigprocmask(SIG_UNBLOCK, &blockAlarm, NULL);
         
         if(size == 0) break;
         
@@ -199,9 +200,10 @@ int receiveFile(){
     u_int8_t *bytes = (u_int8_t *)malloc(maxPacketLength/2 - 4);
     for(int i = 0 ; i < (fileSize / (maxPacketLength/2 - 4)) + 1; i++){
 
-        if (i == (fileSize / (maxPacketLength/2 - 4)) - 1) {
+        if (i == 1) {
             printf("SLEEPING\n");
             sleep(4);
+            sleep(2);
         }
 
         if(llread(app.fd, receive) < 0){

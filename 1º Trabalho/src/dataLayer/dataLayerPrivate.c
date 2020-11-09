@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <signal.h>
+#include <errno.h>
 #include "dataLayer.h"
 #include "dataLayerPrivate.h"
 #include "../macros.h"
@@ -18,12 +19,7 @@ int lastFrameReceivedId = -1;
 extern int maxFrameSize;
 extern int maxFrameDataLength;
 
-
-bool justRead;     // used for timeout
-int timeoutOccured = -1;
 int portFd;
-
-extern sigset_t blockAlarm;
 
 void stuffFrame(frame_t * frame)
 {
@@ -108,7 +104,7 @@ void prepareI(frame_t *info, char* data, int length) //Testar
     (*(info->bytes))[2] = idFrameSent << 6 | I;
     info->infoId = idFrameSent;
     (*(info->bytes))[3] = bccCalculator((*(info->bytes)), 1, 2); //BCC1, calculado com A e C
-    
+
 
     prepareFrameDataSize(length, frameDataSize);
     (*(info->bytes))[4] = frameDataSize[0];
@@ -120,7 +116,7 @@ void prepareI(frame_t *info, char* data, int length) //Testar
 
     int bcc2_byte_ix = 4 + 2 + ((*(info->bytes))[4] << 8)  + (*(info->bytes))[5];
 
-    (*(info->bytes))[bcc2_byte_ix] = bccCalculator((*(info->bytes)), 4, ((*(info->bytes))[4] << 8) + (*(info->bytes))[5] + 2);  
+    (*(info->bytes))[bcc2_byte_ix] = bccCalculator((*(info->bytes)), 4, ((*(info->bytes))[4] << 8) + (*(info->bytes))[5] + 2);
     (*(info->bytes))[bcc2_byte_ix + 1] = FLAG;
     info->size = 4 + 2 + (*(info->bytes))[4] * 256 + (*(info->bytes))[5] + 2;
 
@@ -133,7 +129,7 @@ void prepareI(frame_t *info, char* data, int length) //Testar
 
 
 // Returns -3 if there is an error with reading from the serial port
-// Returns -2 if there is an error with bcc2 
+// Returns -2 if there is an error with bcc2
 // Returns -1 if there is an error with data size value
 // Returns 0 if received ok
 // Returns 1 if received a repeated frame
@@ -143,9 +139,7 @@ int receiveIMessage(frame_t *frame, int fd){
     int dataCounter = -2, returnValue = 0;
     do {
 
-        sigprocmask(SIG_BLOCK, &blockAlarm, NULL);
         int bytesRead = read(fd, &c, 1);
-        sigprocmask(SIG_UNBLOCK, &blockAlarm, NULL);
         // printf("rI  -  byte: %x  -  state: %d\n", c, state);
         if (bytesRead < 0) {
             perror("read error");
@@ -174,11 +168,11 @@ int receiveIMessage(frame_t *frame, int fd){
                 if ((c & I_MASK) == I) {
                     state = RCV_C;
                     (*(frame->bytes))[2] = c;
-                    frame->infoId = c >> 6; 
+                    frame->infoId = c >> 6;
                 }
                 else if (c == FLAG)
                     state = RCV_FLAG;
-                else 
+                else
                     state = INIT;
                 break;
             case RCV_C:
@@ -192,7 +186,7 @@ int receiveIMessage(frame_t *frame, int fd){
                     state = INIT;
                 }
                 break;
-            case RCV_BCC1:     
+            case RCV_BCC1:
                 (*(frame->bytes))[4 + 2 + dataCounter] = c;
                 dataCounter++;
                 if (dataCounter == ((*(frame->bytes))[4] * 256 + (*(frame->bytes))[5])) state = RCV_DATA;
@@ -234,14 +228,9 @@ int receiveIMessage(frame_t *frame, int fd){
     return returnValue;
 }
 
-void readTimeoutHandler(int signo) {
-    if (!justRead) {
-        printf("DATA - Timeout occured while reading a frame!\n");
-        timeoutOccured = 1;
-        char timeoutChar = TIMEOUT_CHAR;
-        write(portFd, &timeoutChar, 1);
-    }
-}
+
+
+void readTimeoutHandler(int signo) { return; }
 
 // Returns 0 if received ok
 // Returns 1 if received RR ok
@@ -252,25 +241,21 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
 {
     u_int8_t c;
     receive_state_t state = INIT;
-    if (timeout > -1) {
-        timeoutOccured = 0;
-        portFd = fd;
-    }
-    do {
-        alarm(timeout); 
-        
-        justRead = false;
-        sigprocmask(SIG_BLOCK, &blockAlarm, NULL);
-        int bytesRead = read(fd, &c, 1);
-        sigprocmask(SIG_UNBLOCK, &blockAlarm, NULL);
-        justRead = true;
-        
-        if (timeoutOccured == 1) {
-            timeoutOccured = -1;
-            return -1;
-        }
 
+    struct sigaction sigAux;
+    sigAux.sa_handler = readTimeoutHandler;
+    sigaction(SIGALRM, &sigAux, NULL);
+    siginterrupt(SIGALRM, 1);
+
+    do {
+        alarm(timeout);
+
+        int bytesRead = read(fd, &c, 1);
         if (bytesRead < 0) {
+            if (errno == EINTR) {
+                printf("DATA - Timeout occured while reading a frame!\n");
+                return -1;
+            }
             perror("read error");
             return -2;
         }
@@ -343,12 +328,12 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
     return returnValue;
 }
 
-// Returns -1 if timeout, 0 if ok 
+// Returns -1 if timeout, 0 if ok
 int sendNotIFrame(frame_t *frame, int fd) {
     int writeReturn = write(fd, (*(frame->bytes)), frame->size);
     printf("DATA - %d bytes sent\n", writeReturn);
 
-    if (writeReturn == -1) return -1; 
+    if (writeReturn == -1) return -1;
     return 0;
 }
 
@@ -360,17 +345,17 @@ int sendIFrame(frame_t *frame, int fd) {
     responseFrame.bytes = (u_int8_t **)malloc(sizeof(u_int8_t *));
     (*(responseFrame.bytes)) = (u_int8_t *)malloc(maxFrameSize);
     while (1) {
-        if(attempts >= MAX_WRITE_ATTEMPTS) 
+        if(attempts >= MAX_WRITE_ATTEMPTS)
         {
             printf("DATA - Too many write attempts\n");
             return -1;
         }
-        if ((sentBytes = write(fd, (*(frame->bytes)), frame->size)) == -1) return -1;                  
+        if ((sentBytes = write(fd, (*(frame->bytes)), frame->size)) == -1) return -1;
         printf("DATA - %d bytes sent\n", sentBytes);
 
-    
+
         int receiveReturn = receiveNotIMessage(&responseFrame, fd, (frame->infoId + 1) % 2, TIMEOUT_3_SEC);
-    
+
         if (receiveReturn == -1) {
             printf("DATA - Timeout reading response, trying again...\n");
         }
@@ -399,9 +384,9 @@ void prepareResponse(frame_t *frame, bool valid, int id) {
     frame->size = 5;
     (*(frame->bytes))[0] = FLAG;
     (*(frame->bytes))[1] = TRANSMITTER_TO_RECEIVER;
-    if (valid) 
+    if (valid)
         (*(frame->bytes))[2] = RR | (id << 7);
-    else 
+    else
         (*(frame->bytes))[2] = REJ | (id << 7);
     (*(frame->bytes))[3] = bccCalculator((*(frame->bytes)), 1, 2);
     (*(frame->bytes))[4] = FLAG;
@@ -419,7 +404,7 @@ u_int8_t bccCalculator(u_int8_t bytes[], int start, int length)
     return bcc;
 }
 
-// Return true if bcc verifies else otherwise 
+// Return true if bcc verifies else otherwise
 bool bccVerifier(u_int8_t bytes[], int start, int length, u_int8_t parity)
 {
     return (bccCalculator(bytes, start, length) == parity);
