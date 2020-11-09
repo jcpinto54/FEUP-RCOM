@@ -142,6 +142,9 @@ int receiveIMessage(frame_t *frame, int fd){
         int bytesRead = read(fd, &c, 1);
         // printf("rI  -  byte: %x  -  state: %d\n", c, state);
         if (bytesRead < 0) {
+            if (errno == EINTR) {
+                
+            }
             perror("read error");
             return -3;
         }

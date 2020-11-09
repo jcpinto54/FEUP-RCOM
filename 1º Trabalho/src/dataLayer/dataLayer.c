@@ -115,7 +115,7 @@ int llopen(char *port, int appStatus)
                 printf("DATA - Problem in sendNotIFrame\n"); 
                 return -5;
             }
-            
+            alarm(0);   // cancel any pending alarm() calls
             break;
     }
     printf("DATA - Opened serial port connection\n");
@@ -177,7 +177,6 @@ int llclose(int fd) {
             int receiveNotIMessageReturn = receiveNotIMessage(&receiveFrame, fd, RESPONSE_WITHOUT_ID, NO_TIMEOUT);
             if (receiveNotIMessageReturn) return -4;
             if (!isUAFrame(&receiveFrame)) return -5;
-
         break;
     }
     if (close(fd) == -1) return -8;
@@ -193,6 +192,7 @@ int llread(int fd, char * buffer){
     (*(frame.bytes)) = (u_int8_t *)malloc(maxFrameSize);
     (*(response.bytes)) = (u_int8_t *)malloc(maxFrameSize);
     int receiveIMessageReturn, sameReadAttempts = 1;
+
     do {
         receiveIMessageReturn = receiveIMessage(&frame, fd);
         if (receiveIMessageReturn < -3 || receiveIMessageReturn > 1) {
