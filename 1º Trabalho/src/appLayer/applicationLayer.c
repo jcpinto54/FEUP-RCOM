@@ -203,7 +203,7 @@ int receiveFile(){
         if (i == 1) {
             printf("SLEEPING\n");
             sleep(4);
-            sleep(2);
+            sleep(4);
         }
 
         if(llread(app.fd, receive) < 0){
