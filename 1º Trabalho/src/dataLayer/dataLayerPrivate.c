@@ -321,8 +321,10 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
                 state = INIT;
                 break;
         }
-        // sleep(1);
     } while (state != COMPLETE);
+
+    alarm(0);   // cancel any pending alarm() calls
+
     frame->size = 5;
     int returnValue = 0;
     if ((*(frame->bytes))[2] == (RR | (responseId << 7))) returnValue = 1;

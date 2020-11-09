@@ -113,7 +113,6 @@ int llopen(char *port, int appStatus)
                 printf("DATA - Problem in sendNotIFrame\n"); 
                 return -5;
             }
-            alarm(0);   // cancel any pending alarm() calls
             break;
     }
     printf("DATA - Opened serial port connection\n");
