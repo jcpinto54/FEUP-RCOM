@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
         if(argc == 7) {
             baudrate = convertBaudrate(atoi(argv[4]));
             maxFrameSize = atoi(argv[5]);
-            if (maxFrameSize > 64000) {
+            if (maxFrameSize > 128000) {
                 printf("MAIN - Max value for frame size is 64000. Setting it to default 512...\n");
                 maxFrameSize = 512;
             }
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
         if(argc == 6) {
             baudrate = convertBaudrate(atoi(argv[3]));
             maxFrameSize = atoi(argv[4]);
-            if (maxFrameSize > 64000) {
+            if (maxFrameSize > 128000) {
                 printf("MAIN - Max value for frame size is 64000. Setting it to default 512...\n");
                 maxFrameSize = 512;
             }
