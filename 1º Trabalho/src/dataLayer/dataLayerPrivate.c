@@ -369,7 +369,7 @@ int sendIFrame(frame_t *frame, int fd) {
     responseFrame.bytes = (u_int8_t **)malloc(sizeof(u_int8_t *));
     (*(responseFrame.bytes)) = (u_int8_t *)malloc(maxFrameSize);
     while (1) {
-        if(attempts >= MAX_WRITE_ATTEMPTS)
+        if(attempts > MAX_WRITE_ATTEMPTS)
         {
             printf("DATA - Too many write attempts\n");
             return -1;
