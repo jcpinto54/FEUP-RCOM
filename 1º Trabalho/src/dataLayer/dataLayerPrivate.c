@@ -135,7 +135,7 @@ int receiveIMessage(frame_t *frame, int fd){
     receive_state_t state = INIT;
     int dataCounter = -2, returnValue = 0, bcc2Size = 1;
 
-    if (rand() % 50 == 0 && state != INIT && state != RCV_BCC2) {
+    if (rand() % 10 == 0) {
         return -2;
     }
 
@@ -264,7 +264,7 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
     sigaction(SIGALRM, &sigAux, NULL);
     siginterrupt(SIGALRM, 1);
 
-    if (rand() % 50 == 0 && state != INIT && state != RCV_BCC1 && responseId != RESPONSE_WITHOUT_ID) {
+    if (rand() % 10 == 0) {
         return -1;
     }
     do {
