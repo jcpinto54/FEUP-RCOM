@@ -24,7 +24,7 @@ unsigned maxPacketDataLength = MAX_PACKET_DATA_LENGTH;
 int main(int argc, char *argv[])
 {
     srand(time(NULL));
-    
+
     system("umask 0077");
 
     if (argc == 3 || argc == 6) {
@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
     }
 
     printf("MAIN - Starting app...\n");
-
+    
     appRun();
 
     printf("MAIN - Closing app...\n");

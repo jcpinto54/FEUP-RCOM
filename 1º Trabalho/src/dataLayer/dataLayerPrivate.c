@@ -134,8 +134,9 @@ int receiveIMessage(frame_t *frame, int fd){
     u_int8_t c;
     receive_state_t state = INIT;
     int dataCounter = -2, returnValue = 0, bcc2Size = 1;
-
-    if (rand() % 10 == 0) {
+    
+    long int random = rand();
+    if ((random * 2) % 25 == 0) {
         return -2;
     }
 
@@ -264,7 +265,9 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
     sigaction(SIGALRM, &sigAux, NULL);
     siginterrupt(SIGALRM, 1);
 
-    if (rand() % 10 == 0) {
+
+    long int random = rand();
+    if ((random * 2) % 25 == 0) {
         return -1;
     }
     do {
