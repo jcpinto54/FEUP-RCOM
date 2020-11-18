@@ -139,9 +139,6 @@ int receiveIMessage(frame_t *frame, int fd){
         int bytesRead = read(fd, &c, 1);
 
         if (bytesRead < 0) {
-            if (errno == EINTR) {
-                
-            }
             perror("read error");
             return -3;
         }
