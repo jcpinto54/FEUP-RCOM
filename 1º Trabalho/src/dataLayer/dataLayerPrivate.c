@@ -136,7 +136,7 @@ int receiveIMessage(frame_t *frame, int fd){
     int dataCounter = -2, returnValue = 0, bcc2Size = 1;
     
     long int random = rand();
-    if ((random * 1) % 25 == 0) {
+    if ((random * 1) % 50 == 0) {
         return -2;
     }
 
@@ -267,7 +267,7 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
 
 
     long int random = rand();
-    if ((random * 1) % 25 == 0) {
+    if ((random * 1) % 50 == 0) {
         return -1;
     }
     do {
