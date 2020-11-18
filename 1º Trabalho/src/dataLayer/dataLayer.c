@@ -232,10 +232,10 @@ int llread(int fd, char * buffer){
         }
     } while (receiveIMessageReturn != 0 && sameReadAttempts < MAX_READ_ATTEMPTS);
 
-    if (sameReadAttempts == MAX_READ_ATTEMPTS) {
-        printf("DATA - Max read attempts of the same frame reached.\n");
-        return -1;
-    }
+    // if (sameReadAttempts == MAX_READ_ATTEMPTS) {
+    //     printf("DATA - Max read attempts of the same frame reached.\n");
+    //     return -1;
+    // }
     return 0;
 }
 
