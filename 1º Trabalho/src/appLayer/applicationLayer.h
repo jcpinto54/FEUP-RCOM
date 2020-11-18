@@ -2,15 +2,15 @@
 #include "../macros.h"
 
 typedef struct {
-    int fd; // serial port
-    int status;
-    char port[20];
-    char filename[MAX_FILENAME_LENGTH];
+    int fd; // serial port file descriptor
+    int status; // transmitter or receiver
+    char port[20];  // port name
+    char filename[MAX_FILENAME_LENGTH];  // name of file to send
 } application;
 
 
 typedef struct {
-    u_int8_t **bytes;
+    u_int8_t **bytes;   // we had memory problems, and got it working this way: we used it an array of bytes
     int size;
 } packet_t;
 

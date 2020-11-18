@@ -2,10 +2,10 @@
 #include "../macros.h"
 
 typedef struct {
-    u_int8_t **bytes;
-    int size;
-    int infoId;
-} frame_t;
+    u_int8_t **bytes;   // we had memory problems, and got it working this way: we used it an array of bytes
+    int size;       
+    int infoId;         // frame id, if needed
+} frame_t;      
 
 
 int llopen(char *port, int appStatus);

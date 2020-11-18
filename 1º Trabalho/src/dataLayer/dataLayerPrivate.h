@@ -10,7 +10,7 @@ typedef enum {
     RCV_DATA,
     RCV_BCC2,
     COMPLETE
-} receive_state_t;
+} receive_state_t;  // auxiliary to receive functions
 
 
 // ---
