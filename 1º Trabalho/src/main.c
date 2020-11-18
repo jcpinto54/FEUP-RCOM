@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
             baudrate = convertBaudrate(atoi(argv[4]));
             maxFrameSize = atoi(argv[5]);
             if (maxFrameSize > 128000) {
-                printf("MAIN - Max value for frame size is 64000. Setting it to default 512...\n");
+                printf("MAIN - Max value for frame size is 128000. Setting it to default 512...\n");
                 maxFrameSize = 512;
             }
             timeoutLength = atoi(argv[6]);
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
             baudrate = convertBaudrate(atoi(argv[3]));
             maxFrameSize = atoi(argv[4]);
             if (maxFrameSize > 128000) {
-                printf("MAIN - Max value for frame size is 64000. Setting it to default 512...\n");
+                printf("MAIN - Max value for frame size is 128000. Setting it to default 512...\n");
                 maxFrameSize = 512;
             }
             timeoutLength = atoi(argv[5]);
