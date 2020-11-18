@@ -126,7 +126,7 @@ void prepareI(frame_t *info, char* data, int length) //Testar
 
 
 // Returns -3 if there is an error with reading from the serial port
-// Returns -2 if there is an error with bcc2
+// Returns -2 if there is an error with bcc
 // Returns -1 if there is an error with data size value
 // Returns 0 if received ok
 // Returns 1 if received a repeated frame
@@ -134,6 +134,11 @@ int receiveIMessage(frame_t *frame, int fd){
     u_int8_t c;
     receive_state_t state = INIT;
     int dataCounter = -2, returnValue = 0, bcc2Size = 1;
+
+    if (rand() % 50 == 0 && state != INIT && state != RCV_BCC2) {
+        return -2;
+    }
+
     do {
 
         int bytesRead = read(fd, &c, 1);
@@ -145,6 +150,8 @@ int receiveIMessage(frame_t *frame, int fd){
             perror("read error");
             return -3;
         }
+
+
         switch (state) {
             case INIT:
                 if (c == FLAG) {
@@ -183,7 +190,8 @@ int receiveIMessage(frame_t *frame, int fd){
                 else if (c == FLAG)
                     state = RCV_FLAG;
                 else {
-                    state = INIT;
+                    printf("DATA - BCC1 not correct\n");
+                    returnValue = -2;
                 }
                 break;
             case RCV_BCC1:
@@ -256,6 +264,9 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
     sigaction(SIGALRM, &sigAux, NULL);
     siginterrupt(SIGALRM, 1);
 
+    if (rand() % 50 == 0 && state != INIT && state != RCV_BCC1 && responseId != RESPONSE_WITHOUT_ID) {
+        return -1;
+    }
     do {
         if (timeout != NO_TIMEOUT)
             alarm(timeout);
@@ -269,6 +280,7 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
             perror("read error");
             return -2;
         }
+
 
         switch (state) {
             case INIT:
@@ -310,7 +322,7 @@ int receiveNotIMessage(frame_t *frame, int fd, int responseId, int timeout)
                     state = RCV_FLAG;
                 else {
                     printf("DATA - BCC1 not correct\n");
-                    state = INIT;
+                    return -1;
                 }
                 break;
             case RCV_BCC1:
