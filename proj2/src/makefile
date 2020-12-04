@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -g
-DEPS = utils/utils.h macros.h
-OBJS = utils/utils.o main.o
+# DEPS = utils/utils.h macros.h
+OBJS = main.o
 TARGET = download
 
 %.o: %.c $(DEPS)
@@ -12,4 +12,4 @@ $(TARGET): $(OBJS)
 
 .PHONY: clean
 clean:
-	rm $(TARGET) *.o ./*/*.o
+	rm $(TARGET) *.o
