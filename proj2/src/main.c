@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include "urlHandler.h"
+#include "macros.h"
 
 int main(int argc, char *argv[]){
 	
@@ -7,11 +9,16 @@ int main(int argc, char *argv[]){
 		return -1;
 	}
 
-	// TODO: Parse URL
-	// TODO: Handle errors on the URL
+	// TODO: Parse URL (and handle errors on the URL)
+	url_t url = parseURL(argv[1]);
+
+	printf("Success: %d\n", url.success);
+	printf("Protocol: %s\n", url.protocol);
+
+
 	// TODO: Print information
 	// TODO: Call function that downloads file
 	// TODO: Handle errors on the receiving of the file
 
-	return 0;
+	return OK;
 }
