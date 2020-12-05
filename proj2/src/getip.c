@@ -6,17 +6,7 @@
 #include <netinet/in.h> 
 #include<arpa/inet.h>
 
-int main(int argc, char *argv[])
-{
-	struct hostent *h;
-
-        if (argc != 2) {  
-            fprintf(stderr,"usage: getip address\n");
-            exit(1);
-        }
-        
-        
-
+/*
 struct hostent {
 	char    *h_name;	// Official name of the host. 
     char    **h_aliases;	// A NULL-terminated array of alternate names for the host. 
@@ -27,6 +17,16 @@ struct hostent {
 };
 
 #define h_addr h_addr_list[0]	// The first address in h_addr_list. 
+*/
+
+int main(int argc, char *argv[])
+{
+	struct hostent *h;
+
+        if (argc != 2) {  
+            fprintf(stderr,"usage: getip address\n");
+            exit(1);
+        }
 
         if ((h=gethostbyname(argv[1])) == NULL) {  
             herror("gethostbyname");
