@@ -12,11 +12,17 @@ int main(int argc, char *argv[]){
 	// TODO: Parse URL (and handle errors on the URL)
 	url_t url = parseURL(argv[1]);
 
+	// TODO: Print information
 	printf("Success: %d\n", url.success);
 	printf("Protocol: %s\n", url.protocol);
+	printf("User: %s\n", url.username);
+	printf("Password: %s\n", url.password);
 
+	if(url.success == FAILURE){
+		perror("ERROR: There was a problem parsing the URL!\n");
+		return -1;
+	}
 
-	// TODO: Print information
 	// TODO: Call function that downloads file
 	// TODO: Handle errors on the receiving of the file
 

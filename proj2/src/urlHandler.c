@@ -7,7 +7,7 @@
 url_t parseURL(char *url){
 	// ftp://[<user>:<password>@]<host>/<url-path>
 
-	char *protocol, *auth;
+	char *protocol, *auth, *user, *password;
 	url_t result;
 	result.success = FAILURE;
 
@@ -18,8 +18,8 @@ url_t parseURL(char *url){
 		return result;
 	}
 
-	int protocolLength = protocol - url;
-	strncpy(result.protocol, url, protocolLength);
+	int length = protocol - url;
+	strncpy(result.protocol, url, length);
 
 	// Checks if protocol is FTP
 	if(strcmp(result.protocol, "ftp") != 0){
@@ -27,9 +27,19 @@ url_t parseURL(char *url){
 		return result;
 	}
 
+	// Checks if there's [<user>:<password>@] block
 	auth = strstr(url, "@");
 	if(auth != NULL){
-		printf("There is authentication!\n");
+		user = strstr(protocol+3, ":");
+		length = user - (protocol + 3);
+		strncpy(result.username, protocol + 3, length);
+
+		password = strstr(user, "@");
+		length = password - (user + 1);
+		strncpy(result.password, user + 1, length);
+	}
+	else{
+		
 	}
 
 
