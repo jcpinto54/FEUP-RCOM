@@ -7,7 +7,7 @@
 url_t parseURL(char *url){
 	// ftp://[<user>:<password>@]<host>/<url-path>
 
-	char *protocol, *auth, *user, *password;
+	char *protocol, *auth, *user, *password, *host, *marker;
 	url_t result;
 	result.success = FAILURE;
 
@@ -28,19 +28,32 @@ url_t parseURL(char *url){
 	}
 
 	// Checks if there's [<user>:<password>@] block
+	//TODO: Add an option to type only user and no password
 	auth = strstr(url, "@");
 	if(auth != NULL){
 		user = strstr(protocol+3, ":");
-		length = user - (protocol + 3);
+		length = user - (protocol + 3); // "protocol+3" to ignore characters "://"
 		strncpy(result.username, protocol + 3, length);
 
 		password = strstr(user, "@");
-		length = password - (user + 1);
+		length = password - (user + 1); // "user+1" to ignore character ":"
 		strncpy(result.password, user + 1, length);
+		marker = password + 1;
 	}
 	else{
-		
+		marker = protocol + 3;
 	}
+	
+
+	//Parsing <host>/<url-path> block
+	host = strstr(marker, "/");
+	if(host == NULL){
+		perror("File not chosen\nExiting...\n");
+		return result;
+	}
+	length = host - marker;
+	strncpy(result.host, marker, length);
+	strncpy(result.path, host + 1, 1024);
 
 
 
