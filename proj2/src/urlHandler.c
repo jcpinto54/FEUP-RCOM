@@ -72,6 +72,11 @@ url_t parseURL(char *url){
 		memset(oldIndex + 1, 0, oldIndex - result.path);
 	}
 
+	if(strlen(result.username) == 0){
+		strcpy(result.username, "anonymous");
+		strcpy(result.password, "randomPassword");
+	}
+
 
 	result.success = OK;
 	return result;
