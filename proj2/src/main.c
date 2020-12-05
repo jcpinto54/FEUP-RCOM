@@ -9,10 +9,10 @@ int main(int argc, char *argv[]){
 		return -1;
 	}
 
-	// TODO: Parse URL (and handle errors on the URL)
+	// Parses URL (TODO: handle some errors on the URL)
 	url_t url = parseURL(argv[1]);
 
-	// TODO: Print information
+	// Prints information
 	printf("Success: %d\n", url.success);
 	printf("Protocol: %s\n", url.protocol);
 	printf("User: %s\n", url.username);
