@@ -55,6 +55,22 @@ url_t parseURL(char *url){
 	strncpy(result.host, marker, length);
 	strncpy(result.path, host + 1, 1024);
 
+	if(strstr(result.path, "/") == NULL){ // File is in root directory
+		strncpy(result.filename, result.path, 512);
+		memset(result.path, 0, 1024);
+	}
+	else{
+		char* index = result.path;
+		char* oldIndex;
+
+		while(index != NULL){
+			oldIndex = index;
+			index = strstr(index+1, "/");
+		}
+
+		strcpy(result.filename, oldIndex + 1);
+		memset(oldIndex + 1, 0, oldIndex - result.path);
+	}
 
 
 	result.success = OK;

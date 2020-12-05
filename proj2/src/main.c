@@ -19,7 +19,7 @@ int main(int argc, char *argv[]){
 	printf("Password: %s\n", url.password);
 	printf("Host: %s\n", url.host);
 	printf("Path: %s\n", url.path);
-	// printf("Filename: %s\n", url.filename);
+	printf("Filename: %s\n", url.filename);
 
 	if(url.success == FAILURE){
 		perror("ERROR: There was a problem parsing the URL!\n");
