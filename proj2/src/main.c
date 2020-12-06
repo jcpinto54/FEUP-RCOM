@@ -4,7 +4,7 @@
 #include "clientTCP.h"
 
 int main(int argc, char *argv[]){
-	
+	system("umask 0766");
 	if (argc != 2){
 		perror("Wrong number of arguments!\nUsage: ./download <FTP url>\n");
 		return -1;

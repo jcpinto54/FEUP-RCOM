@@ -14,3 +14,8 @@
 #define SERV_READY_TO_SEND_FILE 150
 #define SERV_CLOSE 226
 
+
+#define MAX_IP_SIZE 20
+#define MAX_BUF_SIZE 2000
+#define MAX_CMD_SIZE 256
+
