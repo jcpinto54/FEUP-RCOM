@@ -2,3 +2,4 @@ proj1/src/proj
 .idea
 proj2/src/download
 *.o
+*.out
