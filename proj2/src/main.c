@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "urlHandler.h"
 #include "macros.h"
+#include "clientTCP.h"
 
 int main(int argc, char *argv[]){
 	
@@ -25,6 +26,8 @@ int main(int argc, char *argv[]){
 		perror("ERROR: There was a problem parsing the URL!\n");
 		return -1;
 	}
+
+	downloadFTPFile(url);
 
 	// TODO: Call function that downloads file
 	// TODO: Handle errors on the receiving of the file

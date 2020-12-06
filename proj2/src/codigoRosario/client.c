@@ -33,10 +33,10 @@ int main(){
     int socketfd;
 
     struct sockaddr_in server_addr;
-    File *fp;
+    FILE *fp;
     char *filename = "file1.txt";
 
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    socketfd = socket(AF_INET, SOCK_STREAM, 0);
 
     if(sockfd < 0){
         perror("Error in socket creation");
