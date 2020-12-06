@@ -53,7 +53,6 @@ int getReply(int sockfd) {
 
 	free(buf);
 
-	printf("getReplyCode: %d\n", replyCode);	
 	return replyCode;
 }
 
@@ -64,15 +63,12 @@ int parseIPandPort(char *ipAndPort, char *ip, int *port) {
 	int msb_port;
 	int lsb_port;
 	while(partIp != NULL) {
-		printf("i: %d   -   partIp: %s\n", i, partIp);
 		if (i <= 2) {
 			strcat(ip, partIp);
 			strcat(ip, ".");
-			printf("ip: %s\n", ip);
 		}
 		else if (i == 3) {
 			strcat(ip, partIp);
-			printf("ip: %s\n", ip);
 		}
 		else if (i == 4) {
 			msb_port = atoi(partIp);
@@ -85,7 +81,6 @@ int parseIPandPort(char *ipAndPort, char *ip, int *port) {
 	}
 
 	*port = 256 * msb_port + lsb_port;
-	printf("port: %d\n", *port);
 
 	return OK;
 }
@@ -110,7 +105,6 @@ int getPASVReply(int sockfd, char *ip, int *port) {
 			char* ipStart = strstr(buf, "(");
 			ipStart++;
 			int ipStartSize = strlen(ipStart);
-			printf("iSS: %d\n", ipStartSize);
 			ipStart[ipStartSize - 4] = 0;
 			parseIPandPort(ipStart, ip, port);
 			break;
@@ -161,15 +155,7 @@ int openSocket(char *ip, int port) {
 
 }
 
-void printString(char *str)
-{
-    printf("\nStarting printString...\n\tSize: %ld\n", strlen(str));
-    for (int i = 0; i < strlen(str); i++)
-    {
-        printf("\tstr[%d]: %c\n", i, str[i]);
-    }
-    printf("printString ended\n");
-}
+
 
 
 int readAndStoreFile(int sockfd, char *filename) {
@@ -185,8 +171,6 @@ int readAndStoreFile(int sockfd, char *filename) {
 			return -1;
 		}
 		if (size == 0) break;
-		// if (size < bufSize) buf[size-1] = 0;
-		printString(buf);
 		if (fwrite(buf, size, 1, f) < 0) {
 			perror("write in readAndStoreFile");
 			return -2;
@@ -233,10 +217,8 @@ int downloadFTPFile(url_t url) {
 
 	char fileWPath[2000];
 	sprintf(fileWPath, "%s%s", url.path, url.filename);
-	printf("path: %s\n", fileWPath);
 	sendCommand("RETR", fileWPath, mainSockFd);
 
-	printf("FINAL ip: %s  -  port: %d\n", ipToGetFile, portToGetFile);
 	int fileSockFd = openSocket(ipToGetFile, portToGetFile);
 
 	replyCode = getReply(mainSockFd);
