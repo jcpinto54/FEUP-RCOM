@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -g
-DEPS = urlHandler.h macros.h
-OBJS = main.o urlHandler.o
+DEPS = urlHandler.h macros.h clientTCP.h
+OBJS = main.o urlHandler.o clientTCP.o
 TARGET = download
 
 %.o: %.c $(DEPS)

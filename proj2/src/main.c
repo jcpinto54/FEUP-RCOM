@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include "urlHandler.h"
 #include "macros.h"
+#include "clientTCP.h"
 
 int main(int argc, char *argv[]){
-	
 	if (argc != 2){
 		perror("Wrong number of arguments!\nUsage: ./download <FTP url>\n");
 		return -1;
@@ -26,8 +26,10 @@ int main(int argc, char *argv[]){
 		return -1;
 	}
 
-	// TODO: Call function that downloads file
-	// TODO: Handle errors on the receiving of the file
+	printf("Enter to start download... (Ctrl-C to exit)\n");
+	getc(stdin);
+	downloadFTPFile(url);
+	printf("Download Completed\n");
 
 	return OK;
 }
