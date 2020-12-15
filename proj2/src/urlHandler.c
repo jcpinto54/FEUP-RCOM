@@ -30,15 +30,34 @@ url_t parseURL(char *url){
 	// Checks if there's [<user>:<password>@] block
 	//TODO: Add an option to type only user and no password
 	auth = strstr(url, "@");
-	if(auth != NULL){
+	if(auth != NULL){ // In case there is some kind of authentication
 		user = strstr(protocol+3, ":");
-		length = user - (protocol + 3); // "protocol+3" to ignore characters "://"
-		strncpy(result.username, protocol + 3, length);
+		if(user == NULL) { // In case there is no password
+			user = strstr(protocol+3, "@");
+			char* aux = strstr(user + 1, "@"); 
+			if(aux == NULL){ // In case the username does not have "@"
+				length = user - (protocol + 3);
+				strncpy(result.username, protocol + 3, length);
+				strncpy(result.password, "randomPassword", 15);
+				marker = user + 1; 
+			}
+			else{ // In case the username has "@"
+				length = aux - (protocol + 3);
+				strncpy(result.username, protocol+3, length);
+				strncpy(result.password, "randomPassword", 15);
+				marker = aux + 1; 
+			}
+		}
+		else{ // In case there is both username and password
+			length = user - (protocol + 3); // "protocol+3" to ignore characters "://"
+			strncpy(result.username, protocol + 3, length);
 
-		password = strstr(user, "@");
-		length = password - (user + 1); // "user+1" to ignore character ":"
-		strncpy(result.password, user + 1, length);
-		marker = password + 1;
+			password = strstr(user, "@");
+			length = password - (user + 1); // "user+1" to ignore character ":"
+			strncpy(result.password, user + 1, length);
+			marker = password + 1;
+		}
+		
 	}
 	else{
 		marker = protocol + 3;
