@@ -40,7 +40,7 @@ int getReply(int sockfd) {
 	while(1) {
 		bzero(buf, bufSize);
 		getline(&buf, &bufSize, sock_file);
-		if (strstr(buf, "-") == NULL) {
+		if (buf[3] != '-') {
 			char codeBuf[4];
 			bzero(codeBuf, 4);
 			codeBuf[0] = buf[0];
@@ -208,6 +208,11 @@ int downloadFTPFile(url_t url) {
 	replyCode = getReply(mainSockFd);
 	if (interpretReplyCode(replyCode) || replyCode != SERV_LOGGED_IN) return FAILURE;	
 
+	sendCommand("TYPE", "I", mainSockFd);
+
+	replyCode = getReply(mainSockFd);
+	if (interpretReplyCode(replyCode) || replyCode != SERV_BINARY_MODE) return FAILURE;	
+
 	sendCommand("PASV", "", mainSockFd);
 
 	char ipToGetFile[MAX_IP_SIZE];
@@ -225,6 +230,9 @@ int downloadFTPFile(url_t url) {
 	if (interpretReplyCode(replyCode) || replyCode != SERV_READY_TO_SEND_FILE) return FAILURE;	
 
 	readAndStoreFile(fileSockFd, url.filename);
+
+	replyCode = getReply(mainSockFd);
+	if (interpretReplyCode(replyCode) || replyCode != SERV_CLOSE) return FAILURE;	
 
 	close(mainSockFd);
 	close(fileSockFd);

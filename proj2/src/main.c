@@ -13,7 +13,6 @@ int main(int argc, char *argv[]){
 	url_t url = parseURL(argv[1]);
 
 	// Prints information
-	printf("Success: %d\n", url.success);
 	printf("Protocol: %s\n", url.protocol);
 	printf("User: %s\n", url.username);
 	printf("Password: %s\n", url.password);
@@ -28,8 +27,12 @@ int main(int argc, char *argv[]){
 
 	printf("Enter to start download... (Ctrl-C to exit)\n");
 	getc(stdin);
-	downloadFTPFile(url);
-	printf("Download Completed\n");
-
+	int error = downloadFTPFile(url);
+	if (error == FAILURE) {
+		printf("There was an error downloading\n");
+	}
+	else if (error == OK) {
+		printf("Download Completed\n");
+	}
 	return OK;
 }
