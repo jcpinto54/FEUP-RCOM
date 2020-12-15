@@ -1,0 +1,19 @@
+Exp 1 questions
+
+1. What are the ARP packets and what are they used for?
+ARP packets are used for translating between IP addresses and MAC addresses. (Falta o what they are)
+
+2. What are the MAC and IP addresses of ARP packets and why?
+
+3. What packets does the ping command generate?
+The ping command generates random packets(?)
+
+4. What are the MAC and IP addresses of the ping packets?
+Source and destination addresses (?)
+
+5. How to determine if a receiving Ethernet frame is ARP, IP, ICMP?
+
+6. How to determine the length of a receiving frame?
+
+7. What is the loopback interface and why is it important?
+
