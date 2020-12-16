@@ -9,6 +9,13 @@ url_t parseURL(char *url){
 
 	char *protocol, *auth, *user, *password, *host, *marker;
 	url_t result;
+	memset(result.protocol, 0, 6);
+	memset(result.username, 0, 256);
+	memset(result.password, 0, 256);
+	memset(result.host, 0, 256);
+	memset(result.path, 0, 1024);
+	memset(result.filename, 0, 512);
+
 	result.success = FAILURE;
 
 	// Checks for a protocol at the beginning of URL
@@ -71,6 +78,7 @@ url_t parseURL(char *url){
 		return result;
 	}
 	length = host - marker;
+	// printf("", host)
 	strncpy(result.host, marker, length);
 	strncpy(result.path, host + 1, 1024);
 
