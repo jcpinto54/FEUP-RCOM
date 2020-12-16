@@ -1,9 +1,10 @@
 Exp 1 questions
 
 1. What are the ARP packets and what are they used for?
-ARP packets are used for translating between IP addresses and MAC addresses. (Falta o what they are)
+ARP stands for Address Resolution Protocol. ARP packets are used to get a MAC address, given an IP address. The RARP (Reverse ARP) does the opposite (gives an IP given a MAC).
 
 2. What are the MAC and IP addresses of ARP packets and why?
+MAC stands for Medium Access Control, and IP is Internet Protocol. An IP address is a public identifier as a numerical label used by devices to communicate in a network using the Internet Protocol. A MAC address is a unique identifier that every network card has. It is used as a network address in the data link layer.
 
 3. What packets does the ping command generate?
 The ping command generates random packets(?)
