@@ -188,9 +188,9 @@ int downloadFTPFile(url_t url) {
 	bzero(&hints, sizeof(hints));
 	hints.ai_family = AF_INET;
 
-	getaddrinfo(url.host, NULL, &hints, &res_addr);
+	if (getaddrinfo(url.host, NULL, &hints, &res_addr) != 0) return FAILURE;
 	char ipv4[20];
-	getnameinfo(res_addr->ai_addr, res_addr->ai_addrlen, ipv4, 20, NULL, 0, NI_NUMERICHOST);
+	if (getnameinfo(res_addr->ai_addr, res_addr->ai_addrlen, ipv4, 20, NULL, 0, NI_NUMERICHOST) != 0) return FAILURE;
 
 	
 	int mainSockFd = openSocket(ipv4, 21);
