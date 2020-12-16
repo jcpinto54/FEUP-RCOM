@@ -13,10 +13,10 @@ The ping command sends Internet Control Message Protocol (ICMP) packets. It is u
 The IP and MAC addresses of the source and destination of ping request.
 
 5. How to determine if a receiving Ethernet frame is ARP, IP, ICMP?
-By the 2 bytes in the EtherType field right before the payload. The value there encodes a protocol (0x0800 for IP, 0x0806 for ARP, etc).
+In Ethernet II, by verifying the 2 bytes in the EtherType field right before the payload. The value there encodes a protocol (0x0800 for IPv4, 0x0806 for ARP, etc).
 
 6. How to determine the length of a receiving frame?
-
+In IEEE 802.3, the EtherType field represents the length. In Ethernet II, the physical layer detects the end of a frame. In any case, it can be seen on Wireshark and on the terminal after executing the "ping" command.
 
 7. What is the loopback interface and why is it important?
-
+The loopback interface is used to test if the network is well structured. The device sends itself a packet, which goes through every layer, and then returns.
