@@ -7,14 +7,16 @@ ARP stands for Address Resolution Protocol. ARP packets are used to get a MAC ad
 MAC stands for Medium Access Control, and IP is Internet Protocol. An IP address is a public identifier as a numerical label used by devices to communicate in a network using the Internet Protocol. A MAC address is a unique identifier that every network card has. It is used as a network address in the data link layer.
 
 3. What packets does the ping command generate?
-The ping command generates random packets(?)
+The ping command sends Internet Control Message Protocol (ICMP) packets. It is used to evaluate the reachability of a host on the internet. The ping command measures the time for a round trip of a packet, reports packet loss, statistics, and errors.
 
 4. What are the MAC and IP addresses of the ping packets?
-Source and destination addresses (?)
+The IP and MAC addresses of the source and destination of ping request.
 
 5. How to determine if a receiving Ethernet frame is ARP, IP, ICMP?
+By the 2 bytes in the EtherType field right before the payload. The value there encodes a protocol (0x0800 for IP, 0x0806 for ARP, etc).
 
 6. How to determine the length of a receiving frame?
+
 
 7. What is the loopback interface and why is it important?
 
