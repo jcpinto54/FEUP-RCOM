@@ -21,7 +21,7 @@
 int interpretReplyCode(int code) {
 	int lsd = code/100;
 	if (lsd >= 4) {
-		printf("Received bad code from ftp server. Exiting Program...\n");
+		printf("Received bad code [%d] from ftp server. Exiting Program...\n", code);
 		return FAILURE;
 	}
 	if (code < 0) {
@@ -189,7 +189,8 @@ int downloadFTPFile(url_t url) {
 	hints.ai_family = AF_INET;
 
 	if (getaddrinfo(url.host, NULL, &hints, &res_addr) != 0) return FAILURE;
-	char ipv4[20];
+
+char ipv4[20];
 	if (getnameinfo(res_addr->ai_addr, res_addr->ai_addrlen, ipv4, 20, NULL, 0, NI_NUMERICHOST) != 0) return FAILURE;
 
 	
@@ -201,12 +202,14 @@ int downloadFTPFile(url_t url) {
 	sendCommand("USER", url.username, mainSockFd);
 	
 	replyCode = getReply(mainSockFd);
-	if (interpretReplyCode(replyCode) || replyCode != SERV_NEEDS_PASS) return FAILURE;
+	if (interpretReplyCode(replyCode) || (replyCode != SERV_NEEDS_PASS && replyCode != SERV_LOGGED_IN)) return FAILURE;
 
-	sendCommand("PASS", url.password, mainSockFd);
+    if (replyCode == SERV_NEEDS_PASS) {
+	    sendCommand("PASS", url.password, mainSockFd);
 
-	replyCode = getReply(mainSockFd);
-	if (interpretReplyCode(replyCode) || replyCode != SERV_LOGGED_IN) return FAILURE;	
+	    replyCode = getReply(mainSockFd);
+	    if (interpretReplyCode(replyCode) || replyCode != SERV_LOGGED_IN) return FAILURE;	
+    }
 
 	sendCommand("TYPE", "I", mainSockFd);
 
@@ -221,8 +224,10 @@ int downloadFTPFile(url_t url) {
 	if (interpretReplyCode(replyCode) || replyCode != SERV_PASSV_MODE) return FAILURE;		
 
 	char fileWPath[2000];
-	sprintf(fileWPath, "%s%s", url.path, url.filename);
-	sendCommand("RETR", fileWPath, mainSockFd);
+    memset(fileWPath, 0, 2000);
+    sprintf(fileWPath, "%s%s", url.path, url.filename);
+
+    sendCommand("RETR", fileWPath, mainSockFd);
 
 	int fileSockFd = openSocket(ipToGetFile, portToGetFile);
 
