@@ -1,0 +1,28 @@
+TUX3:
+
+ifconfig eth0 up
+ifconfig eth0 172.16.20.1/24
+
+route add default gw 172.16.20.254
+
+
+TUX4:
+
+ifconfig eth0 up
+ifconfig eth0 172.16.20.254/24
+
+ifconfig eth1 up
+ifconfig eth1 172.16.21.253/24
+
+route add default gw 172.16.21.254
+
+
+TUX2:
+
+ifconfig eth0 up
+ifconfig eth0 172.16.21.1/24
+
+route add default gw 172.16.21.254
+
+
+
