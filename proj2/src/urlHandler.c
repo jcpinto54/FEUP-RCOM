@@ -45,13 +45,13 @@ url_t parseURL(char *url){
 			if(aux == NULL){ // In case the username does not have "@"
 				length = user - (protocol + 3);
 				strncpy(result.username, protocol + 3, length);
-				strncpy(result.password, "randomPassword", 15);
+				strncpy(result.password, "", 15);
 				marker = user + 1; 
 			}
 			else{ // In case the username has "@"
 				length = aux - (protocol + 3);
 				strncpy(result.username, protocol+3, length);
-				strncpy(result.password, "randomPassword", 15);
+				strncpy(result.password, "", 15);
 				marker = aux + 1; 
 			}
 		}

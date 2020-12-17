@@ -2,6 +2,9 @@
 #include "urlHandler.h"
 #include "macros.h"
 #include "clientTCP.h"
+#include <string.h>
+// #include <conio.h>
+
 
 int main(int argc, char *argv[]){
 	if (argc != 2){
@@ -24,6 +27,22 @@ int main(int argc, char *argv[]){
 		perror("ERROR: There was a problem parsing the URL!\n");
 		return -1;
 	}
+
+	if(strcmp(url.password, "") == 0){
+		printf("Enter your password: ");
+		char str[256], c;
+		int i = 0;
+		while (i<256){
+		    str[i]=getchar();
+		    c=str[i];
+		    if(c=='\n') break;
+		    i++;
+		}
+		str[i]='\0';
+		strcpy(url.password, str);
+	}
+
+	printf("New password: %s\n", url.password);
 
 	printf("Enter to start download... (Ctrl-C to exit)\n");
 	getc(stdin);
