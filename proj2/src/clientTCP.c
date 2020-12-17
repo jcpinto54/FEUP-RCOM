@@ -56,7 +56,7 @@ int getReply(int sockfd) {
 	return replyCode;
 }
 
-int parseIPandPort(char *ipAndPort, char *ip, int *port) {
+int parseIPandPort(char *ipAndPort, char *ip, int *port) {		// (ip1,ip2,ip3,ip4,portmsb,portlsb)
 	bzero(ip, MAX_IP_SIZE);
 	char *partIp = strtok(ipAndPort, ",");
 	int i = 0;
