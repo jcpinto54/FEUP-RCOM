@@ -17,31 +17,31 @@ end
 configure terminal
 interface fastethernet 0/1
 switchport mode access
-switchport access vlan 20
+switchport access vlan 60
 end
 
 configure terminal
 interface fastethernet 0/2
 switchport mode access
-switchport access vlan 20
+switchport access vlan 60
 end
 
 configure terminal
 interface fastethernet 0/3
 switchport mode access
-switchport access vlan 21
+switchport access vlan 61
 end
 
 configure terminal
 interface fastethernet 0/4
 switchport mode access
-switchport access vlan 21
+switchport access vlan 61
 end
 
 configure terminal
 interface fastethernet 0/5
 switchport mode access
-switchport access vlan 21
+switchport access vlan 61
 end
 
 
