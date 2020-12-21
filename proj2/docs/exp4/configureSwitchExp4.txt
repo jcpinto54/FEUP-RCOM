@@ -1,17 +1,17 @@
 configure terminal
-no vlan 20
+no vlan 60
 end
 
 configure terminal
-no vlan 21
+no vlan 61
 end
 
 configure terminal 
-vlan 20
+vlan 60
 end
 
 configure terminal 
-vlan 21
+vlan 61
 end
 
 configure terminal
