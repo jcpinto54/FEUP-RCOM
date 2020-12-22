@@ -1,7 +1,7 @@
-#Experience 5 questions
+# Experience 5 questions
 
-##1. How to configure the DNS service at an host?
+## 1. How to configure the DNS service at an host?
 
 
-##2. What packets are exchanged by DNS and what information is transported
+## 2. What packets are exchanged by DNS and what information is transported
 
