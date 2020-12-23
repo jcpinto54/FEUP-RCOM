@@ -115,6 +115,39 @@ int getPASVReply(int sockfd, char *ip, int *port) {
 	return replyCode;
 }
 
+int getRETRReply(int sockfd, int *size) {
+	FILE *sock_file = fdopen(sockfd, "r+");
+
+	size_t bufSize = MAX_BUF_SIZE;
+	char *buf = malloc(bufSize);
+	int replyCode;
+	while(1) {
+		bzero(buf, bufSize);
+		getline(&buf, &bufSize, sock_file);
+		if (strstr(buf, "-") == NULL) {
+			char codeBuf[4];
+			bzero(codeBuf, 4);
+			codeBuf[0] = buf[0];
+			codeBuf[1] = buf[1];
+			codeBuf[2] = buf[2];
+			replyCode = atoi(codeBuf);
+			
+			if (replyCode == 150) {
+				char* sizeStart = strrchr(buf, '(');
+				char* sizeEnd = strrchr(buf, ' ');
+				sizeStart++;
+				*sizeEnd = 0;
+				*size = atoi(sizeStart);
+			}
+			else *size = -1;
+			break;
+		}
+	}
+
+	free(buf);
+	return replyCode;
+}
+
 int sendCommand(char *cmd, char *arg, int sockfd) {
 	char cmdWArg[MAX_CMD_SIZE];
 	bzero(cmdWArg, MAX_CMD_SIZE);
@@ -158,23 +191,35 @@ int openSocket(char *ip, int port) {
 
 
 
-int readAndStoreFile(int sockfd, char *filename) {
+int readAndStoreFile(int sockfd, char *filename, int sizeLength) {
 	FILE *f = fopen(filename, "w");
 
 	size_t bufSize = MAX_BUF_SIZE;
 	char *buf = malloc(bufSize);
-	int size;
-	while (1) {
+	int size, bytesRead = 0, readAttempts = 0;
+	while (bytesRead < sizeLength) {
+		if (readAttempts > 5) {
+			printf("Timeout while reading from server\n");
+			return FAILURE;
+		}
 		bzero(buf, bufSize);
 		if ((size = read(sockfd, buf, bufSize)) < 0) {
 			perror("read in readAndStoreFile");
 			return -1;
 		}
-		if (size == 0) break;
+		if (size == 0) {
+			readAttempts++;
+			continue;
+		}
+		readAttempts = 0;
 		if (fwrite(buf, size, 1, f) < 0) {
 			perror("write in readAndStoreFile");
 			return -2;
 		}
+		bytesRead += size;
+		printf("\033[2K\r");
+		printf("Progress: %d%%", (int)((bytesRead / (float) sizeLength) * 100));
+		fflush(stdout);
 	}
 
 	fclose(f);
@@ -190,7 +235,7 @@ int downloadFTPFile(url_t url) {
 
 	if (getaddrinfo(url.host, NULL, &hints, &res_addr) != 0) return FAILURE;
 
-char ipv4[20];
+	char ipv4[20];
 	if (getnameinfo(res_addr->ai_addr, res_addr->ai_addrlen, ipv4, 20, NULL, 0, NI_NUMERICHOST) != 0) return FAILURE;
 
 	
@@ -231,10 +276,12 @@ char ipv4[20];
 
 	int fileSockFd = openSocket(ipToGetFile, portToGetFile);
 
-	replyCode = getReply(mainSockFd);
+	int size;
+	replyCode = getRETRReply(mainSockFd, &size);
 	if (interpretReplyCode(replyCode) || replyCode != SERV_READY_TO_SEND_FILE) return FAILURE;	
 
-	readAndStoreFile(fileSockFd, url.filename);
+	if (readAndStoreFile(fileSockFd, url.filename, size) == FAILURE) return FAILURE;
+
 
 	replyCode = getReply(mainSockFd);
 	if (interpretReplyCode(replyCode) || replyCode != SERV_CLOSE) return FAILURE;	
