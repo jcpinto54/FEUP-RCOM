@@ -12,17 +12,8 @@ int main(int argc, char *argv[]){
 		return -1;
 	}
 
-	// Parses URL (TODO: handle some errors on the URL)
 	url_t url = parseURL(argv[1]);
 
-	// Prints information
-	printf("Protocol: %s\n", url.protocol);
-	printf("User: %s\n", url.username);
-	if (strlen(url.password) != 0)
-		printf("Password: %s\n", url.password);
-	printf("Host: %s\n", url.host);
-	printf("Path: %s\n", url.path);
-	printf("Filename: %s\n", url.filename);
 
 	if(url.success == FAILURE){
 		perror("ERROR: There was a problem parsing the URL!\n");
@@ -42,6 +33,15 @@ int main(int argc, char *argv[]){
 		str[i]='\0';
 		strcpy(url.password, str);
 	}
+
+	// Prints information
+	printf("\nProtocol: %s\n", url.protocol);
+	printf("User: %s\n", url.username);
+	if (strlen(url.password) != 0)
+		printf("Password: %s\n", url.password);
+	printf("Host: %s\n", url.host);
+	printf("Path: %s\n", url.path);
+	printf("Filename: %s\n", url.filename);
 
 
 	printf("\nPress enter to start download... (Ctrl-C to exit)\n");
