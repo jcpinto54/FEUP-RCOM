@@ -3,7 +3,7 @@
 #include "macros.h"
 #include "clientTCP.h"
 #include <string.h>
-// #include <conio.h>
+
 
 
 int main(int argc, char *argv[]){
@@ -18,7 +18,8 @@ int main(int argc, char *argv[]){
 	// Prints information
 	printf("Protocol: %s\n", url.protocol);
 	printf("User: %s\n", url.username);
-	printf("Password: %s\n", url.password);
+	if (strlen(url.password) != 0)
+		printf("Password: %s\n", url.password);
 	printf("Host: %s\n", url.host);
 	printf("Path: %s\n", url.path);
 	printf("Filename: %s\n", url.filename);
@@ -29,7 +30,7 @@ int main(int argc, char *argv[]){
 	}
 
 	if(strcmp(url.password, "") == 0){
-		printf("Enter your password: ");
+		printf("Input your password: ");
 		char str[256], c;
 		int i = 0;
 		while (i<256){
@@ -42,16 +43,16 @@ int main(int argc, char *argv[]){
 		strcpy(url.password, str);
 	}
 
-	printf("New password: %s\n", url.password);
 
-	printf("Enter to start download... (Ctrl-C to exit)\n");
+	printf("\nPress enter to start download... (Ctrl-C to exit)\n");
 	getc(stdin);
+	// printf("\n\nURL:\n%d\n%s\n%s\n%s\n%s\n%s\n%s\n\n", url.success, url.protocol, url.username, url.password, url.host, url.path, url.filename);
 	int error = downloadFTPFile(url);
 	if (error == FAILURE) {
 		printf("There was an error downloading\n");
 	}
 	else if (error == OK) {
-		printf("Download Completed\n");
+		printf("\nDownload Completed\n");
 	}
 	return OK;
 }
