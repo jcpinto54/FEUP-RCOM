@@ -1,5 +1,11 @@
 proj1/src/proj
 .idea
 proj2/src/download
+*.png
+*.mp4
+*.jpg
+*.jpeg
+pub.txt
+timestamp.txt
 *.o
 *.out
