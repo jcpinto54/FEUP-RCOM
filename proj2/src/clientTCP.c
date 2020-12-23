@@ -132,11 +132,14 @@ int getRETRReply(int sockfd, int *size) {
 			codeBuf[2] = buf[2];
 			replyCode = atoi(codeBuf);
 			
-			char* sizeStart = strrchr(buf, '(');
-			char* sizeEnd = strrchr(buf, ' ');
-			sizeStart++;
-			*sizeEnd = 0;
-			*size = atoi(sizeStart);
+			if (replyCode == 150) {
+				char* sizeStart = strrchr(buf, '(');
+				char* sizeEnd = strrchr(buf, ' ');
+				sizeStart++;
+				*sizeEnd = 0;
+				*size = atoi(sizeStart);
+			}
+			else *size = -1;
 			break;
 		}
 	}

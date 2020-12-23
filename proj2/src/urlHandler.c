@@ -104,7 +104,7 @@ url_t parseURL(char *url){
 		strcpy(result.password, "randomPassword");
 	}
 
-
+	printf("filename: %s\n", result.filename);
 	result.success = OK;
 	return result;
 }

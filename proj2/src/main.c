@@ -46,7 +46,6 @@ int main(int argc, char *argv[]){
 
 	printf("\nPress enter to start download... (Ctrl-C to exit)\n");
 	getc(stdin);
-	// printf("\n\nURL:\n%d\n%s\n%s\n%s\n%s\n%s\n%s\n\n", url.success, url.protocol, url.username, url.password, url.host, url.path, url.filename);
 	int error = downloadFTPFile(url);
 	if (error == FAILURE) {
 		printf("There was an error downloading\n");
