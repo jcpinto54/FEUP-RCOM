@@ -9,3 +9,7 @@ pub.txt
 timestamp.txt
 *.o
 *.out
+*.mp4
+*.png
+*.jpg
+*.jpeg
