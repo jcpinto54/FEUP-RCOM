@@ -35,7 +35,6 @@ url_t parseURL(char *url){
 	}
 
 	// Checks if there's [<user>:<password>@] block
-	//TODO: Add an option to type only user and no password
 	auth = strstr(url, "@");
 	if(auth != NULL){ // In case there is some kind of authentication
 		user = strstr(protocol+3, ":");
@@ -78,7 +77,6 @@ url_t parseURL(char *url){
 		return result;
 	}
 	length = host - marker;
-	// printf("", host)
 	strncpy(result.host, marker, length);
 	strncpy(result.path, host + 1, 1024);
 
